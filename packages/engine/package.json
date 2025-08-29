@@ -1,0 +1,22 @@
+{
+  "name": "@omega-flow/engine",
+  "version": "0.0.0",
+  "description": "Workflow engine for Omega Flow",
+  "main": "dist/index.js",
+  "module": "dist/index.esm.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup src/index.ts --format cjs,esm --dts",
+    "dev": "tsup src/index.ts --format cjs,esm --dts --watch",
+    "test": "jest"
+  },
+  "devDependencies": {},
+  "dependencies": {
+    "@omega-flow/types": "workspace:*",
+    "ajv": "^8.17.1",
+    "json-rules-engine": "^7.3.1"
+  }
+}
