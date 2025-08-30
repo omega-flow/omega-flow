@@ -119,7 +119,10 @@ class WorkflowModel {
     if (this.isRunning) {
       throw new Error("Workflow is already running");
     }
-    this.currentNode = this.getStartNode();
+    // If we starts new workflow, there is no current node, set it to start node
+    if (!this.currentNode) {
+      this.currentNode = this.getStartNode();
+    }
     if (!this.currentNode) {
       throw new Error("Workflow does not have a start node");
     }

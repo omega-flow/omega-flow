@@ -37,7 +37,7 @@ describe("WorkflowModel Basics", () => {
     };
 
     sampleContext = {
-      workflow_id: 1,
+      workflowId: 1,
       currentNodeId: "2",
       nodeState: {
         1: { data: {} },
@@ -131,7 +131,7 @@ describe("WorkflowModel Basics", () => {
 
     it("should throw error when workflow id does not match", () => {
       const workflow = new WorkflowModel(sampleWorkflow, nodeTypes);
-      const invalidContext = { ...sampleContext, workflow_id: 2 };
+      const invalidContext = { ...sampleContext, workflowId: 2 };
       expect(() => {
         workflow.setContext(invalidContext);
       }).toThrow("Workflow id does not match");
@@ -139,7 +139,7 @@ describe("WorkflowModel Basics", () => {
 
     it("should throw error when current node does not exist", () => {
       const workflow = new WorkflowModel(sampleWorkflow, nodeTypes);
-      const invalidContext = { ...sampleContext, currentNode: "3" };
+      const invalidContext = { ...sampleContext, currentNodeId: "3" };
       expect(() => {
         workflow.setContext(invalidContext);
       }).toThrow("Current node does not exist in workflow");
@@ -192,7 +192,7 @@ describe("WorkflowModel Basics", () => {
       workflow.setContext(sampleContext);
       workflow.start();
       const context = workflow.getContext();
-      expect(context.workflowId).toEqual(sampleContext.workflow_id);
+      expect(context.workflowId).toEqual(sampleContext.workflowId);
       expect(context.currentNodeId).toEqual(sampleContext.currentNodeId);
       expect(context.nodeState).toEqual(sampleContext.nodeState);
       expect(context.history).toEqual(sampleContext.history);
