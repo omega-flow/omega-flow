@@ -19,6 +19,7 @@ class WorkflowModel {
   edges: EdgeModel[] = [];
   currentNode: NodeModel | null = null;
   history: WorkflowHistoryItem[] = [];
+  // TODO: change to status
   isRunning: boolean = false;
 
   constructor(
@@ -229,7 +230,7 @@ class WorkflowModel {
   }
 
   #log() {
-    console.log(this.history[this.history.length - 1]);
+    // console.log(this.history[this.history.length - 1]);
   }
 }
 

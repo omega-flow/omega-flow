@@ -61,7 +61,6 @@ describe("WorkflowModel Basics", () => {
 
   describe("Creating", () => {
     it("should create workflow instance", () => {
-      console.log("nodeTypes", nodeTypes);
       const workflow = new WorkflowModel(sampleWorkflow, nodeTypes);
       expect(workflow).toBeDefined();
     });

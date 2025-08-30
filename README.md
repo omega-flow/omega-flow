@@ -16,10 +16,10 @@ This is monorepo for omega-flow, it includes:
   - NodeModel - A class that represents a Node in the workflow, with methods to access its properties and connections.
   - EdgeModel - A class that represents an Edge in the workflow, with methods to access its properties.
   - Connection - A type that represents a connection between current node and its target node via an edge.
-  - EventModel - A class that represents an Event that can trigger a workflow or move it to the next step.
+  - Event - A type that represents an Event that can trigger a workflow or move it to the next step.
+  - Context - A type that represents workflow saved stated (nodes state, current node, history of execution etc.).
 - Workflow Engine - A system that executes workflows, manages their state, and handles events.
-  - Context - Workflow saved stated (nodes state, current node, history of execution etc.).
-  - Event - An event that can trigger a workflow, or move it to the next step.
+  - WorkflowStore - a place where workflows are stored
 - Workflow Editor - A user interface for creating and managing workflows.
 
 ## General Concepts
