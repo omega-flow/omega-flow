@@ -118,7 +118,7 @@ describe("WorkflowModel", () => {
       const workflow = new WorkflowModel(simpleWorkflow, nodeTypes);
       workflow.start();
       expect(workflow.getCurrentNode().getId()).toBe("1");
-      expect(workflow.isRunning).toBe(true);
+      expect(workflow.status).toBe("waiting");
     });
 
     // 1 > 1
@@ -138,7 +138,7 @@ describe("WorkflowModel", () => {
           change: "new",
         },
       };
-      await workflow.sendEvent(eventNotMatchFirstNode);
+      await workflow.acceptEvent(eventNotMatchFirstNode);
       expect(workflow.getCurrentNode().getId()).toBe("1");
       expect(workflow.getContext().history.length).toEqual(0);
     });
@@ -160,7 +160,7 @@ describe("WorkflowModel", () => {
           change: "new",
         },
       };
-      await workflow.sendEvent(eventMatchFirstNode);
+      await workflow.acceptEvent(eventMatchFirstNode);
       // here it goes to condition
       // then condition is met and goes to next node which is exit (4)
       expect(workflow.getCurrentNode().getId()).toBe("4");

@@ -10,20 +10,36 @@ export default class SegmentChangeModel extends NodeModel {
     super(node);
   }
 
-  // Returns next node (can be 'this') or null if end of flow
-  async acceptEvent(event: Event): Promise<NodeModel | null> {
+  acceptEvent(event: Event): boolean {
+    // Store whether this event matches our segment change criteria
     if (event.type === "SegmentChange") {
       const eventData = event.data;
       const nodeData = this.getData();
-      if (eventData.segment.id === nodeData.segment.id) {
-        if (eventData.change === nodeData.change) {
-          const handle = this.getSourceHandles()[0];
-          const targetNode = this.getTargetNodeFromSourceHandle(handle);
-          if (targetNode) {
-            // Return the target node
-            return targetNode;
-          }
-        }
+
+      const isMatch =
+        eventData.segment.id === nodeData.segment.id &&
+        eventData.change === nodeData.change;
+
+      this.setState({ isMatch });
+      return true;
+    } else {
+      this.setState({ isMatch: false });
+      return false;
+    }
+  }
+
+  async processEvent(event: Event): Promise<void> {}
+
+  nextNode(event: Event): NodeModel | null {
+    // Check if the event matched during processing
+    const isMatch = this.getState().isMatch;
+
+    if (isMatch) {
+      const handle = this.getSourceHandles()[0];
+      const targetNode = this.getTargetNodeFromSourceHandle(handle);
+      if (targetNode) {
+        // Return the target node
+        return targetNode;
       }
     }
 

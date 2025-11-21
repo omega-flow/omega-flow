@@ -126,6 +126,7 @@ describe("WorkflowModel Basics", () => {
       expect(() => {
         workflow.setContext(sampleContext);
       }).not.toThrow();
+      expect(workflow.status).toBe("idle");
     });
 
     it("should throw error when workflow id does not match", () => {
@@ -134,6 +135,7 @@ describe("WorkflowModel Basics", () => {
       expect(() => {
         workflow.setContext(invalidContext);
       }).toThrow("Workflow id does not match");
+      expect(workflow.status).toBe("idle");
     });
 
     it("should throw error when current node does not exist", () => {
@@ -142,6 +144,7 @@ describe("WorkflowModel Basics", () => {
       expect(() => {
         workflow.setContext(invalidContext);
       }).toThrow("Current node does not exist in workflow");
+      expect(workflow.status).toBe("idle");
     });
   });
 
@@ -158,7 +161,7 @@ describe("WorkflowModel Basics", () => {
       expect(() => {
         workflow.start();
       }).not.toThrow();
-      expect(workflow.isRunning).toBe(true);
+      expect(workflow.status).toBe("waiting");
       expect(workflow.getCurrentNode().getId()).toEqual("1");
     });
 
@@ -166,13 +169,14 @@ describe("WorkflowModel Basics", () => {
       const workflow = new WorkflowModel(sampleWorkflow, nodeTypes);
       expect(() => {
         workflow.setContext(sampleContext);
+        expect(workflow.status).toBe("idle");
         workflow.start();
       }).not.toThrow();
-      expect(workflow.isRunning).toBe(true);
+      expect(workflow.status).toBe("waiting");
       expect(workflow.getCurrentNode().getId()).toEqual("2");
     });
 
-    it("should allow to start twice", () => {
+    it("should not allow to start twice", () => {
       const workflow = new WorkflowModel(sampleWorkflow, nodeTypes);
       // First start
       expect(() => {

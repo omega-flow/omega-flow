@@ -10,8 +10,17 @@ export default class ExitModel extends NodeModel {
     super(node);
   }
 
-  // Returns next node (can be 'this') or null if end of flow
-  async acceptEvent(event: Event): Promise<NodeModel | null> {
+  acceptEvent(event: Event): boolean {
+    // Exit model accepts all events
+    return true;
+  }
+
+  async processEvent(event: Event): Promise<void> {
+    // No processing needed for exit model
+  }
+
+  nextNode(event: Event): NodeModel | null {
+    // Exit model always returns null to end workflow
     return null;
   }
 }

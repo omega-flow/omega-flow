@@ -10,8 +10,17 @@ export default class ActionModel extends NodeModel {
     super(node);
   }
 
-  // Returns next node (can be 'this') or null if end of flow
-  async acceptEvent(event: Event): Promise<NodeModel | null> {
+  acceptEvent(event: Event): boolean {
+    // In this simple implementation, accept all events
+    return true;
+  }
+
+  async processEvent(event: Event): Promise<void> {
+    // No processing needed for this model
+  }
+
+  nextNode(event: Event): NodeModel | null {
+    // Action model always returns null (exits workflow)
     return null;
   }
 }

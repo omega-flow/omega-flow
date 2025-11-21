@@ -8,6 +8,7 @@ import {
   type Node,
   WorkflowSchema,
   WorkflowHistoryItem,
+  type WorkflowStatus,
 } from "@omega-flow/types";
 
 import NodeModel from "./NodeModel";
@@ -19,8 +20,7 @@ class WorkflowModel {
   edges: EdgeModel[] = [];
   currentNode: NodeModel | null = null;
   history: WorkflowHistoryItem[] = [];
-  // TODO: change to status
-  isRunning: boolean = false;
+  status: WorkflowStatus = "idle";
 
   constructor(
     workflow: Workflow,
@@ -37,6 +37,7 @@ class WorkflowModel {
 
     this.workflow = workflow;
 
+    // TODO: import this function from @omega-flow/types
     function nodeHasType(node: Node): node is Node & { type: string } {
       return node.type !== undefined;
     }
@@ -77,7 +78,7 @@ class WorkflowModel {
 
   setContext(context: Context) {
     // Prevent setting context if workflow is already running
-    if (this.isRunning) {
+    if (this.status !== "idle") {
       throw new Error("Workflow is already running");
     }
 
@@ -102,6 +103,8 @@ class WorkflowModel {
 
     // Setting current history
     this.history = context.history || [];
+
+    // After setting context, you need to run start()
   }
 
   getContext(): Context {
@@ -117,7 +120,7 @@ class WorkflowModel {
   }
 
   start() {
-    if (this.isRunning) {
+    if (this.status !== "idle") {
       throw new Error("Workflow is already running");
     }
     // If we starts new workflow, there is no current node, set it to start node
@@ -127,13 +130,15 @@ class WorkflowModel {
     if (!this.currentNode) {
       throw new Error("Workflow does not have a start node");
     }
-    this.isRunning = true;
+    this.status = "waiting";
   }
 
-  async sendEvent(event: Event): Promise<void> {
-    if (!this.isRunning) {
+  async acceptEvent(event: Event): Promise<void> {
+    if (this.status === "idle" || this.status === "completed") {
       throw new Error("Workflow is not running");
     }
+
+    // TODO: Add Ajv validation for event
 
     const currentNode = this.getCurrentNode();
 
@@ -141,14 +146,31 @@ class WorkflowModel {
       throw new Error("Current node not set");
     }
 
-    const nextNode = await currentNode.acceptEvent(event);
+    // Check if node accepts the event
+    const accepts = currentNode.acceptEvent(event);
 
-    // The same node, nothing changed, exit
-    if (currentNode.equals(nextNode)) {
+    // If node doesn't accept the event, return early
+    if (!accepts) {
       return;
     }
 
-    // Workflow just started (start node returned different node),
+    // Change status to processing
+    this.status = "processing";
+
+    // Process the event
+    await currentNode.processEvent(event);
+
+    // Determine next node
+    const nextNode = currentNode.nextNode(event);
+
+    // If the next node is the same as the current node, we're done with this event
+    // TODO: Should this works? If node is not accepting event it returns eaarly, but when it accept it shoudl move to next node
+    if (currentNode.equals(nextNode)) {
+      this.status = "waiting";
+      return;
+    }
+
+    // Workflow just started (start node returned different node)
     if (currentNode.equals(this.getStartNode())) {
       this.#startWorkflow(event);
     }
@@ -159,14 +181,23 @@ class WorkflowModel {
       return;
     }
 
+    // Change status to transforming before moving to next node
+    this.status = "transforming";
+
     // Next node
     this.#moveToNode(nextNode, event);
 
-    return await this.sendEvent(event);
+    // Set status back to waiting
+    this.status = "waiting";
+
+    // Continue processing with the next node
+    return await this.acceptEvent(event);
   }
 
+  // HELPER METHODS
+
   getCurrentNode() {
-    if (!this.isRunning) {
+    if (this.status === "idle") {
       throw new Error("Workflow is not running");
     }
     return this.currentNode;
@@ -182,6 +213,7 @@ class WorkflowModel {
     return startNode || null;
   }
 
+  // TODO: Accept null? Return null?
   getNode(nodeId: string | null): NodeModel | null {
     if (!nodeId) {
       return null;
@@ -225,7 +257,7 @@ class WorkflowModel {
       fromNodeId: this.currentNode && this.currentNode.getId(),
       toNodeId: null,
     });
-    // this.status = "completed";
+    this.status = "completed";
     this.#log();
   }
 

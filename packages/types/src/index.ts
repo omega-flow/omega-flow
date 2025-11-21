@@ -27,6 +27,13 @@ export interface WorkflowHistoryItem {
   toNodeId: string | null;
 }
 
+export type WorkflowStatus =
+  | "idle"
+  | "waiting"
+  | "processing"
+  | "transforming"
+  | "completed";
+
 export interface Context {
   workflowId: string;
   currentNodeId: string | null;

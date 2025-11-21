@@ -12,8 +12,13 @@ export default class ConditionModel extends NodeModel {
     super(node);
   }
 
-  // Returns next node (can be 'this') or null if end of flow
-  async acceptEvent(event: Event): Promise<NodeModel | null> {
+  acceptEvent(event: Event): boolean {
+    // Condition model accepts all events
+    return true;
+  }
+
+  // Process state and store results for later use when determining the next node
+  async processEvent(event: Event): Promise<void> {
     // Crate rule from node data
     const rule = {
       conditions: this.getData().conditions,
@@ -38,7 +43,15 @@ export default class ConditionModel extends NodeModel {
     const conditionTrue = output.events.find(
       (e) => e.type === "condition-true"
     );
-    // Select next node
+    // Store result in state for nextNode to use
+    this.setState({ conditionResult: !!conditionTrue });
+  }
+
+  // Determine next node based on the condition result
+  nextNode(event: Event): NodeModel | null {
+    const conditionTrue = this.getState().conditionResult;
+
+    // Select next node based on condition result
     if (conditionTrue) {
       return this.getTargetNodeFromSourceHandle("true");
     } else {

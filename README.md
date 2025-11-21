@@ -13,7 +13,10 @@ This is monorepo for omega-flow, it includes:
   - Edge - A connection between nodes that defines the flow of execution.
 - Workflow - Flow with additional metadata (name, description, tags, etc.) and options (retry, timeout, etc.).
   - WorkflowModel - A class that represents a Workflow, with methods to access its properties and manage its state.
-  - NodeModel - A class that represents a Node in the workflow, with methods to access its properties and connections.
+  - NodeModel - A class that represents a Node in the workflow, with methods to access its properties and connections. Each node implements three key methods:
+  - `acceptEvent`: Determines whether a node accepts an event (returns true/false)
+  - `processEvent`: Processes the accepted event
+  - `nextNode`: Determines which node should be processed next
   - EdgeModel - A class that represents an Edge in the workflow, with methods to access its properties.
   - Connection - A type that represents a connection between current node and its target node via an edge.
   - Event - A type that represents an Event that can trigger a workflow or move it to the next step.
@@ -28,10 +31,21 @@ This is monorepo for omega-flow, it includes:
 - Workflow can have multiple ending Nodes (called End Nodes)
 - when Workflow starts, Start Node becomes Current Node
 - Current Node waits for Events
-- when Event is received, Current Node check if it can accept this Event
+- when Event is received via the `acceptEvent` method, Current Node checks if it can accept this Event
   - if Event is not accepted, Event is ignored, and Current Node continues to wait for other events
   - if Event is accepted, Current Node is processed with this Event, and Workflow moves to the next node
-  - IMPORTANT: if workflow is on some node, this not mean, this node was processed, it just means, this node is waiting for events, and when event is received, and is accepted, then node is processed, and workflow moves to the next node
+  - when next node is false|undefined, that means workflow finishes
+  - IMPORTANT: if workflow is on some node, this not mean, this node was processed, it just means, this node is waiting for events, and when event is received, and is accepted, then node is processed, and after that workflow moves to the next node
+
+## Workflow Statuses
+
+Workflows have different statuses that represent their current state:
+
+- `idle`: Initial status when a workflow is created but not yet started
+- `waiting`: The workflow is running and waiting for events
+- `processing`: The workflow is currently processing an accepted event
+- `transforming`: The workflow is moving from one node to another
+- `completed`: The workflow has finished execution
 
 ## Sample
 
@@ -118,7 +132,7 @@ This is monorepo for omega-flow, it includes:
 
 ```js
 {
-  workflow_id: 1,
+  workflowId: 1,
   currentNodeId: "2",
   nodeState: {
     1: { data: {} },
@@ -136,6 +150,7 @@ This is monorepo for omega-flow, it includes:
       nodeId: 1,
       data: {},
     }
-  ]
+  ],
+  status: "waiting" // One of: 'idle', 'waiting', 'processing', 'transforming', 'completed'
 }
 ```

@@ -11,7 +11,8 @@
   "scripts": {
     "build": "tsup src/index.ts --format cjs,esm --dts",
     "dev": "tsup src/index.ts --format cjs,esm --dts --watch",
-    "test": "jest --verbose"
+    "test": "jest --verbose --passWithNoTests",
+    "test:watch": "jest --watchAll --verbose --passWithNoTests --detectOpenHandles"
   },
   "devDependencies": {},
   "dependencies": {

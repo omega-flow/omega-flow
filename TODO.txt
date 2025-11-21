@@ -1,0 +1,1 @@
+- [ ] Change SegmentChangeNode to TriggerNode

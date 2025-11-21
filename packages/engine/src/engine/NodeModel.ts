@@ -91,10 +91,23 @@ class NodeModel {
     return null;
   }
 
-  // Returns next node (can be 'this') or null if end of flow
-  async acceptEvent(event: Event): Promise<NodeModel | null> {
+  // Checks if the node accepts the event
+  acceptEvent(event: Event): boolean {
     // This method should be overridden by subclasses
     throw new Error("acceptEvent method not implemented");
+  }
+
+  // Process the event (after accepting it)
+  async processEvent(event: Event): Promise<void> {
+    // This method should be overridden by subclasses
+    throw new Error("processEvent method not implemented");
+  }
+
+  // TODO: can it return 'this'?
+  // Determine next node after processing the event
+  nextNode(event: Event): NodeModel | null {
+    // This method should be overridden by subclasses
+    throw new Error("nextNode method not implemented");
   }
 }
 
