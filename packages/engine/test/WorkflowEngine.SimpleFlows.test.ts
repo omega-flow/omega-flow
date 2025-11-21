@@ -25,7 +25,7 @@ let simpleContext;
 describe("WorkflowModel", () => {
   beforeEach(() => {
     simpleWorkflow = {
-      id: 1,
+      id: "1",
       flow: {
         nodes: [
           {
@@ -91,7 +91,7 @@ describe("WorkflowModel", () => {
     };
 
     simpleContext = {
-      workflowId: 1,
+      workflowId: "1",
       currentNodeId: "2",
       nodeState: {
         1: { data: {} },
@@ -101,13 +101,12 @@ describe("WorkflowModel", () => {
         {
           time: 123456789,
           type: "event",
-          event: {},
         },
         {
           time: 123456789,
           type: "step",
-          nodeId: 1,
-          data: {},
+          fromNodeId: null,
+          toNodeId: "1",
         },
       ],
     };

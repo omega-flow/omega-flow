@@ -8,7 +8,7 @@ let sampleContext;
 describe("WorkflowModel Basics", () => {
   beforeEach(() => {
     sampleWorkflow = {
-      id: 1,
+      id: "1",
       flow: {
         nodes: [
           {
@@ -37,7 +37,7 @@ describe("WorkflowModel Basics", () => {
     };
 
     sampleContext = {
-      workflowId: 1,
+      workflowId: "1",
       currentNodeId: "2",
       nodeState: {
         1: { data: {} },
@@ -47,13 +47,12 @@ describe("WorkflowModel Basics", () => {
         {
           time: 123456789,
           type: "event",
-          event: {},
         },
         {
           time: 123456789,
           type: "step",
-          nodeId: 1,
-          data: {},
+          fromNodeId: null,
+          toNodeId: "1",
         },
       ],
     };
@@ -131,7 +130,7 @@ describe("WorkflowModel Basics", () => {
 
     it("should throw error when workflow id does not match", () => {
       const workflow = new WorkflowModel(sampleWorkflow, nodeTypes);
-      const invalidContext = { ...sampleContext, workflowId: 2 };
+      const invalidContext = { ...sampleContext, workflowId: "2" };
       expect(() => {
         workflow.setContext(invalidContext);
       }).toThrow("Workflow id does not match");

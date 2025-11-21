@@ -6,9 +6,11 @@ import {
   type NodeState,
   type Event,
   type Node,
-  WorkflowSchema,
-  WorkflowHistoryItem,
+  type WorkflowHistoryItem,
   type WorkflowStatus,
+  WorkflowSchema,
+  ContextSchema,
+  EventSchema,
 } from "@omega-flow/types";
 
 import NodeModel from "./NodeModel";
@@ -82,7 +84,16 @@ class WorkflowModel {
       throw new Error("Workflow is already running");
     }
 
-    // TODO: Add Ajv validation for context
+    // Ajv validation for context
+    const ajv = new Ajv();
+    const validate = ajv.compile(ContextSchema);
+
+    if (!validate(context)) {
+      throw new Error(
+        "Invalid context data: " + ajv.errorsText(validate.errors)
+      );
+    }
+
     // Check if context id match flow id
     if (this.workflow.id !== context.workflowId) {
       throw new Error("Workflow id does not match");
@@ -138,7 +149,13 @@ class WorkflowModel {
       throw new Error("Workflow is not running");
     }
 
-    // TODO: Add Ajv validation for event
+    // Ajv validation for event
+    const ajv = new Ajv();
+    const validate = ajv.compile(EventSchema);
+
+    if (!validate(event)) {
+      throw new Error("Invalid event data: " + ajv.errorsText(validate.errors));
+    }
 
     const currentNode = this.getCurrentNode();
 
