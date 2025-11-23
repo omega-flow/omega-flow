@@ -82,13 +82,12 @@ Workflows have different statuses that represent their current state:
   nodes: [
     {
       id: "1",
-      type: "SegmentChange",
+      type: "Trigger",
       data: {
-        label: "Trigger",
-        segment: {
-          id: 1,
+        label: "Sample Trigger",
+        params: {
+          event: "sample",
         },
-        change: "new",
       },
       position: { x: 0, y: -50 },
       measured: { width: 0, height: 36 },

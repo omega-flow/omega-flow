@@ -7,7 +7,7 @@ let simpleWorkflow;
 let simpleContext;
 
 //        +--------------------+
-//        | (1) SegmentChange  |
+//        | (1)   Trigger      |
 //        +--------------------+
 //                  |
 //                  v
@@ -17,7 +17,7 @@ let simpleContext;
 //             /              \
 //         (T)/                \(F)
 //           /                  \
-//          v                    v
+//          v                 x   v
 // +----------------+    +----------------+
 // |     Exit (4)   |<---|     Action (3) |
 // +----------------+    +----------------+
@@ -30,13 +30,12 @@ describe("WorkflowModel", () => {
         nodes: [
           {
             id: "1",
-            type: "SegmentChange",
+            type: "Trigger",
             data: {
-              label: "Trigger",
-              segment: {
-                id: 1,
+              label: "Sample Trigger",
+              params: {
+                event: "sample",
               },
-              change: "new",
             },
             position: { x: 0, y: -50 },
             measured: { width: 0, height: 36 },
@@ -45,7 +44,7 @@ describe("WorkflowModel", () => {
             id: "2",
             type: "Condition",
             data: {
-              label: "if user is men",
+              label: "if user_id === 1",
               conditions: {
                 // json-rules-engine conditions
                 all: [
@@ -63,14 +62,14 @@ describe("WorkflowModel", () => {
           {
             id: "3",
             type: "Action",
-            data: { label: "Node 3" },
+            data: { label: "Action label" },
             position: { x: 0, y: 100 },
             measured: { width: 150, height: 36 },
           },
           {
             id: "4",
             type: "Exit",
-            data: { label: "Node 2" },
+            data: { label: "Exit Label" },
             position: { x: 0, y: 150 },
             measured: { width: 150, height: 36 },
           },
@@ -129,12 +128,10 @@ describe("WorkflowModel", () => {
       // This event match first node
       const eventNotMatchFirstNode: Event = {
         id: "1",
-        type: "SegmentChange",
+        type: "wrong-event",
         time: Date.now(),
         data: {
           user_id: 1,
-          segment: { id: 2 }, // wrong segment id
-          change: "new",
         },
       };
       await workflow.acceptEvent(eventNotMatchFirstNode);
@@ -151,12 +148,10 @@ describe("WorkflowModel", () => {
       // This event match first node
       const eventMatchFirstNode: Event = {
         id: "1",
-        type: "SegmentChange",
+        type: "sample",
         time: Date.now(),
         data: {
           user_id: 1,
-          segment: { id: 1 }, // proper segment id
-          change: "new",
         },
       };
       await workflow.acceptEvent(eventMatchFirstNode);

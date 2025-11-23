@@ -1,26 +1,23 @@
 import { type Node, type Event } from "@omega-flow/types";
 
-import NodeModel from "./../engine/NodeModel";
+import NodeModel from "../engine/NodeModel";
 
-export default class SegmentChangeModel extends NodeModel {
+export default class TriggerModel extends NodeModel {
   constructor(node: Node) {
-    if (node.type !== "SegmentChange") {
-      throw new Error("Node type must be SegmentChange");
+    if (node.type !== "Trigger") {
+      throw new Error("Node type must be Trigger");
     }
     super(node);
   }
 
   acceptEvent(event: Event): boolean {
-    // Store whether this event matches our segment change criteria
-    if (event.type === "SegmentChange") {
-      const eventData = event.data;
-      const nodeData = this.getData();
+    const eventData = event.data;
+    const nodeData = this.getData();
 
-      const isMatch =
-        eventData.segment.id === nodeData.segment.id &&
-        eventData.change === nodeData.change;
+    const isMatch = event.type === nodeData.params.event;
 
-      this.setState({ isMatch });
+    if (isMatch) {
+      this.setState({ isMatch: true });
       return true;
     } else {
       this.setState({ isMatch: false });

@@ -13,7 +13,7 @@ describe("WorkflowModel Basics", () => {
         nodes: [
           {
             id: "1",
-            type: "SegmentChange",
+            type: "Trigger",
             data: { label: "Node 1" },
             position: { x: 0, y: -50 },
             measured: { width: 150, height: 36 },
