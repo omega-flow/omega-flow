@@ -135,6 +135,10 @@ class WorkflowModel {
     };
   }
 
+  getStatus(): WorkflowStatus {
+    return this.status;
+  }
+
   start() {
     if (this.status === WorkflowStatus.Completed) {
       throw new Error("Workflow is already completed");
@@ -154,13 +158,13 @@ class WorkflowModel {
 
   async acceptEvent(event: Event): Promise<void> {
     if (
-      this.status === WorkflowStatus.Idle ||
-      this.status === WorkflowStatus.Completed
+      this.status != WorkflowStatus.Waiting &&
+      this.status != WorkflowStatus.Pending
     ) {
-      throw new Error("Workflow is not running");
+      throw new Error(
+        `Workflow cannot accept events in current status: ${this.status}`
+      );
     }
-
-    // TODO: check if status is waiting, if not something is pending and we cannot accept new events
 
     // Ajv validation for event
     const ajv = new Ajv();
@@ -177,7 +181,7 @@ class WorkflowModel {
     }
 
     // Check if node accepts the event
-    const accepts = currentNode.acceptEvent(event);
+    const accepts = await currentNode.acceptEvent(event);
 
     // If node doesn't accept the event, return early
     if (!accepts) {
@@ -188,15 +192,20 @@ class WorkflowModel {
     this.status = WorkflowStatus.Processing;
 
     // Process the event
-    await currentNode.processEvent(event);
+    const processFinished = await currentNode.processEvent(event);
 
     // TODO: check if we can move to next node, or we need to wait for some async process, or timeout to complete
+    if (!processFinished) {
+      // If processing is not finished, set status back to waiting and return
+      this.status = WorkflowStatus.Pending;
+      return;
+    }
 
     // Determine next node
-    const nextNode = currentNode.nextNode(event);
+    const nextNode = await currentNode.nextNode(event);
 
     // If the next node is the same as the current node, we're done with this event
-    // TODO: Should this works? If node is not accepting event it returns eaarly, but when it accept it shoudl move to next node
+    // TODO: Should this works? If node is not accepting event it returns early, but when it accept it should move to next node
     if (currentNode.equals(nextNode)) {
       this.status = WorkflowStatus.Waiting;
       return;

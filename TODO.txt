@@ -1,5 +1,3 @@
-- [x] Change SegmentChangeNode to TriggerNode
-- [x] Think for bides/*Model to be Base class for User Nodes
-- [x] Add context.isCompleted flag
-- [x] Changes status from strings to enum
 
+- [ ] better methods for getting nextNode
+- [ ] test simpleFlow with action node on the path

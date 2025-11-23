@@ -6,24 +6,9 @@ import nodeTypes from "./../src/nodes";
 let simpleWorkflow;
 let simpleContext;
 
-//        +--------------------+
-//        | (1)   Trigger      |
-//        +--------------------+
-//                  |
-//                  v
-//        +--------------------+
-//        | (2) Condition      |
-//        +--------------------+
-//             /              \
-//         (T)/                \(F)
-//           /                  \
-//          v                 x   v
-// +----------------+    +----------------+
-// |     Exit (4)   |<---|     Action (3) |
-// +----------------+    +----------------+
-
 describe("WorkflowModel", () => {
   beforeEach(() => {
+    // 1 (Trigger) > 2 (Wait 10s) > 3 (Action) > 4 (Exit)
     simpleWorkflow = {
       id: "1",
       flow: {
@@ -42,19 +27,9 @@ describe("WorkflowModel", () => {
           },
           {
             id: "2",
-            type: "Condition",
+            type: "Wait",
             data: {
-              label: "if user_id === 1",
-              conditions: {
-                // json-rules-engine conditions
-                all: [
-                  {
-                    fact: "user_id",
-                    operator: "equal",
-                    value: 1,
-                  },
-                ],
-              },
+              duration: 10,
             },
             position: { x: 0, y: 50 },
             measured: { width: 150, height: 36 },
@@ -76,8 +51,7 @@ describe("WorkflowModel", () => {
         ],
         edges: [
           { id: "e1d-2", source: "1", target: "2" },
-          { id: "e2t-4", source: "2", sourceHandle: "true", target: "4" },
-          { id: "e2f-3", source: "2", sourceHandle: "false", target: "3" },
+          { id: "e2d-3", source: "2", target: "3" },
           { id: "e3d-4", source: "3", target: "4" },
         ],
         viewport: {
@@ -90,7 +64,7 @@ describe("WorkflowModel", () => {
     };
   });
 
-  describe("Simple flow", () => {
+  describe("Simple wait", () => {
     it("should start", async () => {
       const workflow = new WorkflowModel(simpleWorkflow, nodeTypes);
       workflow.start();
@@ -98,28 +72,8 @@ describe("WorkflowModel", () => {
       expect(workflow.status).toBe("waiting");
     });
 
-    // 1 > 1
-    it("should start and NOT accept event as trigger", async () => {
-      const workflow = new WorkflowModel(simpleWorkflow, nodeTypes);
-      workflow.start();
-      // Should be undefined sice we have not loaded any state
-      expect(workflow.getCurrentNode().getId()).toBe("1");
-      // This event match first node
-      const eventNotMatchFirstNode: Event = {
-        id: "1",
-        type: "wrong-event",
-        time: Date.now(),
-        data: {
-          user_id: 1,
-        },
-      };
-      await workflow.acceptEvent(eventNotMatchFirstNode);
-      expect(workflow.getCurrentNode().getId()).toBe("1");
-      expect(workflow.getContext().history.length).toEqual(0);
-    });
-
-    // 1 > 2 (condition met) > 4 (exit)
-    it("should start and accept event as trigger", async () => {
+    // 1 > 2 (wait) > 3 > 4
+    it("should start, get proper timeout and exit", async () => {
       const workflow = new WorkflowModel(simpleWorkflow, nodeTypes);
       workflow.start();
       // Should be undefined sice we have not loaded any state
@@ -128,17 +82,57 @@ describe("WorkflowModel", () => {
       const eventMatchFirstNode: Event = {
         id: "1",
         type: "sample",
-        time: Date.now(),
+        time: 100,
         data: {
           user_id: 1,
         },
       };
       await workflow.acceptEvent(eventMatchFirstNode);
-      // here it goes to condition
-      // then condition is met and goes to next node which is exit (4)
+      // should be stopped on wait node
+      expect(workflow.getCurrentNode().getId()).toBe("2");
+      expect(workflow.getStatus()).toBe("pending");
+      // Send some timeout event
+      const timeoutEvent: Event = {
+        id: "1",
+        type: "timeout",
+        time: 200, // this is 100s later (wait is only for 10s)
+      };
+      await workflow.acceptEvent(timeoutEvent);
+      // it should pass wait node
+      // it should pass action node
+      // it should be on exit node and stop
       expect(workflow.getCurrentNode().getId()).toBe("4");
-      // console.log(workflow.getContext().history);
-      expect(workflow.getContext().history.length).toEqual(4);
+      expect(workflow.getStatus()).toBe("completed");
+    });
+
+    // 1 > 2 (wait) >
+    it("should start, get wrong timeout", async () => {
+      const workflow = new WorkflowModel(simpleWorkflow, nodeTypes);
+      workflow.start();
+      // Should be undefined sice we have not loaded any state
+      expect(workflow.getCurrentNode().getId()).toBe("1");
+      // This event match first node
+      const eventMatchFirstNode: Event = {
+        id: "1",
+        type: "sample",
+        time: 100,
+        data: {
+          user_id: 1,
+        },
+      };
+      await workflow.acceptEvent(eventMatchFirstNode);
+      // should be stopped on wait node
+      expect(workflow.getCurrentNode().getId()).toBe("2");
+      expect(workflow.getStatus()).toBe("pending");
+      // Send some timeout event
+      const timeoutEvent: Event = {
+        id: "1",
+        type: "timeout",
+        time: 105, // this is just 10s later (wait is for 10s)
+      };
+      await workflow.acceptEvent(timeoutEvent);
+      expect(workflow.getCurrentNode().getId()).toBe("2");
+      expect(workflow.getStatus()).toBe("pending");
     });
   });
 });

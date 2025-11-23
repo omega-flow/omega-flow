@@ -10,17 +10,20 @@ export default class ActionModel extends NodeModel {
     super(node);
   }
 
-  acceptEvent(event: Event): boolean {
+  async acceptEvent(event: Event): Promise<boolean> {
     // In this simple implementation, accept all events
     return true;
   }
 
-  async processEvent(event: Event): Promise<void> {
+  async processEvent(event: Event): Promise<boolean> {
     // No processing needed for this model
+    return true;
   }
 
-  nextNode(event: Event): NodeModel | null {
-    // Action model always returns null (exits workflow)
-    return null;
+  async nextNode(event: Event): Promise<NodeModel | null> {
+    const handle = this.getSourceHandles()[0];
+    const targetNode = this.getTargetNodeFromSourceHandle(handle);
+
+    return targetNode;
   }
 }

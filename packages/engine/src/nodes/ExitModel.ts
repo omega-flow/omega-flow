@@ -10,16 +10,17 @@ export default class ExitModel extends NodeModel {
     super(node);
   }
 
-  acceptEvent(event: Event): boolean {
+  async acceptEvent(event: Event): Promise<boolean> {
     // Exit model accepts all events
     return true;
   }
 
-  async processEvent(event: Event): Promise<void> {
+  async processEvent(event: Event): Promise<boolean> {
     // No processing needed for exit model
+    return true;
   }
 
-  nextNode(event: Event): NodeModel | null {
+  async nextNode(event: Event): Promise<NodeModel | null> {
     // Exit model always returns null to end workflow
     return null;
   }

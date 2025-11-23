@@ -10,16 +10,18 @@ export default class TriggerModel extends NodeModel {
     super(node);
   }
 
-  acceptEvent(event: Event): boolean {
+  async acceptEvent(event: Event): Promise<boolean> {
     const eventData = event.data;
     const nodeData = this.getData();
 
     return event.type === nodeData.params.event;
   }
 
-  async processEvent(event: Event): Promise<void> {}
+  async processEvent(event: Event): Promise<boolean> {
+    return true;
+  }
 
-  nextNode(event: Event): NodeModel | null {
+  async nextNode(event: Event): Promise<NodeModel | null> {
     const handle = this.getSourceHandles()[0];
     const targetNode = this.getTargetNodeFromSourceHandle(handle);
 

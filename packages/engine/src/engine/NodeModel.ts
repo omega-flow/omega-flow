@@ -92,20 +92,23 @@ class NodeModel {
   }
 
   // Checks if the node accepts the event
-  acceptEvent(event: Event): boolean {
+  // Returns true if accepted, false otherwise
+  async acceptEvent(event: Event): Promise<boolean> {
     // This method should be overridden by subclasses
     throw new Error("acceptEvent method not implemented");
   }
 
   // Process the event (after accepting it)
-  async processEvent(event: Event): Promise<void> {
+  // Return true if fully processed, false otherwise
+  async processEvent(event: Event): Promise<boolean> {
     // This method should be overridden by subclasses
     throw new Error("processEvent method not implemented");
   }
 
   // TODO: can it return 'this'?
   // Determine next node after processing the event
-  nextNode(event: Event): NodeModel | null {
+  // Return next NodeModel or null if workflow should end
+  async nextNode(event: Event): Promise<NodeModel | null> {
     // This method should be overridden by subclasses
     throw new Error("nextNode method not implemented");
   }

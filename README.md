@@ -16,7 +16,10 @@ This is monorepo for omega-flow, it includes:
   - NodeModel - A class that represents a Node in the workflow, with methods to access its properties and connections. Each node implements three key methods:
     - `acceptEvent`: Determines whether a node accepts an event (returns true/false)
     - `processEvent`: Processes the accepted event
+      - return true if processing is complete and workflow can move to next node
+      - return false if processing is not yet complete (ex. Wait Node), workflow will stay on this node in PENDING state, until another event is received that can be accepted and processed
     - `nextNode`: Determines which node should be processed next
+      - nextNode will received the same event that was accepted and fully processed by the node
     - you can pass data between those methods using setState/getState methods
   - EdgeModel - A class that represents an Edge in the workflow, with methods to access its properties.
   - Connection - A type that represents a connection between current node and its target node via an edge.
