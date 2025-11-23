@@ -7,7 +7,7 @@ import {
   type Event,
   type Node,
   type WorkflowHistoryItem,
-  type WorkflowStatus,
+  WorkflowStatus,
   WorkflowSchema,
   ContextSchema,
   EventSchema,
@@ -22,7 +22,7 @@ class WorkflowModel {
   edges: EdgeModel[] = [];
   currentNode: NodeModel | null = null;
   history: WorkflowHistoryItem[] = [];
-  status: WorkflowStatus = "idle";
+  status: WorkflowStatus = WorkflowStatus.Idle;
 
   constructor(
     workflow: Workflow,
@@ -80,7 +80,7 @@ class WorkflowModel {
 
   setContext(context: Context) {
     // Prevent setting context if workflow is already running
-    if (this.status !== "idle") {
+    if (this.status !== WorkflowStatus.Idle) {
       throw new Error("Workflow is already running");
     }
 
@@ -131,7 +131,7 @@ class WorkflowModel {
   }
 
   start() {
-    if (this.status !== "idle") {
+    if (this.status !== WorkflowStatus.Idle) {
       throw new Error("Workflow is already running");
     }
     // If we starts new workflow, there is no current node, set it to start node
@@ -141,13 +141,18 @@ class WorkflowModel {
     if (!this.currentNode) {
       throw new Error("Workflow does not have a start node");
     }
-    this.status = "waiting";
+    this.status = WorkflowStatus.Waiting;
   }
 
   async acceptEvent(event: Event): Promise<void> {
-    if (this.status === "idle" || this.status === "completed") {
+    if (
+      this.status === WorkflowStatus.Idle ||
+      this.status === WorkflowStatus.Completed
+    ) {
       throw new Error("Workflow is not running");
     }
+
+    // TODO: check if status is waiting, if not something is pending and we cannot accept new events
 
     // Ajv validation for event
     const ajv = new Ajv();
@@ -172,10 +177,12 @@ class WorkflowModel {
     }
 
     // Change status to processing
-    this.status = "processing";
+    this.status = WorkflowStatus.Processing;
 
     // Process the event
     await currentNode.processEvent(event);
+
+    // TODO: check if we can move to next node, or we need to wait for some async process, or timeout to complete
 
     // Determine next node
     const nextNode = currentNode.nextNode(event);
@@ -183,7 +190,7 @@ class WorkflowModel {
     // If the next node is the same as the current node, we're done with this event
     // TODO: Should this works? If node is not accepting event it returns eaarly, but when it accept it shoudl move to next node
     if (currentNode.equals(nextNode)) {
-      this.status = "waiting";
+      this.status = WorkflowStatus.Waiting;
       return;
     }
 
@@ -199,13 +206,13 @@ class WorkflowModel {
     }
 
     // Change status to transforming before moving to next node
-    this.status = "transforming";
+    this.status = WorkflowStatus.Transforming;
 
     // Next node
     this.#moveToNode(nextNode, event);
 
     // Set status back to waiting
-    this.status = "waiting";
+    this.status = WorkflowStatus.Waiting;
 
     // Continue processing with the next node
     return await this.acceptEvent(event);
@@ -214,7 +221,7 @@ class WorkflowModel {
   // HELPER METHODS
 
   getCurrentNode() {
-    if (this.status === "idle") {
+    if (this.status === WorkflowStatus.Idle) {
       throw new Error("Workflow is not running");
     }
     return this.currentNode;
@@ -274,7 +281,7 @@ class WorkflowModel {
       fromNodeId: this.currentNode && this.currentNode.getId(),
       toNodeId: null,
     });
-    this.status = "completed";
+    this.status = WorkflowStatus.Completed;
     this.#log();
   }
 

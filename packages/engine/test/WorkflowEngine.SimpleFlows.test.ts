@@ -1,6 +1,6 @@
 // @ts-nocheck
-import WorkflowModel from "./../src/engine/WorkflowModel";
 import { Event } from "@omega-flow/types";
+import WorkflowModel from "./../src/engine/WorkflowModel";
 import nodeTypes from "./../src/nodes";
 
 let simpleWorkflow;
@@ -15,7 +15,7 @@ let simpleContext;
 //        | (2) Condition      |
 //        +--------------------+
 //             /              \
-//          (T)/               \(F)
+//         (T)/                \(F)
 //           /                  \
 //          v                    v
 // +----------------+    +----------------+

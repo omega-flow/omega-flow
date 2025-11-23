@@ -1,1 +1,5 @@
 - [ ] Change SegmentChangeNode to TriggerNode
+- [ ] Think for bides/*Model to be Base class for User Nodes
+- [ ] Add context.isCompleted flag
+- [ ] Changes status from strings to enum
+

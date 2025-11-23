@@ -9,12 +9,13 @@ export interface Workflow {
   };
 }
 
-export type WorkflowStatus =
-  | "idle"
-  | "waiting"
-  | "processing"
-  | "transforming"
-  | "completed";
+export enum WorkflowStatus {
+  Idle = "idle",
+  Waiting = "waiting",
+  Processing = "processing",
+  Transforming = "transforming",
+  Completed = "completed",
+}
 
 // Workflow schema definition
 export const WorkflowSchema = {
