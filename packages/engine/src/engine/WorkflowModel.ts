@@ -115,6 +115,10 @@ class WorkflowModel {
     // Setting current history
     this.history = context.history || [];
 
+    if (context.isCompleted) {
+      this.status = WorkflowStatus.Completed;
+    }
+
     // After setting context, you need to run start()
   }
 
@@ -127,10 +131,14 @@ class WorkflowModel {
         return acc;
       }, {} as NodeState),
       history: this.history,
+      isCompleted: this.status === WorkflowStatus.Completed,
     };
   }
 
   start() {
+    if (this.status === WorkflowStatus.Completed) {
+      throw new Error("Workflow is already completed");
+    }
     if (this.status !== WorkflowStatus.Idle) {
       throw new Error("Workflow is already running");
     }

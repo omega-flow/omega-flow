@@ -14,6 +14,7 @@ export interface Context {
   currentNodeId: string | null;
   nodeState: NodeState;
   history: WorkflowHistoryItem[];
+  isCompleted?: boolean;
 }
 
 // Context schema definition
@@ -37,5 +38,6 @@ export const ContextSchema = {
         },
       },
     },
+    isCompleted: { type: "boolean" },
   },
 };

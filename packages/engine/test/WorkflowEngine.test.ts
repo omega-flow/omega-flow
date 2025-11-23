@@ -55,6 +55,7 @@ describe("WorkflowModel Basics", () => {
           toNodeId: "1",
         },
       ],
+      isCompleted: false,
     };
   });
 
@@ -198,6 +199,7 @@ describe("WorkflowModel Basics", () => {
       expect(context.currentNodeId).toEqual(sampleContext.currentNodeId);
       expect(context.nodeState).toEqual(sampleContext.nodeState);
       expect(context.history).toEqual(sampleContext.history);
+      expect(context.isCompleted).toEqual(sampleContext.isCompleted);
     });
   });
 });
