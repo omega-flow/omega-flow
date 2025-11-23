@@ -14,33 +14,15 @@ export default class TriggerModel extends NodeModel {
     const eventData = event.data;
     const nodeData = this.getData();
 
-    const isMatch = event.type === nodeData.params.event;
-
-    if (isMatch) {
-      this.setState({ isMatch: true });
-      return true;
-    } else {
-      this.setState({ isMatch: false });
-      return false;
-    }
+    return event.type === nodeData.params.event;
   }
 
   async processEvent(event: Event): Promise<void> {}
 
   nextNode(event: Event): NodeModel | null {
-    // Check if the event matched during processing
-    const isMatch = this.getState().isMatch;
+    const handle = this.getSourceHandles()[0];
+    const targetNode = this.getTargetNodeFromSourceHandle(handle);
 
-    if (isMatch) {
-      const handle = this.getSourceHandles()[0];
-      const targetNode = this.getTargetNodeFromSourceHandle(handle);
-      if (targetNode) {
-        // Return the target node
-        return targetNode;
-      }
-    }
-
-    // No match, return self
-    return this;
+    return targetNode;
   }
 }
