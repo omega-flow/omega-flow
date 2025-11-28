@@ -44,6 +44,13 @@ class NodeModel {
     this.state = state;
   }
 
+  updateState(changes: any) {
+    this.state = {
+      ...this.state,
+      ...changes,
+    };
+  }
+
   // Connects this node to another node
   // this node becomes source node
   connect(targetNode: NodeModel, edge: EdgeModel) {

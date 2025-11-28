@@ -12,28 +12,35 @@ export default class WaitModel extends NodeModel {
 
   isWaiting(): boolean {
     const state = this.getState();
-    return state && state.waitStartAt !== undefined;
+    return state && state.waitStartsAt !== undefined;
   }
 
   startWaiting(time: number) {
-    this.setState({ waitStartAt: time });
+    this.updateState({ waitStartsAt: time });
+
+    // TODO: Trigger scheduler to wake up when wait is over
   }
 
-  waitIsOver(currentTime: number): boolean {
-    const state = this.getState();
-    const nodeData = this.getData();
-    if (!state || state.waitStartAt === undefined) {
-      return false;
+  stopWaiting(time: number) {
+    this.updateState({ waitEndsAt: time });
+  }
+
+  isWaitComplete(currentTime: number): boolean {
+    if (this.isWaiting()) {
+      const state = this.getState();
+      const nodeData = this.getData();
+      const waitDuration = nodeData.duration || 0;
+      return currentTime >= state.waitStartsAt + waitDuration;
     }
-    const waitDuration = nodeData.duration || 0;
-    return currentTime >= state.waitStartAt + waitDuration;
+    return false;
   }
 
   async acceptEvent(event: Event): Promise<boolean> {
     if (this.isWaiting()) {
-      // check time, return time if wait is over
-      return this.waitIsOver(event.time);
+      // Accept the event only if wait is complete
+      return this.isWaitComplete(event.time);
     } else {
+      // Accept the event to start waiting
       return true;
     }
   }
@@ -41,10 +48,11 @@ export default class WaitModel extends NodeModel {
   async processEvent(event: Event): Promise<boolean> {
     if (this.isWaiting()) {
       // Wait is over
+      this.stopWaiting(event.time);
       return true;
     } else {
       this.startWaiting(event.time);
-      // Returns false to indicate that processing  (aka waiting) is not yet complete
+      // Returns false to indicate that processing (aka waiting) is not yet complete
       return false;
     }
   }
