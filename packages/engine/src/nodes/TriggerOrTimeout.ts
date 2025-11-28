@@ -12,32 +12,22 @@ export default class TriggerOrTimeoutModel extends WaitModel {
   }
 
   async acceptEvent(event: Event): Promise<boolean> {
-    const eventData = event.data;
     const nodeData = this.getData();
-
-    // Check if event matches the trigger event
-    if (event.type === nodeData.params.event) {
-      return true;
-    } else if (this.isWaiting()) {
-      return this.isWaitComplete(event.time);
-    } else {
-      return true;
-    }
-  }
-
-  async processEvent(event: Event): Promise<boolean> {
-    const nodeData = this.getData();
-
+    // If event matches trigger, stop waiting and accept
     if (event.type === nodeData.params.event) {
       this.stopWaiting(event.time);
       return true;
     } else if (this.isWaiting()) {
-      // Wait is over
-      this.stopWaiting(event.time);
-      return true;
+      // Wait is over, stop waiting and accept only if complete
+      if (this.isWaitComplete(event.time)) {
+        this.stopWaiting(event.time);
+        return true;
+      }
+      // Not complete, stay pending
+      return false;
     } else {
+      // Start waiting and stay pending
       this.startWaiting(event.time);
-      // Returns false to indicate that processing (aka waiting) is not yet complete
       return false;
     }
   }

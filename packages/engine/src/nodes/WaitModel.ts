@@ -37,22 +37,16 @@ export default class WaitModel extends NodeModel {
 
   async acceptEvent(event: Event): Promise<boolean> {
     if (this.isWaiting()) {
-      // Accept the event only if wait is complete
-      return this.isWaitComplete(event.time);
+      // Wait is over, stop waiting and accept event only if complete
+      if (this.isWaitComplete(event.time)) {
+        this.stopWaiting(event.time);
+        return true;
+      }
+      // Not complete, stay pending
+      return false;
     } else {
-      // Accept the event to start waiting
-      return true;
-    }
-  }
-
-  async processEvent(event: Event): Promise<boolean> {
-    if (this.isWaiting()) {
-      // Wait is over
-      this.stopWaiting(event.time);
-      return true;
-    } else {
+      // Start waiting and stay pending
       this.startWaiting(event.time);
-      // Returns false to indicate that processing (aka waiting) is not yet complete
       return false;
     }
   }

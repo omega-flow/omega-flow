@@ -90,7 +90,7 @@ describe("WorkflowModel", () => {
       await workflow.acceptEvent(eventMatchFirstNode);
       // should be stopped on wait node
       expect(workflow.getCurrentNode().getId()).toBe("2");
-      expect(workflow.getStatus()).toBe("pending");
+      expect(workflow.getStatus()).toBe("waiting");
       // Send some timeout event
       const timeoutEvent: Event = {
         id: "1",
@@ -123,7 +123,7 @@ describe("WorkflowModel", () => {
       await workflow.acceptEvent(eventMatchFirstNode);
       // should be stopped on wait node
       expect(workflow.getCurrentNode().getId()).toBe("2");
-      expect(workflow.getStatus()).toBe("pending");
+      expect(workflow.getStatus()).toBe("waiting");
       // Send some timeout event
       const timeoutEvent: Event = {
         id: "1",
@@ -132,7 +132,7 @@ describe("WorkflowModel", () => {
       };
       await workflow.acceptEvent(timeoutEvent);
       expect(workflow.getCurrentNode().getId()).toBe("2");
-      expect(workflow.getStatus()).toBe("pending");
+      expect(workflow.getStatus()).toBe("waiting");
     });
   });
 });

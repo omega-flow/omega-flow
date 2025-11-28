@@ -98,18 +98,11 @@ class NodeModel {
     return null;
   }
 
-  // Checks if the node accepts the event
-  // Returns true if accepted, false otherwise
+  // Accepts and processes the event
+  // Returns true if fully processed and workflow can move to next node, false if node is still waiting
   async acceptEvent(event: Event): Promise<boolean> {
     // This method should be overridden by subclasses
     throw new Error("acceptEvent method not implemented");
-  }
-
-  // Process the event (after accepting it)
-  // Return true if fully processed, false otherwise
-  async processEvent(event: Event): Promise<boolean> {
-    // This method should be overridden by subclasses
-    throw new Error("processEvent method not implemented");
   }
 
   // TODO: can it return 'this'?

@@ -11,12 +11,7 @@ export default class ExitModel extends NodeModel {
   }
 
   async acceptEvent(event: Event): Promise<boolean> {
-    // Exit model accepts all events
-    return true;
-  }
-
-  async processEvent(event: Event): Promise<boolean> {
-    // No processing needed for exit model
+    // Accept all events and process immediately
     return true;
   }
 

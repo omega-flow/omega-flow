@@ -11,14 +11,9 @@ export default class TriggerModel extends NodeModel {
   }
 
   async acceptEvent(event: Event): Promise<boolean> {
-    const eventData = event.data;
     const nodeData = this.getData();
-
+    // Accept only if event type matches node trigger
     return event.type === nodeData.params.event;
-  }
-
-  async processEvent(event: Event): Promise<boolean> {
-    return true;
   }
 
   async nextNode(event: Event): Promise<NodeModel | null> {

@@ -11,12 +11,7 @@ export default class ActionModel extends NodeModel {
   }
 
   async acceptEvent(event: Event): Promise<boolean> {
-    // In this simple implementation, accept all events
-    return true;
-  }
-
-  async processEvent(event: Event): Promise<boolean> {
-    // No processing needed for this model
+    // Accept all events and process immediately
     return true;
   }
 

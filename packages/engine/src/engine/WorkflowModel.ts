@@ -157,10 +157,7 @@ class WorkflowModel {
   }
 
   async acceptEvent(event: Event): Promise<void> {
-    if (
-      this.status != WorkflowStatus.Waiting &&
-      this.status != WorkflowStatus.Pending
-    ) {
+    if (this.status != WorkflowStatus.Waiting) {
       throw new Error(
         `Workflow cannot accept events in current status: ${this.status}`
       );
@@ -180,26 +177,16 @@ class WorkflowModel {
       throw new Error("Current node not set");
     }
 
-    // Check if node accepts the event
-    const accepts = await currentNode.acceptEvent(event);
+    // Accept and process the event
+    const processed = await currentNode.acceptEvent(event);
 
-    // If node doesn't accept the event, return early
-    if (!accepts) {
+    // If node doesn't accept or isn't finished, set status to waiting and return
+    if (!processed) {
+      this.status = WorkflowStatus.Waiting;
       return;
     }
-
     // Change status to processing
     this.status = WorkflowStatus.Processing;
-
-    // Process the event
-    const processFinished = await currentNode.processEvent(event);
-
-    // TODO: check if we can move to next node, or we need to wait for some async process, or timeout to complete
-    if (!processFinished) {
-      // If processing is not finished, set status back to waiting and return
-      this.status = WorkflowStatus.Pending;
-      return;
-    }
 
     // Determine next node
     const nextNode = await currentNode.nextNode(event);

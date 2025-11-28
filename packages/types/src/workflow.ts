@@ -13,7 +13,6 @@ export enum WorkflowStatus {
   Idle = "idle",
   Waiting = "waiting",
   Processing = "processing",
-  Pending = "pending",
   Transforming = "transforming",
   Completed = "completed",
 }

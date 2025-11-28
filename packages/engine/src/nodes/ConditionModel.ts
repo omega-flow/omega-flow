@@ -13,12 +13,6 @@ export default class ConditionModel extends NodeModel {
   }
 
   async acceptEvent(event: Event): Promise<boolean> {
-    // Condition model accepts all events
-    return true;
-  }
-
-  // Process state and store results for later use when determining the next node
-  async processEvent(event: Event): Promise<boolean> {
     // Crate rule from node data
     const rule = {
       conditions: this.getData().conditions,
@@ -32,11 +26,6 @@ export default class ConditionModel extends NodeModel {
     let ruleEngine = new RulesEngine();
     // Add rule with success event
     ruleEngine.addRule(rule);
-    // Add facts fetcher
-    // ruleEngine.addFact("user", async (params, almanac) => {
-    //   const user_id = await almanac.factValue("user_id");
-    //   return USERS[user_id];
-    // });
     // Run engine
     const output = await ruleEngine.run(facts);
     // Check output.event for `condition-true`
@@ -45,7 +34,7 @@ export default class ConditionModel extends NodeModel {
     );
     // Store result in state for nextNode to use
     this.setState({ conditionResult: !!conditionTrue });
-
+    // Accept event if condition is evaluated (always true for now)
     return true;
   }
 

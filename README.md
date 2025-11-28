@@ -13,14 +13,10 @@ This is monorepo for omega-flow, it includes:
   - Edge - A connection between nodes that defines the flow of execution.
 - Workflow - Flow with additional metadata (name, description, tags, etc.) and options (retry, timeout, etc.).
   - WorkflowModel - A class that represents a Workflow, with methods to access its properties and manage its state.
-  - NodeModel - A class that represents a Node in the workflow, with methods to access its properties and connections. Each node implements three key methods:
-    - `acceptEvent`: Determines whether a node accepts an event (returns true/false)
-    - `processEvent`: Processes the accepted event
-      - return true if processing is complete and workflow can move to next node
-      - return false if processing is not yet complete (ex. Wait Node), workflow will stay on this node in PENDING state, until another event is received that can be accepted and processed
-    - `nextNode`: Determines which node should be processed next
-      - nextNode will received the same event that was accepted and fully processed by the node
-    - you can pass data between those methods using setState/getState methods
+  - NodeModel - A class that represents a Node in the workflow, with methods to access its properties and connections. Each node implements two key methods:
+    - `acceptEvent`: Accepts and processes an event. Returns true if processing is complete and workflow can move to next node, false if node is pending (ex. Wait Node) or is not accepting event at all.
+    - `nextNode`: Determines which node should be processed next, receiving the same event that was accepted and processed by the node.
+    - You can pass data between those methods using setState/getState methods.
   - EdgeModel - A class that represents an Edge in the workflow, with methods to access its properties.
   - Connection - A type that represents a connection between current node and its target node via an edge.
   - Event - A type that represents an Event that can trigger a workflow or move it to the next step.
