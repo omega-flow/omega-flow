@@ -29,7 +29,7 @@ export default class WaitModel extends NodeModel {
     if (this.isWaiting()) {
       const state = this.getState();
       const nodeData = this.getData();
-      const waitDuration = nodeData.duration || 0;
+      const waitDuration = nodeData.params.duration || 0;
       return currentTime >= state.waitStartsAt + waitDuration;
     }
     return false;
