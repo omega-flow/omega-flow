@@ -6,10 +6,14 @@ import { Engine as RulesEngine } from "json-rules-engine";
 
 export default class ConditionModel extends NodeModel {
   constructor(node: Node) {
+    super(node);
+  }
+
+  static create(node: Node): ConditionModel {
     if (node.type !== "Condition") {
       throw new Error("Node type must be Condition");
     }
-    super(node);
+    return new this(node);
   }
 
   async acceptEvent(event: Event): Promise<boolean> {

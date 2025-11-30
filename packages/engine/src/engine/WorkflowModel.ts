@@ -50,7 +50,7 @@ class WorkflowModel {
       if (!model) {
         throw new Error(`Node type ${node.type} not found`);
       }
-      return new model(node);
+      return model.create(node);
     });
 
     // Map edges to their classes

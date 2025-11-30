@@ -4,10 +4,14 @@ import NodeModel from "./../engine/NodeModel";
 
 export default class ExitModel extends NodeModel {
   constructor(node: Node) {
+    super(node);
+  }
+
+  static create(node: Node): ExitModel {
     if (node.type !== "Exit") {
       throw new Error("Node type must be Exit");
     }
-    super(node);
+    return new this(node);
   }
 
   async acceptEvent(event: Event): Promise<boolean> {

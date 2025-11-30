@@ -4,6 +4,10 @@ import EdgeModel from "./EdgeModel";
 import { type Connection } from "./Connection";
 
 class NodeModel {
+  static create(node: Node): NodeModel {
+    return new this(node);
+  }
+
   node: Node;
   connections: Connection[];
   state: any;

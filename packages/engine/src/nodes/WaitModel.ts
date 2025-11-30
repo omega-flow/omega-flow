@@ -4,10 +4,14 @@ import NodeModel from "./../engine/NodeModel";
 
 export default class WaitModel extends NodeModel {
   constructor(node: Node) {
+    super(node);
+  }
+
+  static create(node: Node): WaitModel {
     if (node.type !== "Wait") {
       throw new Error("Node type must be of type Wait");
     }
-    super(node);
+    return new this(node);
   }
 
   isWaiting(): boolean {

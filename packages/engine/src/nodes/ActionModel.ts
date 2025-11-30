@@ -4,10 +4,14 @@ import NodeModel from "./../engine/NodeModel";
 
 export default class ActionModel extends NodeModel {
   constructor(node: Node) {
+    super(node);
+  }
+
+  static create(node: Node): ActionModel {
     if (node.type !== "Action") {
       throw new Error("Node type must be Action");
     }
-    super(node);
+    return new this(node);
   }
 
   async acceptEvent(event: Event): Promise<boolean> {

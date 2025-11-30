@@ -4,10 +4,14 @@ import NodeModel from "../engine/NodeModel";
 
 export default class TriggerModel extends NodeModel {
   constructor(node: Node) {
+    super(node);
+  }
+
+  static create(node: Node): TriggerModel {
     if (node.type !== "Trigger") {
       throw new Error("Node type must be Trigger");
     }
-    super(node);
+    return new this(node);
   }
 
   async acceptEvent(event: Event): Promise<boolean> {

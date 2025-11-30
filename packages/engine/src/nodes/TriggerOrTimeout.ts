@@ -5,10 +5,14 @@ import WaitModel from "./WaitModel";
 
 export default class TriggerOrTimeoutModel extends WaitModel {
   constructor(node: Node) {
+    super(node);
+  }
+
+  static create(node: Node): TriggerOrTimeoutModel {
     if (node.type !== "TriggerOrTimeout") {
       throw new Error("Node type must be TriggerOrTimeout");
     }
-    super(node);
+    return new this(node);
   }
 
   async acceptEvent(event: Event): Promise<boolean> {
