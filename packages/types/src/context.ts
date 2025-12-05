@@ -11,18 +11,28 @@ export interface WorkflowHistoryItem {
 
 export interface Context {
   workflowId: string;
+  instanceId: string;
   currentNodeId: string | null;
   nodeState: NodeState;
   history: WorkflowHistoryItem[];
   isCompleted?: boolean;
+  startedAt: number;
 }
 
 // Context schema definition
 export const ContextSchema = {
   type: "object",
-  required: ["workflowId", "currentNodeId", "nodeState", "history"],
+  required: [
+    "workflowId",
+    "instanceId",
+    "currentNodeId",
+    "nodeState",
+    "history",
+    "startedAt",
+  ],
   properties: {
     workflowId: { type: "string" },
+    instanceId: { type: "string" },
     currentNodeId: { type: ["string", "null"] },
     nodeState: { type: "object" },
     history: {
@@ -39,5 +49,6 @@ export const ContextSchema = {
       },
     },
     isCompleted: { type: "boolean" },
+    startedAt: { type: "number" },
   },
 };

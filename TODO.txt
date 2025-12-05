@@ -1,4 +1,6 @@
 
-- [x] one method (acceptEvent & processEvent)
 - [ ] better methods for getting nextNode
 - [ ] test simpleFlow with action node on the path
+
+- [ ] split test to multiple files
+- [ ] workflow manager review

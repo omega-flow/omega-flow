@@ -38,6 +38,7 @@ describe("WorkflowModel Basics", () => {
 
     sampleContext = {
       workflowId: "1",
+      instanceId: "test-instance-1",
       currentNodeId: "2",
       nodeState: {
         1: { data: {} },
@@ -56,6 +57,7 @@ describe("WorkflowModel Basics", () => {
         },
       ],
       isCompleted: false,
+      startedAt: 123456789,
     };
   });
 

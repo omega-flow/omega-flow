@@ -23,11 +23,10 @@ class WorkflowModel {
   currentNode: NodeModel | null = null;
   history: WorkflowHistoryItem[] = [];
   status: WorkflowStatus = WorkflowStatus.Idle;
+  instanceId: string = "";
+  startedAt: number = 0;
 
-  constructor(
-    workflow: Workflow,
-    nodeModels: Record<string, typeof NodeModel>
-  ) {
+  constructor(workflow: Workflow, nodeModels: Record<string, typeof NodeModel>) {
     const ajv = new Ajv();
     const validate = ajv.compile(WorkflowSchema);
 
@@ -115,6 +114,10 @@ class WorkflowModel {
     // Setting current history
     this.history = context.history || [];
 
+    // Restore instanceId and startedAt from context
+    this.instanceId = context.instanceId;
+    this.startedAt = context.startedAt;
+
     if (context.isCompleted) {
       this.status = WorkflowStatus.Completed;
     }
@@ -125,6 +128,7 @@ class WorkflowModel {
   getContext(): Context {
     return {
       workflowId: this.workflow.id,
+      instanceId: this.instanceId,
       currentNodeId: this.currentNode && this.currentNode.getId(),
       nodeState: this.nodes.reduce((acc, node) => {
         acc[node.getId()] = node.getState();
@@ -132,6 +136,7 @@ class WorkflowModel {
       }, {} as NodeState),
       history: this.history,
       isCompleted: this.status === WorkflowStatus.Completed,
+      startedAt: this.startedAt,
     };
   }
 
@@ -149,6 +154,13 @@ class WorkflowModel {
     // If we starts new workflow, there is no current node, set it to start node
     if (!this.currentNode) {
       this.currentNode = this.getStartNode();
+      // Set instanceId and startedAt only when starting a new workflow instance
+      if (this.instanceId === "") {
+        this.instanceId = `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
+      }
+      if (this.startedAt === 0) {
+        this.startedAt = Date.now();
+      }
     }
     if (!this.currentNode) {
       throw new Error("Workflow does not have a start node");

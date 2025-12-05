@@ -8,22 +8,27 @@ This is monorepo for omega-flow, it includes:
 
 ## Definitions
 
-- Flow - A sequence of steps (nodes) that define a process or task. Flow is based on ReactFlow JSON structure.
-  - Node - A step in the flow that can perform actions, wait for events, or make decisions.
-  - Edge - A connection between nodes that defines the flow of execution.
-- Workflow - Flow with additional metadata (name, description, tags, etc.) and options (retry, timeout, etc.).
-  - WorkflowModel - A class that represents a Workflow, with methods to access its properties and manage its state.
-  - NodeModel - A class that represents a Node in the workflow, with methods to access its properties and connections. Each node implements two key methods:
-    - `acceptEvent`: Accepts and processes an event. Returns true if processing is complete and workflow can move to next node, false if node is pending (ex. Wait Node) or is not accepting event at all.
-    - `nextNode`: Determines which node should be processed next, receiving the same event that was accepted and processed by the node.
-    - You can pass data between those methods using setState/getState methods.
-  - EdgeModel - A class that represents an Edge in the workflow, with methods to access its properties.
-  - Connection - A type that represents a connection between current node and its target node via an edge.
-  - Event - A type that represents an Event that can trigger a workflow or move it to the next step.
-    - from Event there should be easy way to identify Subject of the event ex. event.user_id
-  - Context - A type that represents workflow saved stated (nodes state, current node, history of execution etc.) for each individual Subject.
-  - Subject - An entity (user, order, device, etc.) that the workflow is executed for.
-    - for each Subject there is separate Workflow started with its own Context.
+Flow - A sequence of steps (nodes) that define a process or task. Flow is based on ReactFlow JSON structure.
+
+- Node - A step in the flow that can perform actions, wait for events, or make decisions.
+- Edge - A connection between nodes that defines the flow of execution.
+  Workflow - Flow with additional metadata (name, description, tags, etc.) and options (retry, timeout, etc.).
+- Workflow Options:
+  - frequency: Defines how often a subject can enter or re-enter a workflow when trigger conditions are met. Options:
+    - `one_time`: Subject enters only the first time they meet the trigger conditions. Cannot enter again.
+    - `every_rematch`: Subject enters every time they re-match the trigger conditions, but not more than once simultaneously and not often than a defined interval.
+- WorkflowModel - A class that represents a Workflow, with methods to access its properties and manage its state.
+- NodeModel - A class that represents a Node in the workflow, with methods to access its properties and connections. Each node implements two key methods:
+  - `acceptEvent`: Accepts and processes an event. Returns true if processing is complete and workflow can move to next node, false if node is pending (ex. Wait Node) or is not accepting event at all.
+  - `nextNode`: Determines which node should be processed next, receiving the same event that was accepted and processed by the node.
+  - You can pass data between those methods using setState/getState methods.
+- EdgeModel - A class that represents an Edge in the workflow, with methods to access its properties.
+- Connection - A type that represents a connection between current node and its target node via an edge.
+- Event - A type that represents an Event that can trigger a workflow or move it to the next step.
+  - from Event there should be easy way to identify Subject of the event ex. event.user_id
+- Context - A type that represents workflow saved state (nodes state, current node, history of execution, instance ID, start time, etc.) for each individual Subject.
+- Subject - An entity (user, order, device, etc.) that the workflow is executed for.
+  - for each Subject there is separate Workflow started with its own Context.
 - Workflow Engine - A system that executes workflows, manages their state, and handles events.
 - Workflow Manager - A component that manages multiple workflows, their states, and interactions.
   - Workflow Store - a place where definitions of workflows are stored and retrieved.
@@ -46,9 +51,36 @@ This is monorepo for omega-flow, it includes:
   - pass Event to Workflow Engine to process it
   - save updated Workflow Context to Workflow Memory
 
-### Workflow Metadata
+### Workflow Store
 
-TBD
+- it is a connector to some database where Workflows definitions are stored
+- it has methods to:
+  - get Workflow by id
+- Workflow Store is passed to Workflow Manager to load Workflows definitions
+- Current implementation:
+  - in-memory store with predefined Workflows
+  - AWS DynamoDB connector
+
+### Workflow Memory
+
+- it is a connector to some database where Workflows Contexts are stored
+- it has methods to:
+  - get Context by workflow id and subject id
+  - save Context by workflow id and subject id
+- Workflow Memory is passed to Workflow Manager to load/save Workflows Contexts
+- Current implementation:
+  - in-memory store
+  - AWS DynamoDB connector
+
+### Workflow Scheduler
+
+- it is a component that can schedule future Events for Workflows
+- it has methods to:
+  - schedule Event for specific time in future
+- Workflow Scheduler is passed to Workflow Manager and Workflow Engine to schedule Events for Workflows
+- Current implementation:
+  - in-memory scheduler using setTimeout
+  - AWS EventBridge connector
 
 ### Workflow
 
@@ -147,6 +179,10 @@ Workflows have different statuses that represent their current state:
   name: "My Workflow",
   flow: { ...flow },
   options: {
+    frequency: {
+      type: "one_time", // one_time | every_rematch
+      interval: 0 // for every_rematch type, interval in seconds
+    }
     // to be defined
   },
 }
@@ -156,7 +192,8 @@ Workflows have different statuses that represent their current state:
 
 ```js
 {
-  workflowId: 1,
+  workflowId: "workflow-1",
+  instanceId: "uuid-1234-5678-90ab-cdef",
   currentNodeId: "2",
   nodeState: {
     1: { data: {} },
@@ -165,30 +202,18 @@ Workflows have different statuses that represent their current state:
   history: [
     {
       time: 123456789,
-      type: "event",
-      event: {},
+      type: "started",
+      fromNodeId: null,
+      toNodeId: "1",
     },
     {
-      time: 123456789,
+      time: 123456790,
       type: "step",
-      nodeId: 1,
-      data: {},
+      fromNodeId: "1",
+      toNodeId: "2",
     }
-  ]
+  ],
+  isCompleted: false,
+  startedAt: 123456789
 }
 ```
-
-## Problems
-
-1. How to handle long processing nodes, how notify Workflow that processing is done and workflow can continue?
-2. How to handle Wait Node, when it can wait for days or weeks? Do we need some scheduler to wake up workflow after some time? How to notify Workflow (the same problem as above)?
-3. What if there are some events in a queue to process, but first event cause a long process or its a wait node. We need to pause and wait for process to complete before processing next event. Context will be saved, but what happens to events in the queue? Do we keep them in memory? Or do we need some persistent queue? Or we just skip new events until workflow is ready to process them?
-4. How to handle TriggerNode with timeouts. So we wait form some event, but if it does not come in X time, we move to timeout edge. Again we need some scheduler to wake up workflow after timeout.
-
-ANSWER:
-
-We are adding PENDING status to workflow. Pending means that current node waits for completion event - it can be either external event or internal event (timeout, long process completion, etc.). The logic to handle pending events should be implemented inside acceptEvent of that node.
-
-For example: WaitNode first accepts the event, but when processing it returns special indicator that marks workflow as PENDING on that node. It alos schedule timeout event in the future. This can be saved in context. When timeout happens, scheduler triggers workflow with timeout event, and WaitNode acceptEvent functions checks using getState that it is pending, and now it can accept timeout event process it and move workflow to next node. In that case the processEvent is called two times - first time when wait starts, second time when timeout happens. So inside processEvent we need to check if we are starting wait or finishing it.
-
-Other example: TriggerOrTimeoutNode first accepts the event, then in processEvent it check if Event match the trigger (normally this should be done in acceptEvent()). If it not match, it marks workflow as PENDING and schedule timeout event. Then following events are checked in acceptEvent, if they match trigger, workflow continues, if timeout event happens, workflow continues on timeout edge.

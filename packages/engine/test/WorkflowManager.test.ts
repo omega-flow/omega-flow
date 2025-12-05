@@ -1,0 +1,1129 @@
+// @ts-nocheck
+import type { Event, Workflow, Context } from "@omega-flow/types";
+import {
+  WorkflowManager,
+  InMemoryWorkflowStore,
+  InMemoryWorkflowMemory,
+  InMemoryWorkflowScheduler,
+} from "../src/manager";
+import nodeTypes from "../src/nodes";
+
+describe("WorkflowStore", () => {
+  let store: InMemoryWorkflowStore;
+  let sampleWorkflow: Workflow;
+  const testDomain = "test-domain";
+
+  beforeEach(() => {
+    sampleWorkflow = {
+      id: "workflow-1",
+      name: "Sample Workflow",
+      flow: {
+        nodes: [
+          {
+            id: "1",
+            type: "Trigger",
+            data: {
+              label: "Start",
+              params: { event: "user.created" },
+            },
+            position: { x: 0, y: 0 },
+          },
+          {
+            id: "2",
+            type: "Exit",
+            data: { label: "End" },
+            position: { x: 0, y: 100 },
+          },
+        ],
+        edges: [
+          {
+            id: "e1-2",
+            source: "1",
+            target: "2",
+          },
+        ],
+      },
+      options: {},
+    };
+
+    store = new InMemoryWorkflowStore([
+      { domain: testDomain, workflow: sampleWorkflow },
+    ]);
+  });
+
+  it("should retrieve a workflow by id", async () => {
+    const workflow = await store.getWorkflow(testDomain, "workflow-1");
+    expect(workflow).toEqual(sampleWorkflow);
+  });
+
+  it("should return null for non-existent workflow", async () => {
+    const workflow = await store.getWorkflow(testDomain, "non-existent");
+    expect(workflow).toBeNull();
+  });
+
+  it("should get all workflows for a domain", async () => {
+    const workflows = await store.getAllWorkflows(testDomain);
+    expect(workflows).toHaveLength(1);
+    expect(workflows[0]).toEqual(sampleWorkflow);
+  });
+
+  it("should return empty array for non-existent domain", async () => {
+    const workflows = await store.getAllWorkflows("non-existent-domain");
+    expect(workflows).toHaveLength(0);
+  });
+
+  it("should add a new workflow", async () => {
+    const newWorkflow: Workflow = {
+      id: "workflow-2",
+      name: "New Workflow",
+      flow: { nodes: [], edges: [] },
+      options: {},
+    };
+
+    await store.setWorkflow(testDomain, newWorkflow);
+    const retrieved = await store.getWorkflow(testDomain, "workflow-2");
+    expect(retrieved).toEqual(newWorkflow);
+  });
+
+  it("should update an existing workflow", async () => {
+    const updated = { ...sampleWorkflow, name: "Updated Name" };
+    await store.setWorkflow(testDomain, updated);
+
+    const retrieved = await store.getWorkflow(testDomain, "workflow-1");
+    expect(retrieved?.name).toBe("Updated Name");
+  });
+
+  it("should delete a workflow", async () => {
+    await store.deleteWorkflow(testDomain, "workflow-1");
+    const workflows = await store.getAllWorkflows(testDomain);
+    expect(workflows).toHaveLength(0);
+  });
+
+  it("should isolate workflows by domain", async () => {
+    const domain1Workflow: Workflow = {
+      id: "wf-1",
+      name: "Domain 1 Workflow",
+      flow: { nodes: [], edges: [] },
+      options: {},
+    };
+
+    const domain2Workflow: Workflow = {
+      id: "wf-2",
+      name: "Domain 2 Workflow",
+      flow: { nodes: [], edges: [] },
+      options: {},
+    };
+
+    await store.setWorkflow("domain1", domain1Workflow);
+    await store.setWorkflow("domain2", domain2Workflow);
+
+    const domain1Workflows = await store.getAllWorkflows("domain1");
+    const domain2Workflows = await store.getAllWorkflows("domain2");
+
+    expect(domain1Workflows).toHaveLength(1);
+    expect(domain2Workflows).toHaveLength(1);
+    expect(domain1Workflows[0].id).toBe("wf-1");
+    expect(domain2Workflows[0].id).toBe("wf-2");
+  });
+});
+
+describe("WorkflowMemory", () => {
+  let memory: InMemoryWorkflowMemory;
+  let sampleContext: Context;
+  const testDomain = "test-domain";
+
+  beforeEach(() => {
+    memory = new InMemoryWorkflowMemory();
+    sampleContext = {
+      workflowId: "workflow-1",
+      instanceId: "instance-1",
+      currentNodeId: "node-1",
+      nodeState: {},
+      history: [],
+      isCompleted: false,
+      startedAt: Date.now(),
+    };
+  });
+
+  it("should save and retrieve context", async () => {
+    await memory.saveContext(
+      testDomain,
+      "workflow-1",
+      "subject-1",
+      sampleContext
+    );
+    const contexts = await memory.getContexts(
+      testDomain,
+      "workflow-1",
+      "subject-1"
+    );
+    expect(contexts[0]).toEqual(sampleContext);
+  });
+
+  it("should return empty array for non-existent context", async () => {
+    const contexts = await memory.getContexts(
+      testDomain,
+      "workflow-1",
+      "subject-1"
+    );
+    expect(contexts.length).toBe(0);
+  });
+
+  it("should handle multiple subjects for same workflow", async () => {
+    const context1 = {
+      ...sampleContext,
+      instanceId: "instance-1",
+      currentNodeId: "node-1",
+    };
+    const context2 = {
+      ...sampleContext,
+      instanceId: "instance-2",
+      currentNodeId: "node-2",
+    };
+
+    await memory.saveContext(testDomain, "workflow-1", "subject-1", context1);
+    await memory.saveContext(testDomain, "workflow-1", "subject-2", context2);
+
+    const contexts1 = await memory.getContexts(
+      testDomain,
+      "workflow-1",
+      "subject-1"
+    );
+    const contexts2 = await memory.getContexts(
+      testDomain,
+      "workflow-1",
+      "subject-2"
+    );
+
+    expect(contexts1[0]?.currentNodeId).toBe("node-1");
+    expect(contexts2[0]?.currentNodeId).toBe("node-2");
+  });
+
+  it("should handle multiple workflows for same subject", async () => {
+    const context1 = {
+      ...sampleContext,
+      instanceId: "instance-1",
+      workflowId: "workflow-1",
+    };
+    const context2 = {
+      ...sampleContext,
+      instanceId: "instance-2",
+      workflowId: "workflow-2",
+    };
+
+    await memory.saveContext(testDomain, "workflow-1", "subject-1", context1);
+    await memory.saveContext(testDomain, "workflow-2", "subject-1", context2);
+
+    const contexts1 = await memory.getContexts(
+      testDomain,
+      "workflow-1",
+      "subject-1"
+    );
+    const contexts2 = await memory.getContexts(
+      testDomain,
+      "workflow-2",
+      "subject-1"
+    );
+
+    expect(contexts1[0]?.workflowId).toBe("workflow-1");
+    expect(contexts2[0]?.workflowId).toBe("workflow-2");
+  });
+
+  it("should delete context", async () => {
+    await memory.saveContext(
+      testDomain,
+      "workflow-1",
+      "subject-1",
+      sampleContext
+    );
+    await memory.deleteContext(
+      testDomain,
+      "workflow-1",
+      "subject-1",
+      sampleContext.instanceId
+    );
+
+    const contexts = await memory.getContexts(
+      testDomain,
+      "workflow-1",
+      "subject-1"
+    );
+    expect(contexts.length).toBe(0);
+  });
+
+  it("should isolate contexts by domain", async () => {
+    const context1 = {
+      ...sampleContext,
+      instanceId: "instance-1",
+      workflowId: "workflow-1",
+    };
+    const context2 = {
+      ...sampleContext,
+      instanceId: "instance-2",
+      workflowId: "workflow-1",
+    };
+
+    await memory.saveContext("domain1", "workflow-1", "subject-1", context1);
+    await memory.saveContext("domain2", "workflow-1", "subject-1", context2);
+
+    const contexts1 = await memory.getContexts(
+      "domain1",
+      "workflow-1",
+      "subject-1"
+    );
+    const contexts2 = await memory.getContexts(
+      "domain2",
+      "workflow-1",
+      "subject-1"
+    );
+
+    expect(contexts1[0]).toEqual(context1);
+    expect(contexts2[0]).toEqual(context2);
+  });
+
+  it("should clear all contexts", async () => {
+    await memory.saveContext(
+      testDomain,
+      "workflow-1",
+      "subject-1",
+      sampleContext
+    );
+    await memory.clear();
+
+    const contexts = await memory.getContexts(
+      testDomain,
+      "workflow-1",
+      "subject-1"
+    );
+    expect(contexts.length).toBe(0);
+  });
+});
+
+describe("WorkflowScheduler", () => {
+  let scheduler: InMemoryWorkflowScheduler;
+  let mockManager: {
+    processEvent: jest.Mock<Promise<void>, [Event]>;
+  };
+
+  beforeEach(() => {
+    scheduler = new InMemoryWorkflowScheduler();
+    mockManager = {
+      processEvent: jest.fn().mockResolvedValue(undefined),
+    };
+    scheduler.setWorkflowManager(mockManager);
+  });
+
+  it("should schedule and execute an event", async () => {
+    const event: Event = {
+      id: "event-1",
+      type: "timeout",
+      time: Date.now(),
+    };
+
+    await scheduler.schedule(event, 10);
+
+    // Wait for the scheduled event to be processed
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    expect(mockManager.processEvent).toHaveBeenCalledWith(event);
+  });
+
+  it("should return a schedule id", async () => {
+    const event: Event = {
+      id: "event-1",
+      type: "timeout",
+      time: Date.now(),
+    };
+
+    const scheduleId = await scheduler.schedule(event, 1000);
+    expect(scheduleId).toMatch(/^schedule_\d+$/);
+  });
+
+  it("should cancel a scheduled event", async () => {
+    const event: Event = {
+      id: "event-1",
+      type: "timeout",
+      time: Date.now(),
+    };
+
+    const scheduleId = await scheduler.schedule(event, 100);
+    const canceled = await scheduler.cancel(scheduleId);
+
+    expect(canceled).toBe(true);
+
+    // Wait to ensure event is not processed
+    await new Promise((resolve) => setTimeout(resolve, 150));
+    expect(mockManager.processEvent).not.toHaveBeenCalled();
+  });
+
+  it("should return false when canceling non-existent schedule", async () => {
+    const canceled = await scheduler.cancel("non-existent");
+    expect(canceled).toBe(false);
+  });
+
+  it("should track schedule count", async () => {
+    expect(scheduler.getScheduleCount()).toBe(0);
+
+    const event: Event = {
+      id: "event-1",
+      type: "timeout",
+      time: Date.now(),
+    };
+
+    await scheduler.schedule(event, 1000);
+    expect(scheduler.getScheduleCount()).toBe(1);
+
+    await scheduler.schedule(event, 1000);
+    expect(scheduler.getScheduleCount()).toBe(2);
+  });
+
+  it("should cancel all schedules", async () => {
+    const event: Event = {
+      id: "event-1",
+      type: "timeout",
+      time: Date.now(),
+    };
+
+    await scheduler.schedule(event, 1000);
+    await scheduler.schedule(event, 1000);
+
+    expect(scheduler.getScheduleCount()).toBe(2);
+
+    await scheduler.cancelAll();
+    expect(scheduler.getScheduleCount()).toBe(0);
+  });
+
+  it("should throw error when scheduling without workflow manager set", async () => {
+    const schedulerWithoutManager = new InMemoryWorkflowScheduler();
+    const event: Event = {
+      id: "event-1",
+      type: "timeout",
+      time: Date.now(),
+    };
+
+    await expect(schedulerWithoutManager.schedule(event, 10)).rejects.toThrow(
+      "WorkflowManager not set"
+    );
+  });
+});
+
+describe("WorkflowManager", () => {
+  let manager: WorkflowManager;
+  let store: InMemoryWorkflowStore;
+  let memory: InMemoryWorkflowMemory;
+  let scheduler: InMemoryWorkflowScheduler;
+  const testDomain = "test-domain";
+
+  const sampleWorkflow: Workflow = {
+    id: "workflow-1",
+    name: "User Onboarding",
+    flow: {
+      nodes: [
+        {
+          id: "1",
+          type: "Trigger",
+          data: {
+            label: "User Created",
+            params: { event: "user.created" },
+          },
+          position: { x: 0, y: 0 },
+        },
+        {
+          id: "2",
+          type: "Action",
+          data: {
+            label: "Send Welcome Email",
+            params: { action: "send_email" },
+          },
+          position: { x: 0, y: 100 },
+        },
+        {
+          id: "3",
+          type: "Exit",
+          data: { label: "End" },
+          position: { x: 0, y: 200 },
+        },
+      ],
+      edges: [
+        { id: "e1-2", source: "1", target: "2" },
+        { id: "e2-3", source: "2", target: "3" },
+      ],
+    },
+    options: {},
+  };
+
+  beforeEach(() => {
+    store = new InMemoryWorkflowStore([
+      { domain: testDomain, workflow: sampleWorkflow },
+    ]);
+    memory = new InMemoryWorkflowMemory();
+    scheduler = new InMemoryWorkflowScheduler();
+
+    manager = new WorkflowManager({
+      workflowStore: store,
+      workflowMemory: memory,
+      workflowScheduler: scheduler,
+      nodeModels: nodeTypes,
+      eventExtractor: (event) => [
+        event.data?.domain || testDomain,
+        event.data?.userId || "unknown",
+      ],
+    });
+
+    // Set the workflow manager reference in the scheduler
+    scheduler.setWorkflowManager(manager);
+  });
+
+  it("should start a new workflow when triggered", async () => {
+    const event: Event = {
+      id: "e1",
+      type: "user.created",
+      time: Date.now(),
+      data: { userId: "user-1" },
+    };
+
+    await manager.processEvent(event);
+
+    const contexts = await memory.getContexts(testDomain, "workflow-1", "user-1");
+    expect(contexts.length).toBeGreaterThan(0);
+    expect(contexts[0]?.workflowId).toBe("workflow-1");
+  });
+
+  it("should not start workflow for non-triggering event", async () => {
+    const event: Event = {
+      id: "e1",
+      type: "user.deleted",
+      time: Date.now(),
+      data: { userId: "user-1" },
+    };
+
+    await manager.processEvent(event);
+
+    const contexts = await memory.getContexts(testDomain, "workflow-1", "user-1");
+    expect(contexts.length).toBe(0);
+  });
+
+  it("should handle multiple subjects independently", async () => {
+    const event1: Event = {
+      id: "e1",
+      type: "user.created",
+      time: Date.now(),
+      data: { userId: "user-1" },
+    };
+
+    const event2: Event = {
+      id: "e2",
+      type: "user.created",
+      time: Date.now(),
+      data: { userId: "user-2" },
+    };
+
+    await manager.processEvent(event1);
+    await manager.processEvent(event2);
+
+    const contexts1 = await memory.getContexts(
+      testDomain,
+      "workflow-1",
+      "user-1"
+    );
+    const contexts2 = await memory.getContexts(
+      testDomain,
+      "workflow-1",
+      "user-2"
+    );
+
+    expect(contexts1.length).toBeGreaterThan(0);
+    expect(contexts2.length).toBeGreaterThan(0);
+    expect(contexts1[0]?.workflowId).toBe("workflow-1");
+    expect(contexts2[0]?.workflowId).toBe("workflow-1");
+  });
+
+  it("should resume existing workflow for subsequent events", async () => {
+    // Create initial context - workflow is at Action node (node 2)
+    const initialHistoryLength = 2;
+    const initialContext: Context = {
+      workflowId: "workflow-1",
+      instanceId: "test-instance-1",
+      currentNodeId: "2",
+      nodeState: {},
+      history: [
+        {
+          time: Date.now(),
+          type: "started",
+          fromNodeId: null,
+          toNodeId: "1",
+        },
+        {
+          time: Date.now(),
+          type: "step",
+          fromNodeId: "1",
+          toNodeId: "2",
+        },
+      ],
+      isCompleted: false,
+      startedAt: Date.now(),
+    };
+
+    await memory.saveContext(
+      testDomain,
+      "workflow-1",
+      "user-1",
+      initialContext
+    );
+
+    const event: Event = {
+      id: "e1",
+      type: "any.event",
+      time: Date.now(),
+      data: { userId: "user-1" },
+    };
+
+    await manager.processEvent(event);
+
+    const contexts = await memory.getContexts(testDomain, "workflow-1", "user-1");
+    // After processing, workflow should complete (Action -> Exit -> completed)
+    // History should have more items than before (at least step to Exit and completed)
+    expect(contexts[0]?.history.length).toBeGreaterThan(initialHistoryLength);
+    expect(contexts[0]?.isCompleted).toBe(true);
+  });
+
+  it("should not restart completed workflow with one_time frequency (default)", async () => {
+    // Create completed context
+    const completedContext: Context = {
+      workflowId: "workflow-1",
+      instanceId: "completed-instance",
+      currentNodeId: null,
+      nodeState: {},
+      history: [],
+      isCompleted: true,
+      startedAt: Date.now() - 10000, // Started 10 seconds ago
+    };
+
+    await memory.saveContext(
+      testDomain,
+      "workflow-1",
+      "user-1",
+      completedContext
+    );
+
+    const event: Event = {
+      id: "e1",
+      type: "user.created",
+      time: Date.now(),
+      data: { userId: "user-1" },
+    };
+
+    await manager.processEvent(event);
+
+    // Should not create a new instance - getContext should return the old completed one
+    const contexts = await memory.getContexts(
+      testDomain,
+      "workflow-1",
+      "user-1"
+    );
+    expect(contexts.length).toBe(1);
+    expect(contexts[0].instanceId).toBe("completed-instance");
+    expect(contexts[0].isCompleted).toBe(true);
+  });
+
+  it("should get contexts for a subject", async () => {
+    const event: Event = {
+      id: "e1",
+      type: "user.created",
+      time: Date.now(),
+      data: { userId: "user-1" },
+    };
+
+    await manager.processEvent(event);
+
+    const contexts = await memory.getContexts(
+      testDomain,
+      "workflow-1",
+      "user-1"
+    );
+    expect(contexts.length).toBeGreaterThan(0);
+    expect(contexts[0]?.workflowId).toBe("workflow-1");
+  });
+
+  it("should expose scheduler", () => {
+    const schedulerInstance = manager.getScheduler();
+    expect(schedulerInstance).toBe(scheduler);
+  });
+
+  it("should handle errors gracefully", async () => {
+    const invalidWorkflow: Workflow = {
+      id: "invalid-workflow",
+      name: "Invalid",
+      flow: {
+        nodes: [
+          {
+            id: "1",
+            type: "InvalidNodeType", // This will cause an error
+            data: {},
+            position: { x: 0, y: 0 },
+          },
+        ],
+        edges: [],
+      },
+      options: {},
+    };
+
+    await store.setWorkflow(testDomain, invalidWorkflow);
+
+    const event: Event = {
+      id: "e1",
+      type: "user.created",
+      time: Date.now(),
+      data: { userId: "user-1" },
+    };
+
+    // Should not throw - errors are caught and logged
+    await expect(manager.processEvent(event)).resolves.not.toThrow();
+  });
+
+  describe("Frequency: one_time", () => {
+    let oneTimeWorkflow: Workflow;
+
+    beforeEach(() => {
+      oneTimeWorkflow = {
+        id: "one-time-workflow",
+        name: "One Time Workflow",
+        flow: {
+          nodes: [
+            {
+              id: "1",
+              type: "Trigger",
+              data: {
+                label: "Order Created",
+                params: { event: "order.created" },
+              },
+              position: { x: 0, y: 0 },
+            },
+            {
+              id: "2",
+              type: "Exit",
+              data: { label: "End" },
+              position: { x: 0, y: 100 },
+            },
+          ],
+          edges: [{ id: "e1-2", source: "1", target: "2" }],
+        },
+        options: {
+          frequency: {
+            type: "one_time",
+          },
+        },
+      };
+    });
+
+    it("should start workflow on first trigger", async () => {
+      await store.setWorkflow(testDomain, oneTimeWorkflow);
+
+      const event: Event = {
+        id: "e1",
+        type: "order.created",
+        time: Date.now(),
+        data: { userId: "user-1", orderId: "order-1" },
+      };
+
+      await manager.processEvent(event);
+
+      const contexts = await memory.getContexts(
+        testDomain,
+        "one-time-workflow",
+        "user-1"
+      );
+      expect(contexts.length).toBe(1);
+      expect(contexts[0].isCompleted).toBe(true);
+    });
+
+    it("should not start workflow again after completion", async () => {
+      await store.setWorkflow(testDomain, oneTimeWorkflow);
+
+      const event1: Event = {
+        id: "e1",
+        type: "order.created",
+        time: Date.now(),
+        data: { userId: "user-1", orderId: "order-1" },
+      };
+
+      await manager.processEvent(event1);
+
+      const firstContexts = await memory.getContexts(
+        testDomain,
+        "one-time-workflow",
+        "user-1"
+      );
+      expect(firstContexts.length).toBe(1);
+      const firstInstanceId = firstContexts[0].instanceId;
+
+      // Try to trigger again
+      const event2: Event = {
+        id: "e2",
+        type: "order.created",
+        time: Date.now() + 1000,
+        data: { userId: "user-1", orderId: "order-2" },
+      };
+
+      await manager.processEvent(event2);
+
+      // Should still have only one instance
+      const secondContexts = await memory.getContexts(
+        testDomain,
+        "one-time-workflow",
+        "user-1"
+      );
+      expect(secondContexts.length).toBe(1);
+      expect(secondContexts[0].instanceId).toBe(firstInstanceId);
+    });
+
+    it("should not start second instance while first is active", async () => {
+      // Create a workflow that waits (doesn't complete immediately)
+      const waitingWorkflow: Workflow = {
+        id: "waiting-workflow",
+        name: "Waiting Workflow",
+        flow: {
+          nodes: [
+            {
+              id: "1",
+              type: "Trigger",
+              data: {
+                label: "Order Created",
+                params: { event: "order.created" },
+              },
+              position: { x: 0, y: 0 },
+            },
+            {
+              id: "2",
+              type: "Trigger",
+              data: {
+                label: "Wait for Payment",
+                params: { event: "payment.completed" },
+              },
+              position: { x: 0, y: 100 },
+            },
+            {
+              id: "3",
+              type: "Exit",
+              data: { label: "End" },
+              position: { x: 0, y: 200 },
+            },
+          ],
+          edges: [
+            { id: "e1-2", source: "1", target: "2" },
+            { id: "e2-3", source: "2", target: "3" },
+          ],
+        },
+        options: {
+          frequency: {
+            type: "one_time",
+          },
+        },
+      };
+
+      await store.setWorkflow(testDomain, waitingWorkflow);
+
+      const event1: Event = {
+        id: "e1",
+        type: "order.created",
+        time: Date.now(),
+        data: { userId: "user-1", orderId: "order-1" },
+      };
+
+      await manager.processEvent(event1);
+
+      const firstContexts = await memory.getContexts(
+        testDomain,
+        "waiting-workflow",
+        "user-1"
+      );
+      expect(firstContexts.length).toBe(1);
+      expect(firstContexts[0].isCompleted).toBe(false);
+      const firstInstanceId = firstContexts[0].instanceId;
+
+      // Try to trigger again while first is still active
+      const event2: Event = {
+        id: "e2",
+        type: "order.created",
+        time: Date.now() + 1000,
+        data: { userId: "user-1", orderId: "order-2" },
+      };
+
+      await manager.processEvent(event2);
+
+      // Should still have only one instance
+      const secondContexts = await memory.getContexts(
+        testDomain,
+        "waiting-workflow",
+        "user-1"
+      );
+      expect(secondContexts.length).toBe(1);
+      expect(secondContexts[0].instanceId).toBe(firstInstanceId);
+      expect(secondContexts[0].isCompleted).toBe(false);
+    });
+  });
+
+  describe("Frequency: every_rematch", () => {
+    let everyRematchWorkflow: Workflow;
+
+    beforeEach(() => {
+      everyRematchWorkflow = {
+        id: "every-rematch-workflow",
+        name: "Every Rematch Workflow",
+        flow: {
+          nodes: [
+            {
+              id: "1",
+              type: "Trigger",
+              data: {
+                label: "Order Created",
+                params: { event: "order.created" },
+              },
+              position: { x: 0, y: 0 },
+            },
+            {
+              id: "2",
+              type: "Exit",
+              data: { label: "End" },
+              position: { x: 0, y: 100 },
+            },
+          ],
+          edges: [{ id: "e1-2", source: "1", target: "2" }],
+        },
+        options: {
+          frequency: {
+            type: "every_rematch",
+          },
+        },
+      };
+    });
+
+    it("should start workflow on first trigger", async () => {
+      await store.setWorkflow(testDomain, everyRematchWorkflow);
+
+      const event: Event = {
+        id: "e1",
+        type: "order.created",
+        time: Date.now(),
+        data: { userId: "user-1", orderId: "order-1" },
+      };
+
+      await manager.processEvent(event);
+
+      const contexts = await memory.getContexts(
+        testDomain,
+        "every-rematch-workflow",
+        "user-1"
+      );
+      expect(contexts.length).toBe(1);
+      expect(contexts[0].isCompleted).toBe(true);
+    });
+
+    it("should start new instance after previous completes", async () => {
+      await store.setWorkflow(testDomain, everyRematchWorkflow);
+
+      const event1: Event = {
+        id: "e1",
+        type: "order.created",
+        time: Date.now(),
+        data: { userId: "user-1", orderId: "order-1" },
+      };
+
+      await manager.processEvent(event1);
+
+      const firstContexts = await memory.getContexts(
+        testDomain,
+        "every-rematch-workflow",
+        "user-1"
+      );
+      expect(firstContexts.length).toBe(1);
+      const firstInstanceId = firstContexts[0].instanceId;
+
+      // Trigger again after completion
+      const event2: Event = {
+        id: "e2",
+        type: "order.created",
+        time: Date.now() + 1000,
+        data: { userId: "user-1", orderId: "order-2" },
+      };
+
+      await manager.processEvent(event2);
+
+      // Should have two instances now
+      const secondContexts = await memory.getContexts(
+        testDomain,
+        "every-rematch-workflow",
+        "user-1"
+      );
+      expect(secondContexts.length).toBe(2);
+      expect(
+        secondContexts.some((ctx) => ctx.instanceId === firstInstanceId)
+      ).toBe(true);
+      expect(secondContexts.every((ctx) => ctx.isCompleted)).toBe(true);
+    });
+
+    it("should not start second instance while first is active", async () => {
+      // Create a workflow that waits
+      const waitingWorkflow: Workflow = {
+        id: "waiting-rematch-workflow",
+        name: "Waiting Every Rematch Workflow",
+        flow: {
+          nodes: [
+            {
+              id: "1",
+              type: "Trigger",
+              data: {
+                label: "Order Created",
+                params: { event: "order.created" },
+              },
+              position: { x: 0, y: 0 },
+            },
+            {
+              id: "2",
+              type: "Trigger",
+              data: {
+                label: "Wait for Payment",
+                params: { event: "payment.completed" },
+              },
+              position: { x: 0, y: 100 },
+            },
+            {
+              id: "3",
+              type: "Exit",
+              data: { label: "End" },
+              position: { x: 0, y: 200 },
+            },
+          ],
+          edges: [
+            { id: "e1-2", source: "1", target: "2" },
+            { id: "e2-3", source: "2", target: "3" },
+          ],
+        },
+        options: {
+          frequency: {
+            type: "every_rematch",
+          },
+        },
+      };
+
+      await store.setWorkflow(testDomain, waitingWorkflow);
+
+      const event1: Event = {
+        id: "e1",
+        type: "order.created",
+        time: Date.now(),
+        data: { userId: "user-1", orderId: "order-1" },
+      };
+
+      await manager.processEvent(event1);
+
+      const firstContexts = await memory.getContexts(
+        testDomain,
+        "waiting-rematch-workflow",
+        "user-1"
+      );
+      expect(firstContexts.length).toBe(1);
+      expect(firstContexts[0].isCompleted).toBe(false);
+      const firstInstanceId = firstContexts[0].instanceId;
+
+      // Try to trigger again while first is still active
+      const event2: Event = {
+        id: "e2",
+        type: "order.created",
+        time: Date.now() + 1000,
+        data: { userId: "user-1", orderId: "order-2" },
+      };
+
+      await manager.processEvent(event2);
+
+      // Should still have only one instance (can't start while active)
+      const secondContexts = await memory.getContexts(
+        testDomain,
+        "waiting-rematch-workflow",
+        "user-1"
+      );
+      expect(secondContexts.length).toBe(1);
+      expect(secondContexts[0].instanceId).toBe(firstInstanceId);
+    });
+
+    it("should respect interval restriction", async () => {
+      const intervalWorkflow: Workflow = {
+        ...everyRematchWorkflow,
+        id: "interval-workflow",
+        options: {
+          frequency: {
+            type: "every_rematch",
+            interval: 5, // 5 seconds
+          },
+        },
+      };
+
+      await store.setWorkflow(testDomain, intervalWorkflow);
+
+      const startTime = Date.now();
+
+      const event1: Event = {
+        id: "e1",
+        type: "order.created",
+        time: startTime,
+        data: { userId: "user-1", orderId: "order-1" },
+      };
+
+      await manager.processEvent(event1);
+
+      const firstContexts = await memory.getContexts(
+        testDomain,
+        "interval-workflow",
+        "user-1"
+      );
+      expect(firstContexts.length).toBe(1);
+      const firstInstanceId = firstContexts[0].instanceId;
+
+      // Try to trigger again before interval passes (only 2 seconds later)
+      const event2: Event = {
+        id: "e2",
+        type: "order.created",
+        time: startTime + 2000,
+        data: { userId: "user-1", orderId: "order-2" },
+      };
+
+      // Mock Date.now to return time 2 seconds after start
+      const originalNow = Date.now;
+      Date.now = jest.fn(() => startTime + 2000);
+
+      await manager.processEvent(event2);
+
+      // Should still have only one instance (interval not passed)
+      let contexts = await memory.getContexts(
+        testDomain,
+        "interval-workflow",
+        "user-1"
+      );
+      expect(contexts.length).toBe(1);
+      expect(contexts[0].instanceId).toBe(firstInstanceId);
+
+      // Try again after interval passes (6 seconds later)
+      const event3: Event = {
+        id: "e3",
+        type: "order.created",
+        time: startTime + 6000,
+        data: { userId: "user-1", orderId: "order-3" },
+      };
+
+      Date.now = jest.fn(() => startTime + 6000);
+
+      await manager.processEvent(event3);
+
+      // Should now have two instances (interval passed)
+      contexts = await memory.getContexts(
+        testDomain,
+        "interval-workflow",
+        "user-1"
+      );
+      expect(contexts.length).toBe(2);
+
+      // Restore Date.now
+      Date.now = originalNow;
+    });
+  });
+});

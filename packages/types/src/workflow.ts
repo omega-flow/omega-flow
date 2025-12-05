@@ -1,5 +1,15 @@
 import type { Edge, Node } from "@xyflow/react";
 
+export interface WorkflowFrequency {
+  type: "one_time" | "every_rematch";
+  interval?: number; // in seconds, for every_rematch type
+}
+
+export interface WorkflowOptions {
+  frequency?: WorkflowFrequency;
+  [key: string]: any;
+}
+
 export interface Workflow {
   id: string;
   name: string;
@@ -7,6 +17,7 @@ export interface Workflow {
     nodes: Node[];
     edges: Edge[];
   };
+  options: WorkflowOptions;
 }
 
 export enum WorkflowStatus {
