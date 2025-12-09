@@ -5,407 +5,8 @@ import {
   InMemoryWorkflowStore,
   InMemoryWorkflowMemory,
   InMemoryWorkflowScheduler,
-} from "../src/manager";
-import nodeTypes from "../src/nodes";
-
-describe("WorkflowStore", () => {
-  let store: InMemoryWorkflowStore;
-  let sampleWorkflow: Workflow;
-  const testDomain = "test-domain";
-
-  beforeEach(() => {
-    sampleWorkflow = {
-      id: "workflow-1",
-      name: "Sample Workflow",
-      flow: {
-        nodes: [
-          {
-            id: "1",
-            type: "Trigger",
-            data: {
-              label: "Start",
-              params: { event: "user.created" },
-            },
-            position: { x: 0, y: 0 },
-          },
-          {
-            id: "2",
-            type: "Exit",
-            data: { label: "End" },
-            position: { x: 0, y: 100 },
-          },
-        ],
-        edges: [
-          {
-            id: "e1-2",
-            source: "1",
-            target: "2",
-          },
-        ],
-      },
-      options: {},
-    };
-
-    store = new InMemoryWorkflowStore([
-      { domain: testDomain, workflow: sampleWorkflow },
-    ]);
-  });
-
-  it("should retrieve a workflow by id", async () => {
-    const workflow = await store.getWorkflow(testDomain, "workflow-1");
-    expect(workflow).toEqual(sampleWorkflow);
-  });
-
-  it("should return null for non-existent workflow", async () => {
-    const workflow = await store.getWorkflow(testDomain, "non-existent");
-    expect(workflow).toBeNull();
-  });
-
-  it("should get all workflows for a domain", async () => {
-    const workflows = await store.getAllWorkflows(testDomain);
-    expect(workflows).toHaveLength(1);
-    expect(workflows[0]).toEqual(sampleWorkflow);
-  });
-
-  it("should return empty array for non-existent domain", async () => {
-    const workflows = await store.getAllWorkflows("non-existent-domain");
-    expect(workflows).toHaveLength(0);
-  });
-
-  it("should add a new workflow", async () => {
-    const newWorkflow: Workflow = {
-      id: "workflow-2",
-      name: "New Workflow",
-      flow: { nodes: [], edges: [] },
-      options: {},
-    };
-
-    await store.setWorkflow(testDomain, newWorkflow);
-    const retrieved = await store.getWorkflow(testDomain, "workflow-2");
-    expect(retrieved).toEqual(newWorkflow);
-  });
-
-  it("should update an existing workflow", async () => {
-    const updated = { ...sampleWorkflow, name: "Updated Name" };
-    await store.setWorkflow(testDomain, updated);
-
-    const retrieved = await store.getWorkflow(testDomain, "workflow-1");
-    expect(retrieved?.name).toBe("Updated Name");
-  });
-
-  it("should delete a workflow", async () => {
-    await store.deleteWorkflow(testDomain, "workflow-1");
-    const workflows = await store.getAllWorkflows(testDomain);
-    expect(workflows).toHaveLength(0);
-  });
-
-  it("should isolate workflows by domain", async () => {
-    const domain1Workflow: Workflow = {
-      id: "wf-1",
-      name: "Domain 1 Workflow",
-      flow: { nodes: [], edges: [] },
-      options: {},
-    };
-
-    const domain2Workflow: Workflow = {
-      id: "wf-2",
-      name: "Domain 2 Workflow",
-      flow: { nodes: [], edges: [] },
-      options: {},
-    };
-
-    await store.setWorkflow("domain1", domain1Workflow);
-    await store.setWorkflow("domain2", domain2Workflow);
-
-    const domain1Workflows = await store.getAllWorkflows("domain1");
-    const domain2Workflows = await store.getAllWorkflows("domain2");
-
-    expect(domain1Workflows).toHaveLength(1);
-    expect(domain2Workflows).toHaveLength(1);
-    expect(domain1Workflows[0].id).toBe("wf-1");
-    expect(domain2Workflows[0].id).toBe("wf-2");
-  });
-});
-
-describe("WorkflowMemory", () => {
-  let memory: InMemoryWorkflowMemory;
-  let sampleContext: Context;
-  const testDomain = "test-domain";
-
-  beforeEach(() => {
-    memory = new InMemoryWorkflowMemory();
-    sampleContext = {
-      workflowId: "workflow-1",
-      instanceId: "instance-1",
-      currentNodeId: "node-1",
-      nodeState: {},
-      history: [],
-      isCompleted: false,
-      startedAt: Date.now(),
-    };
-  });
-
-  it("should save and retrieve context", async () => {
-    await memory.saveContext(
-      testDomain,
-      "workflow-1",
-      "subject-1",
-      sampleContext
-    );
-    const contexts = await memory.getContexts(
-      testDomain,
-      "workflow-1",
-      "subject-1"
-    );
-    expect(contexts[0]).toEqual(sampleContext);
-  });
-
-  it("should return empty array for non-existent context", async () => {
-    const contexts = await memory.getContexts(
-      testDomain,
-      "workflow-1",
-      "subject-1"
-    );
-    expect(contexts.length).toBe(0);
-  });
-
-  it("should handle multiple subjects for same workflow", async () => {
-    const context1 = {
-      ...sampleContext,
-      instanceId: "instance-1",
-      currentNodeId: "node-1",
-    };
-    const context2 = {
-      ...sampleContext,
-      instanceId: "instance-2",
-      currentNodeId: "node-2",
-    };
-
-    await memory.saveContext(testDomain, "workflow-1", "subject-1", context1);
-    await memory.saveContext(testDomain, "workflow-1", "subject-2", context2);
-
-    const contexts1 = await memory.getContexts(
-      testDomain,
-      "workflow-1",
-      "subject-1"
-    );
-    const contexts2 = await memory.getContexts(
-      testDomain,
-      "workflow-1",
-      "subject-2"
-    );
-
-    expect(contexts1[0]?.currentNodeId).toBe("node-1");
-    expect(contexts2[0]?.currentNodeId).toBe("node-2");
-  });
-
-  it("should handle multiple workflows for same subject", async () => {
-    const context1 = {
-      ...sampleContext,
-      instanceId: "instance-1",
-      workflowId: "workflow-1",
-    };
-    const context2 = {
-      ...sampleContext,
-      instanceId: "instance-2",
-      workflowId: "workflow-2",
-    };
-
-    await memory.saveContext(testDomain, "workflow-1", "subject-1", context1);
-    await memory.saveContext(testDomain, "workflow-2", "subject-1", context2);
-
-    const contexts1 = await memory.getContexts(
-      testDomain,
-      "workflow-1",
-      "subject-1"
-    );
-    const contexts2 = await memory.getContexts(
-      testDomain,
-      "workflow-2",
-      "subject-1"
-    );
-
-    expect(contexts1[0]?.workflowId).toBe("workflow-1");
-    expect(contexts2[0]?.workflowId).toBe("workflow-2");
-  });
-
-  it("should delete context", async () => {
-    await memory.saveContext(
-      testDomain,
-      "workflow-1",
-      "subject-1",
-      sampleContext
-    );
-    await memory.deleteContext(
-      testDomain,
-      "workflow-1",
-      "subject-1",
-      sampleContext.instanceId
-    );
-
-    const contexts = await memory.getContexts(
-      testDomain,
-      "workflow-1",
-      "subject-1"
-    );
-    expect(contexts.length).toBe(0);
-  });
-
-  it("should isolate contexts by domain", async () => {
-    const context1 = {
-      ...sampleContext,
-      instanceId: "instance-1",
-      workflowId: "workflow-1",
-    };
-    const context2 = {
-      ...sampleContext,
-      instanceId: "instance-2",
-      workflowId: "workflow-1",
-    };
-
-    await memory.saveContext("domain1", "workflow-1", "subject-1", context1);
-    await memory.saveContext("domain2", "workflow-1", "subject-1", context2);
-
-    const contexts1 = await memory.getContexts(
-      "domain1",
-      "workflow-1",
-      "subject-1"
-    );
-    const contexts2 = await memory.getContexts(
-      "domain2",
-      "workflow-1",
-      "subject-1"
-    );
-
-    expect(contexts1[0]).toEqual(context1);
-    expect(contexts2[0]).toEqual(context2);
-  });
-
-  it("should clear all contexts", async () => {
-    await memory.saveContext(
-      testDomain,
-      "workflow-1",
-      "subject-1",
-      sampleContext
-    );
-    await memory.clear();
-
-    const contexts = await memory.getContexts(
-      testDomain,
-      "workflow-1",
-      "subject-1"
-    );
-    expect(contexts.length).toBe(0);
-  });
-});
-
-describe("WorkflowScheduler", () => {
-  let scheduler: InMemoryWorkflowScheduler;
-  let mockManager: {
-    processEvent: jest.Mock<Promise<void>, [Event]>;
-  };
-
-  beforeEach(() => {
-    scheduler = new InMemoryWorkflowScheduler();
-    mockManager = {
-      processEvent: jest.fn().mockResolvedValue(undefined),
-    };
-    scheduler.setWorkflowManager(mockManager);
-  });
-
-  it("should schedule and execute an event", async () => {
-    const event: Event = {
-      id: "event-1",
-      type: "timeout",
-      time: Date.now(),
-    };
-
-    await scheduler.schedule(event, 10);
-
-    // Wait for the scheduled event to be processed
-    await new Promise((resolve) => setTimeout(resolve, 50));
-
-    expect(mockManager.processEvent).toHaveBeenCalledWith(event);
-  });
-
-  it("should return a schedule id", async () => {
-    const event: Event = {
-      id: "event-1",
-      type: "timeout",
-      time: Date.now(),
-    };
-
-    const scheduleId = await scheduler.schedule(event, 1000);
-    expect(scheduleId).toMatch(/^schedule_\d+$/);
-  });
-
-  it("should cancel a scheduled event", async () => {
-    const event: Event = {
-      id: "event-1",
-      type: "timeout",
-      time: Date.now(),
-    };
-
-    const scheduleId = await scheduler.schedule(event, 100);
-    const canceled = await scheduler.cancel(scheduleId);
-
-    expect(canceled).toBe(true);
-
-    // Wait to ensure event is not processed
-    await new Promise((resolve) => setTimeout(resolve, 150));
-    expect(mockManager.processEvent).not.toHaveBeenCalled();
-  });
-
-  it("should return false when canceling non-existent schedule", async () => {
-    const canceled = await scheduler.cancel("non-existent");
-    expect(canceled).toBe(false);
-  });
-
-  it("should track schedule count", async () => {
-    expect(scheduler.getScheduleCount()).toBe(0);
-
-    const event: Event = {
-      id: "event-1",
-      type: "timeout",
-      time: Date.now(),
-    };
-
-    await scheduler.schedule(event, 1000);
-    expect(scheduler.getScheduleCount()).toBe(1);
-
-    await scheduler.schedule(event, 1000);
-    expect(scheduler.getScheduleCount()).toBe(2);
-  });
-
-  it("should cancel all schedules", async () => {
-    const event: Event = {
-      id: "event-1",
-      type: "timeout",
-      time: Date.now(),
-    };
-
-    await scheduler.schedule(event, 1000);
-    await scheduler.schedule(event, 1000);
-
-    expect(scheduler.getScheduleCount()).toBe(2);
-
-    await scheduler.cancelAll();
-    expect(scheduler.getScheduleCount()).toBe(0);
-  });
-
-  it("should throw error when scheduling without workflow manager set", async () => {
-    const schedulerWithoutManager = new InMemoryWorkflowScheduler();
-    const event: Event = {
-      id: "event-1",
-      type: "timeout",
-      time: Date.now(),
-    };
-
-    await expect(schedulerWithoutManager.schedule(event, 10)).rejects.toThrow(
-      "WorkflowManager not set"
-    );
-  });
-});
+} from "../../src/manager";
+import nodeTypes from "../../src/nodes";
 
 describe("WorkflowManager", () => {
   let manager: WorkflowManager;
@@ -484,7 +85,11 @@ describe("WorkflowManager", () => {
 
     await manager.processEvent(event);
 
-    const contexts = await memory.getContexts(testDomain, "workflow-1", "user-1");
+    const contexts = await memory.getContexts(
+      testDomain,
+      "workflow-1",
+      "user-1"
+    );
     expect(contexts.length).toBeGreaterThan(0);
     expect(contexts[0]?.workflowId).toBe("workflow-1");
   });
@@ -499,7 +104,11 @@ describe("WorkflowManager", () => {
 
     await manager.processEvent(event);
 
-    const contexts = await memory.getContexts(testDomain, "workflow-1", "user-1");
+    const contexts = await memory.getContexts(
+      testDomain,
+      "workflow-1",
+      "user-1"
+    );
     expect(contexts.length).toBe(0);
   });
 
@@ -580,7 +189,11 @@ describe("WorkflowManager", () => {
 
     await manager.processEvent(event);
 
-    const contexts = await memory.getContexts(testDomain, "workflow-1", "user-1");
+    const contexts = await memory.getContexts(
+      testDomain,
+      "workflow-1",
+      "user-1"
+    );
     // After processing, workflow should complete (Action -> Exit -> completed)
     // History should have more items than before (at least step to Exit and completed)
     expect(contexts[0]?.history.length).toBeGreaterThan(initialHistoryLength);

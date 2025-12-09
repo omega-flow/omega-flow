@@ -1,6 +1,6 @@
 // @ts-nocheck
-import WorkflowModel from "./../src/engine/WorkflowModel";
-import nodeTypes from "./../src/nodes";
+import WorkflowModel from "../../src/engine/WorkflowModel";
+import nodeTypes from "../../src/nodes";
 
 let sampleWorkflow;
 let sampleContext;

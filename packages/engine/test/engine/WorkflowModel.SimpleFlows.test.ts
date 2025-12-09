@@ -1,7 +1,7 @@
 // @ts-nocheck
 import { Event } from "@omega-flow/types";
-import WorkflowModel from "./../src/engine/WorkflowModel";
-import nodeTypes from "./../src/nodes";
+import WorkflowModel from "../../src/engine/WorkflowModel";
+import nodeTypes from "../../src/nodes";
 
 let simpleWorkflow;
 let simpleContext;
@@ -22,7 +22,7 @@ let simpleContext;
 // |     Exit (4)   |<---|     Action (3) |
 // +----------------+    +----------------+
 
-describe("WorkflowModel", () => {
+describe("WorkflowModel Simple Flow", () => {
   beforeEach(() => {
     simpleWorkflow = {
       id: "1",
@@ -90,55 +90,53 @@ describe("WorkflowModel", () => {
     };
   });
 
-  describe("Simple flow", () => {
-    it("should start", async () => {
-      const workflow = new WorkflowModel(simpleWorkflow, nodeTypes);
-      workflow.start();
-      expect(workflow.getCurrentNode().getId()).toBe("1");
-      expect(workflow.status).toBe("waiting");
-    });
+  it("should start", async () => {
+    const workflow = new WorkflowModel(simpleWorkflow, nodeTypes);
+    workflow.start();
+    expect(workflow.getCurrentNode().getId()).toBe("1");
+    expect(workflow.status).toBe("waiting");
+  });
 
-    // 1 > 1
-    it("should start and NOT accept event as trigger", async () => {
-      const workflow = new WorkflowModel(simpleWorkflow, nodeTypes);
-      workflow.start();
-      // Should be undefined sice we have not loaded any state
-      expect(workflow.getCurrentNode().getId()).toBe("1");
-      // This event match first node
-      const eventNotMatchFirstNode: Event = {
-        id: "1",
-        type: "wrong-event",
-        time: Date.now(),
-        data: {
-          user_id: 1,
-        },
-      };
-      await workflow.acceptEvent(eventNotMatchFirstNode);
-      expect(workflow.getCurrentNode().getId()).toBe("1");
-      expect(workflow.getContext().history.length).toEqual(0);
-    });
+  // 1 > 1
+  it("should start and NOT accept event as trigger", async () => {
+    const workflow = new WorkflowModel(simpleWorkflow, nodeTypes);
+    workflow.start();
+    // Should be undefined sice we have not loaded any state
+    expect(workflow.getCurrentNode().getId()).toBe("1");
+    // This event match first node
+    const eventNotMatchFirstNode: Event = {
+      id: "1",
+      type: "wrong-event",
+      time: Date.now(),
+      data: {
+        user_id: 1,
+      },
+    };
+    await workflow.acceptEvent(eventNotMatchFirstNode);
+    expect(workflow.getCurrentNode().getId()).toBe("1");
+    expect(workflow.getContext().history.length).toEqual(0);
+  });
 
-    // 1 > 2 (condition met) > 4 (exit)
-    it("should start and accept event as trigger", async () => {
-      const workflow = new WorkflowModel(simpleWorkflow, nodeTypes);
-      workflow.start();
-      // Should be undefined sice we have not loaded any state
-      expect(workflow.getCurrentNode().getId()).toBe("1");
-      // This event match first node
-      const eventMatchFirstNode: Event = {
-        id: "1",
-        type: "sample",
-        time: Date.now(),
-        data: {
-          user_id: 1,
-        },
-      };
-      await workflow.acceptEvent(eventMatchFirstNode);
-      // here it goes to condition
-      // then condition is met and goes to next node which is exit (4)
-      expect(workflow.getCurrentNode().getId()).toBe("4");
-      // console.log(workflow.getContext().history);
-      expect(workflow.getContext().history.length).toEqual(4);
-    });
+  // 1 > 2 (condition met) > 4 (exit)
+  it("should start and accept event as trigger", async () => {
+    const workflow = new WorkflowModel(simpleWorkflow, nodeTypes);
+    workflow.start();
+    // Should be undefined sice we have not loaded any state
+    expect(workflow.getCurrentNode().getId()).toBe("1");
+    // This event match first node
+    const eventMatchFirstNode: Event = {
+      id: "1",
+      type: "sample",
+      time: Date.now(),
+      data: {
+        user_id: 1,
+      },
+    };
+    await workflow.acceptEvent(eventMatchFirstNode);
+    // here it goes to condition
+    // then condition is met and goes to next node which is exit (4)
+    expect(workflow.getCurrentNode().getId()).toBe("4");
+    // console.log(workflow.getContext().history);
+    expect(workflow.getContext().history.length).toEqual(4);
   });
 });

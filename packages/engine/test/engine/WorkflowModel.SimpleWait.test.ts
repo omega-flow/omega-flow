@@ -1,12 +1,12 @@
 // @ts-nocheck
 import { Event } from "@omega-flow/types";
-import WorkflowModel from "./../src/engine/WorkflowModel";
-import nodeTypes from "./../src/nodes";
+import WorkflowModel from "../../src/engine/WorkflowModel";
+import nodeTypes from "../../src/nodes";
 
 let simpleWorkflow;
 let simpleContext;
 
-describe("WorkflowModel", () => {
+describe("WorkflowModel Simple Wait", () => {
   describe("Simple wait", () => {
     beforeEach(() => {
       // 1 (Trigger) > 2 (Wait 10s) > 3 (Action) > 4 (Exit)
