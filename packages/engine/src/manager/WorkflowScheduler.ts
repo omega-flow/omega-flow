@@ -1,7 +1,14 @@
 import type { Event } from "@omega-flow/types";
 
-// Forward declaration to avoid circular dependency
+/**
+ * Minimal interface for WorkflowManager used by schedulers.
+ * This forward declaration avoids circular dependency issues.
+ */
 export interface IWorkflowManager {
+  /**
+   * Process an event through the workflow system.
+   * @param event - The event to process
+   */
   processEvent(event: Event): Promise<void>;
 }
 

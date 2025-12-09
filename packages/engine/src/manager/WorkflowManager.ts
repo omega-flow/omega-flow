@@ -5,29 +5,69 @@ import type { WorkflowScheduler } from "./WorkflowScheduler";
 import WorkflowModel from "../engine/WorkflowModel";
 import type NodeModel from "../engine/NodeModel";
 
+/**
+ * Configuration options for WorkflowManager.
+ */
 export interface WorkflowManagerConfig {
+  /** Storage backend for workflow definitions */
   workflowStore: WorkflowStore;
+  /** Storage backend for workflow execution contexts */
   workflowMemory: WorkflowMemory;
+  /** Scheduler for time-based workflow events */
   workflowScheduler: WorkflowScheduler;
+  /** Map of node type names to their NodeModel classes */
   nodeModels: Record<string, typeof NodeModel>;
   /**
-   * Extract domain and subject ID from event
-   * Returns [domain, subjectId]
+   * Function to extract domain and subject ID from an event.
+   * The domain allows multi-tenant workflow isolation.
+   * The subject ID identifies which entity (user, order, etc.) the workflow is for.
+   * @param event - The incoming event
+   * @returns Tuple of [domain, subjectId]
    */
   eventExtractor: (event: Event) => [string, string];
 }
 
 /**
- * Manages multiple workflows and their execution
- * Handles workflow lifecycle, state persistence, and event routing
+ * Orchestrates multiple workflows across multiple subjects and domains.
+ *
+ * WorkflowManager is the top-level coordinator that:
+ * - Routes incoming events to the appropriate workflow instances
+ * - Manages workflow lifecycle (start, resume, complete)
+ * - Handles state persistence via WorkflowMemory
+ * - Enforces workflow frequency rules (one_time, every_rematch)
+ *
+ * Each combination of (domain, workflowId, subjectId) can have multiple
+ * workflow instances depending on the frequency configuration.
+ *
+ * @example
+ * ```typescript
+ * const manager = new WorkflowManager({
+ *   workflowStore: new InMemoryWorkflowStore([...]),
+ *   workflowMemory: new InMemoryWorkflowMemory(),
+ *   workflowScheduler: new InMemoryWorkflowScheduler(),
+ *   nodeModels: { Trigger: TriggerModel, Action: ActionModel, Exit: ExitModel },
+ *   eventExtractor: (event) => [event.data.domain, event.data.userId],
+ * });
+ *
+ * await manager.processEvent({ type: 'user_signup', time: Date.now(), data: {...} });
+ * ```
  */
 export class WorkflowManager {
+  /** Storage backend for workflow definitions */
   private workflowStore: WorkflowStore;
+  /** Storage backend for workflow execution contexts */
   private workflowMemory: WorkflowMemory;
+  /** Scheduler for time-based workflow events */
   private workflowScheduler: WorkflowScheduler;
+  /** Map of node type names to their NodeModel classes */
   private nodeModels: Record<string, typeof NodeModel>;
+  /** Function to extract domain and subject ID from events */
   private eventExtractor: (event: Event) => [string, string];
 
+  /**
+   * Creates a new WorkflowManager instance.
+   * @param config - Configuration options including storage backends and node models
+   */
   constructor(config: WorkflowManagerConfig) {
     this.workflowStore = config.workflowStore;
     this.workflowMemory = config.workflowMemory;

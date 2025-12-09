@@ -2,13 +2,20 @@ import type { Context } from "@omega-flow/types";
 import type { WorkflowMemory } from "../WorkflowMemory";
 
 /**
- * In-memory implementation of WorkflowMemory
- * Stores workflow contexts in memory using a nested Map structure
- * Key format: domain -> workflowId -> subjectId -> instanceId -> Context
+ * In-memory implementation of WorkflowMemory.
+ *
+ * Stores workflow execution contexts in memory using a nested Map structure.
+ * Useful for testing, development, and single-instance deployments.
+ *
+ * Storage structure: domain -> workflowId -> subjectId -> instanceId -> Context
  */
 export class InMemoryWorkflowMemory implements WorkflowMemory {
+  /** Nested map storing contexts by domain, workflow, subject, and instance */
   private contexts: Map<string, Map<string, Map<string, Map<string, Context>>>>;
 
+  /**
+   * Creates a new InMemoryWorkflowMemory with empty storage.
+   */
   constructor() {
     this.contexts = new Map();
   }

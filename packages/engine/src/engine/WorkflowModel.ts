@@ -16,16 +16,62 @@ import {
 import NodeModel from "./NodeModel";
 import EdgeModel from "./EdgeModel";
 
+/**
+ * Core workflow execution engine that manages the lifecycle of a single workflow instance.
+ *
+ * WorkflowModel takes a workflow definition (graph of nodes and edges) and executes it
+ * by processing events and moving through nodes. It maintains execution state including
+ * the current node, history, and node-specific state.
+ *
+ * Workflow execution follows this model:
+ * 1. Workflow starts in `idle` status
+ * 2. After `start()` is called, status becomes `waiting`
+ * 3. When an event arrives via `acceptEvent()`:
+ *    - If current node accepts the event, status becomes `processing`
+ *    - After determining next node, status becomes `transforming`
+ *    - Once moved to next node, status returns to `waiting`
+ *    - Process repeats recursively until node doesn't accept the event
+ * 4. When workflow reaches an exit node, status becomes `completed`
+ *
+ * @example
+ * ```typescript
+ * const workflow = new WorkflowModel(workflowDef, nodeModels);
+ * workflow.start();
+ * await workflow.acceptEvent({ type: 'trigger', time: Date.now(), data: {} });
+ * const context = workflow.getContext(); // Save for later resumption
+ * ```
+ */
 class WorkflowModel {
+  /** The workflow definition containing metadata, flow (nodes/edges), and options */
   workflow: Workflow;
+
+  /** Array of instantiated node models for this workflow */
   nodes: NodeModel[] = [];
+
+  /** Array of edge models connecting the nodes */
   edges: EdgeModel[] = [];
+
+  /** The node currently waiting for events (null before start or after completion) */
   currentNode: NodeModel | null = null;
+
+  /** Execution history recording workflow transitions */
   history: WorkflowHistoryItem[] = [];
+
+  /** Current execution status of the workflow */
   status: WorkflowStatus = WorkflowStatus.Idle;
+
+  /** Unique identifier for this workflow instance */
   instanceId: string = "";
+
+  /** Unix timestamp (ms) when this workflow instance was started */
   startedAt: number = 0;
 
+  /**
+   * Creates a new WorkflowModel instance from a workflow definition.
+   * @param workflow - The workflow definition to execute
+   * @param nodeModels - Map of node type names to their NodeModel classes
+   * @throws Error if workflow is invalid or missing required nodes
+   */
   constructor(
     workflow: Workflow,
     nodeModels: Record<string, typeof NodeModel>
@@ -80,6 +126,15 @@ class WorkflowModel {
 
   // PUBLIC METHODS
 
+  /**
+   * Restores workflow state from a previously saved context.
+   * Use this to resume a workflow that was interrupted or to restore from persistence.
+   * After calling setContext, you must call start() to begin processing events.
+   * @param context - The context to restore from
+   * @throws Error if workflow is already running
+   * @throws Error if context is invalid or doesn't match this workflow
+   * @throws Error if the current node in context doesn't exist in the workflow
+   */
   setContext(context: Context) {
     // Prevent setting context if workflow is already running
     if (this.status !== WorkflowStatus.Idle) {
@@ -128,6 +183,11 @@ class WorkflowModel {
     // After setting context, you need to run start()
   }
 
+  /**
+   * Exports the current workflow state as a Context object.
+   * The context contains all information needed to restore the workflow later.
+   * @returns A Context object containing workflow state
+   */
   getContext(): Context {
     return {
       workflowId: this.workflow.id,
@@ -143,10 +203,21 @@ class WorkflowModel {
     };
   }
 
+  /**
+   * Gets the current execution status of the workflow.
+   * @returns The current WorkflowStatus
+   */
   getStatus(): WorkflowStatus {
     return this.status;
   }
 
+  /**
+   * Starts or resumes the workflow execution.
+   * If no context was set, starts from the beginning at the start node.
+   * If a context was set via setContext(), resumes from the saved position.
+   * @throws Error if workflow is already running or completed
+   * @throws Error if workflow has no start node
+   */
   start() {
     if (this.status === WorkflowStatus.Completed) {
       throw new Error("Workflow is already completed");
@@ -173,6 +244,18 @@ class WorkflowModel {
     this.status = WorkflowStatus.Waiting;
   }
 
+  /**
+   * Processes an incoming event through the workflow.
+   *
+   * This is the main event processing method. It passes the event to the current node
+   * and handles workflow transitions. The method recursively processes the event through
+   * subsequent nodes until a node doesn't accept the event or the workflow completes.
+   *
+   * @param event - The event to process
+   * @throws Error if workflow is not in waiting status
+   * @throws Error if event is invalid
+   * @throws Error if current node is not set
+   */
   async acceptEvent(event: Event): Promise<void> {
     if (this.status != WorkflowStatus.Waiting) {
       throw new Error(
@@ -241,6 +324,11 @@ class WorkflowModel {
 
   // HELPER METHODS
 
+  /**
+   * Gets the current node that is waiting for events.
+   * @returns The current NodeModel
+   * @throws Error if workflow is not running (still idle)
+   */
   getCurrentNode() {
     if (this.status === WorkflowStatus.Idle) {
       throw new Error("Workflow is not running");
@@ -248,6 +336,11 @@ class WorkflowModel {
     return this.currentNode;
   }
 
+  /**
+   * Finds the start node of the workflow.
+   * The start node is the node with no incoming edges.
+   * @returns The start NodeModel, or null if not found
+   */
   getStartNode() {
     // Find node which has no incoming edges
     const startNode = this.nodes.find((node) => {
@@ -258,7 +351,11 @@ class WorkflowModel {
     return startNode || null;
   }
 
-  // TODO: Accept null? Return null?
+  /**
+   * Finds a node by its ID.
+   * @param nodeId - The ID of the node to find (can be null)
+   * @returns The NodeModel if found, or null if not found or nodeId is null
+   */
   getNode(nodeId: string | null): NodeModel | null {
     if (!nodeId) {
       return null;
@@ -271,7 +368,12 @@ class WorkflowModel {
 
   // PRIVATE METHODS
 
-  #startWorkflow(event: Event) {
+  /**
+   * Records workflow start in history.
+   * Called when the workflow transitions from the start node.
+   * @param _event - The triggering event (unused, kept for consistency)
+   */
+  #startWorkflow(_event: Event) {
     // History
     this.history.push({
       time: Date.now(),
@@ -282,7 +384,12 @@ class WorkflowModel {
     this.#log();
   }
 
-  #moveToNode(nextNode: NodeModel, event: Event) {
+  /**
+   * Moves the workflow to a new node and records the transition.
+   * @param nextNode - The node to move to
+   * @param _event - The triggering event (unused, kept for consistency)
+   */
+  #moveToNode(nextNode: NodeModel, _event: Event) {
     // History
     this.history.push({
       time: Date.now(),
@@ -294,7 +401,11 @@ class WorkflowModel {
     this.#log();
   }
 
-  #completeWorkflow(event: Event) {
+  /**
+   * Marks the workflow as completed and records the completion.
+   * @param _event - The triggering event (unused, kept for consistency)
+   */
+  #completeWorkflow(_event: Event) {
     // History
     this.history.push({
       time: Date.now(),
@@ -306,6 +417,9 @@ class WorkflowModel {
     this.#log();
   }
 
+  /**
+   * Internal logging helper for debugging workflow transitions.
+   */
   #log() {
     // console.log(this.history[this.history.length - 1]);
   }

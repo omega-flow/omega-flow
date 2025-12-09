@@ -2,14 +2,26 @@ import type { Event } from "@omega-flow/types";
 import type { WorkflowScheduler, IWorkflowManager } from "../WorkflowScheduler";
 
 /**
- * In-memory implementation of WorkflowScheduler using setTimeout
- * Stores scheduled events in memory with their timeout handles
+ * In-memory implementation of WorkflowScheduler using setTimeout.
+ *
+ * Stores scheduled events in memory with their timeout handles.
+ * When a timeout fires, the event is delivered to the workflow manager.
+ * Useful for testing, development, and single-instance deployments.
+ *
+ * Note: Requires setWorkflowManager() to be called before scheduling events.
  */
 export class InMemoryWorkflowScheduler implements WorkflowScheduler {
+  /** Map of schedule IDs to their setTimeout handles */
   private schedules: Map<string, ReturnType<typeof setTimeout>>;
+  /** Counter for generating unique schedule IDs */
   private scheduleIdCounter: number;
+  /** Reference to the workflow manager for event delivery */
   private workflowManager: IWorkflowManager | null;
 
+  /**
+   * Creates a new InMemoryWorkflowScheduler.
+   * Call setWorkflowManager() before scheduling any events.
+   */
   constructor() {
     this.schedules = new Map();
     this.scheduleIdCounter = 0;

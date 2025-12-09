@@ -2,13 +2,21 @@ import type { Workflow } from "@omega-flow/types";
 import type { WorkflowStore } from "../WorkflowStore";
 
 /**
- * In-memory implementation of WorkflowStore
- * Stores workflow definitions in memory using a nested Map structure
- * Key format: domain -> workflowId -> Workflow
+ * In-memory implementation of WorkflowStore.
+ *
+ * Stores workflow definitions in memory using a nested Map structure.
+ * Useful for testing, development, and single-instance deployments.
+ *
+ * Storage structure: domain -> workflowId -> Workflow
  */
 export class InMemoryWorkflowStore implements WorkflowStore {
+  /** Nested map storing workflows by domain and workflow ID */
   private workflows: Map<string, Map<string, Workflow>>;
 
+  /**
+   * Creates a new InMemoryWorkflowStore.
+   * @param workflows - Optional array of workflows to initialize the store with
+   */
   constructor(workflows: Array<{ domain: string; workflow: Workflow }> = []) {
     this.workflows = new Map();
     for (const { domain, workflow } of workflows) {

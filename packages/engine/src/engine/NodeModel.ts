@@ -3,15 +3,55 @@ import { type Node, type Event } from "@omega-flow/types";
 import EdgeModel from "./EdgeModel";
 import { type Connection } from "./Connection";
 
+/**
+ * Base class for all workflow node types.
+ *
+ * NodeModel represents a single step in a workflow graph. Each node can accept events,
+ * process them, and determine which node should be executed next. Subclasses must
+ * implement the `acceptEvent` and `nextNode` methods to define their specific behavior.
+ *
+ * When a workflow is on a node, that node is waiting for events (not yet processed).
+ * Processing happens when an event is accepted by the node.
+ *
+ * @example
+ * ```typescript
+ * class MyCustomNode extends NodeModel {
+ *   async acceptEvent(event: Event): Promise<boolean> {
+ *     // Return true if event is accepted and processing is complete
+ *     return event.type === 'my-event';
+ *   }
+ *
+ *   async nextNode(event: Event): Promise<NodeModel | null> {
+ *     return this.getTargetNodeFromSourceHandle('output');
+ *   }
+ * }
+ * ```
+ */
 class NodeModel {
+  /**
+   * Factory method to create a new NodeModel instance.
+   * Subclasses should override this method to perform type validation.
+   * @param node - The node definition from the workflow
+   * @returns A new NodeModel instance
+   */
   static create(node: Node): NodeModel {
     return new this(node);
   }
 
+  /** The underlying node definition from the workflow */
   node: Node;
+
+  /** List of outgoing connections to other nodes */
   connections: Connection[];
+
+  /** Internal state that persists across event processing. Use setState/getState to access. */
   state: any;
 
+  /**
+   * Creates a new NodeModel instance.
+   * @param node - The node definition from the workflow
+   * @throws Error if node is missing or doesn't have an id
+   */
   constructor(node: Node) {
     if (!node || !node.id) {
       throw new Error("Node must have an id");
@@ -21,14 +61,28 @@ class NodeModel {
     this.state = {};
   }
 
+  /**
+   * Gets the unique identifier of this node.
+   * @returns The node's ID as a string
+   */
   getId(): string {
     return String(this.node.id);
   }
 
+  /**
+   * Gets the data payload associated with this node.
+   * This typically contains node-specific configuration like parameters.
+   * @returns The node's data object, or an empty object if not defined
+   */
   getData(): any {
     return this.node.data || {};
   }
 
+  /**
+   * Checks if this node is equal to another node by comparing IDs.
+   * @param node - The node to compare against (can be null)
+   * @returns True if the nodes have the same ID, false otherwise
+   */
   equals(node: NodeModel | null): boolean {
     // Node can be null, when workflow finishes
     if (!node) {
@@ -40,14 +94,27 @@ class NodeModel {
     return false;
   }
 
+  /**
+   * Gets the current internal state of the node.
+   * State is used to share data between `acceptEvent` and `nextNode` methods.
+   * @returns The current state object
+   */
   getState(): any {
     return this.state;
   }
 
+  /**
+   * Replaces the entire internal state of the node.
+   * @param state - The new state object
+   */
   setState(state: any) {
     this.state = state;
   }
 
+  /**
+   * Merges changes into the existing state (shallow merge).
+   * @param changes - Object containing state properties to update
+   */
   updateState(changes: any) {
     this.state = {
       ...this.state,
@@ -55,8 +122,14 @@ class NodeModel {
     };
   }
 
-  // Connects this node to another node
-  // this node becomes source node
+  /**
+   * Connects this node to a target node via an edge.
+   * This node becomes the source node of the connection.
+   * @param targetNode - The node to connect to
+   * @param edge - The edge defining the connection
+   * @throws Error if attempting to connect node to itself
+   * @throws Error if connection already exists with the same source handle
+   */
   connect(targetNode: NodeModel, edge: EdgeModel) {
     if (this.getId() === targetNode.getId()) {
       throw new Error("Cannot connect node to itself");
@@ -80,18 +153,28 @@ class NodeModel {
     });
   }
 
-  // Returns all connected nodes
-  // returns [{targetNode, edge}, ...]
+  /**
+   * Returns all outgoing connections from this node.
+   * @returns Array of Connection objects containing targetNode and edge
+   */
   getConnections(): Connection[] {
     return this.connections;
   }
 
-  // Return all outputs of this node, as labels (strings)
+  /**
+   * Returns all source handle identifiers (output labels) for this node.
+   * Source handles define the different output paths from this node.
+   * @returns Array of source handle strings
+   */
   getSourceHandles(): string[] {
     return this.connections.map((c) => c.edge.getSourceHandle());
   }
 
-  // Return node that source (output) handle is connected to
+  /**
+   * Finds the target node connected to a specific source handle.
+   * @param sourceHandle - The source handle (output) identifier to look up
+   * @returns The connected NodeModel, or null if no connection exists for the handle
+   */
   getTargetNodeFromSourceHandle(sourceHandle: string): NodeModel | null {
     const connection = this.connections.find(
       (c) => c.edge.getSourceHandle() === sourceHandle
@@ -102,17 +185,35 @@ class NodeModel {
     return null;
   }
 
-  // Accepts and processes the event
-  // Returns true if fully processed and workflow can move to next node, false if node is still waiting
-  async acceptEvent(event: Event): Promise<boolean> {
+  /**
+   * Accepts and processes an incoming event.
+   *
+   * This method must be overridden by subclasses to define how the node
+   * handles events. The method can be called multiple times for the same
+   * logical operation (e.g., start wait, then complete wait).
+   *
+   * @param event - The event to process
+   * @returns Promise resolving to true if event is accepted and processing is complete,
+   *          false if the node is still waiting or doesn't accept the event
+   * @throws Error if not implemented by subclass
+   */
+  async acceptEvent(_event: Event): Promise<boolean> {
     // This method should be overridden by subclasses
     throw new Error("acceptEvent method not implemented");
   }
 
-  // TODO: can it return 'this'?
-  // Determine next node after processing the event
-  // Return next NodeModel or null if workflow should end
-  async nextNode(event: Event): Promise<NodeModel | null> {
+  /**
+   * Determines the next node to execute after processing an event.
+   *
+   * This method must be overridden by subclasses. It is called after
+   * `acceptEvent` returns true to determine where the workflow should go next.
+   *
+   * @param event - The event that was processed
+   * @returns Promise resolving to the next NodeModel to execute,
+   *          or null if the workflow should end
+   * @throws Error if not implemented by subclass
+   */
+  async nextNode(_event: Event): Promise<NodeModel | null> {
     // This method should be overridden by subclasses
     throw new Error("nextNode method not implemented");
   }
