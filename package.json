@@ -15,6 +15,7 @@
     "preinstall": "npx only-allow pnpm",
     "build": "pnpm --filter=@omega-flow/* run build",
     "test": "pnpm --filter=@omega-flow/* run test",
+    "test:coverage": "pnpm --filter=@omega-flow/* run test:coverage",
     "lint": "pnpm --filter@omega-flow/* run lint",
     "clean": "rimraf 'packages/*/{dist,node_modules}' && rimraf node_modules",
     "changeset": "changeset",

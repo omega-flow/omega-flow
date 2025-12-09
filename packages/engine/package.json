@@ -12,7 +12,8 @@
     "build": "tsup src/index.ts --format cjs,esm --dts",
     "dev": "tsup src/index.ts --format cjs,esm --dts --watch",
     "test": "jest --verbose --passWithNoTests",
-    "test:watch": "jest --watchAll --verbose --passWithNoTests --detectOpenHandles"
+    "test:watch": "jest --watchAll --verbose --passWithNoTests --detectOpenHandles",
+    "test:coverage": "jest --verbose --coverage"
   },
   "devDependencies": {},
   "dependencies": {
