@@ -26,7 +26,10 @@ class WorkflowModel {
   instanceId: string = "";
   startedAt: number = 0;
 
-  constructor(workflow: Workflow, nodeModels: Record<string, typeof NodeModel>) {
+  constructor(
+    workflow: Workflow,
+    nodeModels: Record<string, typeof NodeModel>
+  ) {
     const ajv = new Ajv();
     const validate = ajv.compile(WorkflowSchema);
 
@@ -156,7 +159,9 @@ class WorkflowModel {
       this.currentNode = this.getStartNode();
       // Set instanceId and startedAt only when starting a new workflow instance
       if (this.instanceId === "") {
-        this.instanceId = `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
+        this.instanceId = `${Date.now()}-${Math.random()
+          .toString(36)
+          .substring(2, 11)}`;
       }
       if (this.startedAt === 0) {
         this.startedAt = Date.now();

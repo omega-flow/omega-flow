@@ -1,4 +1,4 @@
-import type { Event, Workflow, Context } from "@omega-flow/types";
+import { type Event, type Workflow, type Context, WorkflowStatus } from "@omega-flow/types";
 import type { WorkflowStore } from "./WorkflowStore";
 import type { WorkflowMemory } from "./WorkflowMemory";
 import type { WorkflowScheduler } from "./WorkflowScheduler";
@@ -101,22 +101,20 @@ export class WorkflowManager {
       );
     }
 
-    // Check if we should start a new instance based on trigger and frequency
-    if (this.isTriggeredByEvent(workflowDef, event)) {
-      const canStartNew = this.canStartNewInstance(
-        workflowDef,
-        activeContexts,
-        completedContexts
-      );
+    // Check if we should start a new instance based on frequency
+    const canStartNew = this.canStartNewInstance(
+      workflowDef,
+      activeContexts,
+      completedContexts
+    );
 
-      if (canStartNew) {
-        await this.startNewWorkflowInstance(
-          workflowDef,
-          event,
-          domain,
-          subjectId
-        );
-      }
+    if (canStartNew) {
+      await this.tryStartNewWorkflowInstance(
+        workflowDef,
+        event,
+        domain,
+        subjectId
+      );
     }
   }
 
@@ -171,13 +169,14 @@ export class WorkflowManager {
   }
 
   /**
-   * Start a new workflow instance for a subject
+   * Try to start a new workflow instance for a subject
+   * Only saves context if the workflow actually started (start node accepted the event)
    * @param workflowDef - The workflow definition
    * @param event - The triggering event
    * @param domain - The domain identifier
    * @param subjectId - The subject ID
    */
-  private async startNewWorkflowInstance(
+  private async tryStartNewWorkflowInstance(
     workflowDef: Workflow,
     event: Event,
     domain: string,
@@ -185,6 +184,8 @@ export class WorkflowManager {
   ): Promise<void> {
     const workflow = new WorkflowModel(workflowDef, this.nodeModels);
     workflow.start();
+
+    const startNode = workflow.getStartNode();
 
     try {
       await workflow.acceptEvent(event);
@@ -194,6 +195,14 @@ export class WorkflowManager {
         error
       );
       throw error;
+    }
+
+    // If workflow is still waiting on the start node, it wasn't triggered by this event
+    if (
+      workflow.getStatus() === WorkflowStatus.Waiting &&
+      workflow.getCurrentNode()?.equals(startNode)
+    ) {
+      return;
     }
 
     const context = workflow.getContext();
@@ -241,36 +250,6 @@ export class WorkflowManager {
       subjectId,
       updatedContext
     );
-  }
-
-  /**
-   * Check if a workflow is triggered by a specific event
-   * Examines the start node of the workflow to determine if it accepts this event
-   * @param workflow - The workflow definition
-   * @param event - The event to check
-   * @returns true if the workflow should be triggered by this event
-   */
-  private isTriggeredByEvent(workflow: Workflow, event: Event): boolean {
-    // Find the start node (node with no incoming edges)
-    const startNodeDef = workflow.flow.nodes.find((node) => {
-      return !workflow.flow.edges.some(
-        (edge) => String(edge.target) === String(node.id)
-      );
-    });
-
-    if (!startNodeDef) {
-      return false; // No start node found
-    }
-
-    // Check if start node is a Trigger node with matching event type
-    if (startNodeDef.type === "Trigger") {
-      const nodeData = startNodeDef.data as any;
-      if (nodeData?.params?.event === event.type) {
-        return true;
-      }
-    }
-
-    return false;
   }
 
   /**
