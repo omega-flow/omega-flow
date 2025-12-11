@@ -32,6 +32,11 @@ Navigate to specific package or use pnpm filtering:
 - Run tests: `pnpm --filter=@omega-flow/types run test`
 - Dev mode (watch build): `pnpm --filter=@omega-flow/types run dev`
 
+**For @omega-flow/sample-server:**
+
+- Dev server: `cd apps/sampleServer && pnpm dev` (runs on port 5010)
+- Build: `pnpm --filter=@omega-flow/sample-server run build`
+
 ### Running a single test file:
 
 ```bash
@@ -41,11 +46,17 @@ pnpm test WorkflowEngine.SimpleFlows.test.ts
 
 ## Repository Structure
 
-This is a monorepo containing three main packages:
+This is a monorepo containing packages and apps:
+
+### Packages
 
 - **@omega-flow/types** - TypeScript types & JSON Schema (Ajv) for workflow, events, context
 - **@omega-flow/engine** - Workflow engine that executes workflows, manages state, and handles events
 - **@omega-flow/editor** - React-based workflow editor components (in development)
+
+### Apps
+
+- **@omega-flow/sample-server** (`apps/sampleServer`) - Express development server with file-based DB for workflows and contexts. Implements `WorkflowStore` and `WorkflowMemory` interfaces. Run with `pnpm dev` (port 5010). See `apps/sampleServer/README.md` for API docs.
 
 ## Core Architecture
 
