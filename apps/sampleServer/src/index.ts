@@ -1,4 +1,5 @@
 import express from "express";
+import cors from "cors";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 import { FileWorkflowStore } from "./stores/FileWorkflowStore.js";
@@ -14,6 +15,7 @@ const DB_PATH = process.env.DB_PATH || join(__dirname, "..", "db");
 const app = express();
 
 // Middleware
+app.use(cors());
 app.use(express.json());
 
 // Initialize stores
