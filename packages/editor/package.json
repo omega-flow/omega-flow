@@ -1,0 +1,42 @@
+{
+  "name": "@omega-flow/editor",
+  "version": "0.0.0",
+  "description": "Workflow editor components for Omega Flow",
+  "type": "module",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup src/index.ts --format cjs,esm --dts --external react --external react-dom --external @xyflow/react",
+    "dev": "tsup src/index.ts --format cjs,esm --dts --watch --external react --external react-dom --external @xyflow/react",
+    "test": "jest --passWithNoTests",
+    "test:coverage": "jest --coverage --passWithNoTests"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0 || ^19.0.0",
+    "react-dom": "^18.0.0 || ^19.0.0",
+    "@xyflow/react": "^12.0.0"
+  },
+  "dependencies": {
+    "@omega-flow/types": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.5",
+    "@types/react-dom": "^19.2.3",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "@xyflow/react": "catalog:",
+    "tsup": "^8.0.0",
+    "typescript": "^5.7.2"
+  }
+}
