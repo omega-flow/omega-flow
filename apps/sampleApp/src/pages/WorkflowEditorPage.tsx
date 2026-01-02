@@ -13,6 +13,7 @@ import {
   useNodeRegistry,
   useDragAndDrop,
   useWorkflowEditor,
+  defaultNodeTypes,
 } from "@omega-flow/editor";
 import { useWorkflow } from "../hooks/useWorkflow";
 import { useAutoSave } from "../hooks/useAutoSave";
@@ -196,7 +197,7 @@ export function WorkflowEditorPage() {
 
   return (
     <div style={pageStyle}>
-      <WorkflowEditor workflow={workflow}>
+      <WorkflowEditor workflow={workflow} nodeTypes={defaultNodeTypes}>
         <EditorCanvas />
       </WorkflowEditor>
     </div>

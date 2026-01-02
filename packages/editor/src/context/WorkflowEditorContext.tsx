@@ -44,12 +44,12 @@ type Action =
 
 function createInitialState(
   workflow?: Workflow,
-  customNodeTypes?: NodeTypeDefinition[]
+  nodeTypes?: NodeTypeDefinition[]
 ): WorkflowEditorState {
-  // Combine default and custom node types
+  // Use provided node types, or fall back to defaults if none provided
   const nodeTypesMap = new Map<string, NodeTypeDefinition>();
-  defaultNodeTypes.forEach((def) => nodeTypesMap.set(def.type, def));
-  customNodeTypes?.forEach((def) => nodeTypesMap.set(def.type, def));
+  const typesToUse = nodeTypes ?? defaultNodeTypes;
+  typesToUse.forEach((def) => nodeTypesMap.set(def.type, def));
 
   if (workflow) {
     return {
@@ -270,14 +270,14 @@ function generateEdgeId(source: string, target: string): string {
 export function WorkflowEditorProvider({
   children,
   workflow,
-  nodeTypes: customNodeTypes,
+  nodeTypes,
   onWorkflowChange,
   onDirtyChange,
 }: WorkflowEditorProps) {
   const [state, dispatch] = useReducer(
     reducer,
-    { workflow, customNodeTypes },
-    ({ workflow, customNodeTypes }) => createInitialState(workflow, customNodeTypes)
+    { workflow, nodeTypes },
+    ({ workflow, nodeTypes }) => createInitialState(workflow, nodeTypes)
   );
 
   // Load workflow when prop changes
