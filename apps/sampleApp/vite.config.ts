@@ -7,4 +7,8 @@ export default defineConfig({
   server: {
     port: 5001,
   },
+  optimizeDeps: {
+    // Force Vite to not pre-bundle workspace packages so changes are picked up
+    exclude: ['@omega-flow/editor', '@omega-flow/types'],
+  },
 })

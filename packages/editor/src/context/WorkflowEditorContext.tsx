@@ -198,17 +198,27 @@ function reducer(state: WorkflowEditorState, action: Action): WorkflowEditorStat
     case "APPLY_NODE_CHANGES": {
       const newNodes = applyNodeChanges(action.payload, state.nodes);
       // Check for selection changes
+      // Process selections first, then deselections, to handle the case where
+      // ReactFlow sends deselect of old node after select of new node
       let newSelectedId = state.selectedNodeId;
+
+      // First pass: handle selections (new node being selected)
       for (const change of action.payload) {
         if (change.type === "select" && change.selected) {
           newSelectedId = change.id;
-        } else if (
+        }
+      }
+
+      // Second pass: handle deselections and removals
+      for (const change of action.payload) {
+        if (
           change.type === "select" &&
           !change.selected &&
-          change.id === state.selectedNodeId
+          change.id === newSelectedId
         ) {
+          // Only clear selection if the deselected node is still the selected one
           newSelectedId = null;
-        } else if (change.type === "remove" && change.id === state.selectedNodeId) {
+        } else if (change.type === "remove" && change.id === newSelectedId) {
           newSelectedId = null;
         }
       }
