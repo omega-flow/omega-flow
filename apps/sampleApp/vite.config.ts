@@ -5,6 +5,10 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   server: {
-    port: 5000,
+    port: 5001,
+  },
+  optimizeDeps: {
+    // Force Vite to not pre-bundle workspace packages so changes are picked up
+    exclude: ['@omega-flow/editor', '@omega-flow/types'],
   },
 })
