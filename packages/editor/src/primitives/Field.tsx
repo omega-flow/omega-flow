@@ -10,24 +10,24 @@ export interface FieldProps {
 const fieldStyle: React.CSSProperties = {
   display: "flex",
   flexDirection: "column",
-  gap: "4px",
-  marginBottom: "12px",
+  gap: "var(--of-spacing-1, 4px)",
+  marginBottom: "var(--of-spacing-5, 12px)",
 };
 
 const labelStyle: React.CSSProperties = {
-  fontSize: "12px",
-  fontWeight: 500,
-  color: "#374151",
+  fontSize: "var(--of-field-label-size, 12px)",
+  fontWeight: "var(--of-font-weight-medium, 500)" as React.CSSProperties["fontWeight"],
+  color: "var(--of-field-label-color, #374151)",
 };
 
 const errorStyle: React.CSSProperties = {
-  fontSize: "11px",
-  color: "#DC2626",
+  fontSize: "var(--of-font-size-xs, 11px)",
+  color: "var(--of-field-error-color, #DC2626)",
 };
 
 const hintStyle: React.CSSProperties = {
-  fontSize: "11px",
-  color: "#6B7280",
+  fontSize: "var(--of-font-size-xs, 11px)",
+  color: "var(--of-field-hint-color, #6B7280)",
 };
 
 /**

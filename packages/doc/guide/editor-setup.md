@@ -24,11 +24,14 @@ The editor package has the following peer dependencies:
 
 ### 1. Import Styles
 
-First, import the ReactFlow styles in your application:
+First, import the required styles in your application:
 
 ```tsx
 import "@xyflow/react/dist/style.css";
+import "@omega-flow/editor/styles.css"; // Optional: for theming support
 ```
+
+The Omega Flow editor styles are optional but recommended. They enable CSS variable-based theming. See the [Theming Guide](/guide/theming) for customization options.
 
 ### 2. Create the Editor Component
 
@@ -45,6 +48,7 @@ Here's a minimal setup:
 import React from "react";
 import { ReactFlow, Background, Controls, Panel } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
+import "@omega-flow/editor/styles.css";
 import {
   WorkflowEditor,
   NodesPanel,
@@ -285,6 +289,7 @@ Each panel component accepts props for customization:
 
 ## Next Steps
 
+- Learn how to [customize the editor theme](/guide/theming)
 - Learn how to [create custom nodes](/guide/custom-nodes)
 - Explore the [Components API](/api/components)
 - See [Hooks reference](/api/hooks)

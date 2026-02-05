@@ -2,6 +2,10 @@ import React, { useCallback, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { ReactFlow, Background, Controls, Panel } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
+// Import Omega Flow editor styles for theming support
+import "@omega-flow/editor/styles.css";
+// Uncomment to enable dark theme (also requires data-omega-flow-theme="dark" on a wrapper)
+// import "@omega-flow/editor/themes/dark.css";
 import {
   WorkflowEditor,
   NodesPanel,

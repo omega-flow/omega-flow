@@ -15,26 +15,27 @@ export interface BaseNodeViewProps {
 }
 
 const baseStyle: React.CSSProperties = {
-  padding: "10px 15px",
-  borderRadius: "8px",
+  padding: "var(--of-spacing-4, 10px) 15px",
+  borderRadius: "var(--of-radius-lg, 8px)",
   border: "2px solid",
-  backgroundColor: "#fff",
+  backgroundColor: "var(--of-node-bg, #fff)",
   minWidth: "150px",
-  fontSize: "12px",
-  fontFamily: "system-ui, sans-serif",
+  fontSize: "var(--of-font-size-sm, 12px)",
+  fontFamily: "var(--of-font-family-base, system-ui, sans-serif)",
 };
 
 const headerStyle: React.CSSProperties = {
   display: "flex",
   alignItems: "center",
-  gap: "6px",
-  fontWeight: 600,
-  marginBottom: "4px",
+  gap: "var(--of-spacing-2, 6px)",
+  fontWeight: "var(--of-font-weight-semibold, 600)" as React.CSSProperties["fontWeight"],
+  marginBottom: "var(--of-spacing-1, 4px)",
+  color: "var(--of-color-text-primary, #111827)",
 };
 
 const contentStyle: React.CSSProperties = {
-  color: "#666",
-  fontSize: "11px",
+  color: "var(--of-node-content-color, #666)",
+  fontSize: "var(--of-font-size-xs, 11px)",
 };
 
 const handleStyle: React.CSSProperties = {
@@ -61,7 +62,9 @@ export function BaseNodeView({
       style={{
         ...baseStyle,
         borderColor: color,
-        boxShadow: selected ? `0 0 0 2px ${color}40` : "0 2px 4px rgba(0,0,0,0.1)",
+        boxShadow: selected
+          ? `0 0 0 2px ${color}40`
+          : "var(--of-node-shadow, 0 2px 4px rgba(0,0,0,0.1))",
       }}
     >
       {/* Target handles (inputs) */}

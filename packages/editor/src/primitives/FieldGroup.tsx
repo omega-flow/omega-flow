@@ -8,17 +8,17 @@ export interface FieldGroupProps {
 }
 
 const groupStyle: React.CSSProperties = {
-  marginBottom: "16px",
+  marginBottom: "var(--of-spacing-6, 16px)",
 };
 
 const headerStyle: React.CSSProperties = {
   display: "flex",
   alignItems: "center",
-  gap: "6px",
-  marginBottom: "12px",
-  fontSize: "13px",
-  fontWeight: 600,
-  color: "#111827",
+  gap: "var(--of-spacing-2, 6px)",
+  marginBottom: "var(--of-spacing-5, 12px)",
+  fontSize: "var(--of-field-font-size, 13px)",
+  fontWeight: "var(--of-font-weight-semibold, 600)" as React.CSSProperties["fontWeight"],
+  color: "var(--of-color-text-primary, #111827)",
 };
 
 const toggleStyle: React.CSSProperties = {
@@ -26,11 +26,11 @@ const toggleStyle: React.CSSProperties = {
   userSelect: "none",
   display: "flex",
   alignItems: "center",
-  gap: "6px",
+  gap: "var(--of-spacing-2, 6px)",
 };
 
 const contentStyle: React.CSSProperties = {
-  paddingLeft: "4px",
+  paddingLeft: "var(--of-spacing-1, 4px)",
 };
 
 /**
@@ -56,7 +56,7 @@ export function FieldGroup({
           style={{ ...headerStyle, ...toggleStyle }}
           onClick={() => setCollapsed(!collapsed)}
         >
-          <span style={{ transform: collapsed ? "rotate(-90deg)" : "rotate(0)", transition: "transform 0.15s" }}>
+          <span style={{ transform: collapsed ? "rotate(-90deg)" : "rotate(0)", transition: "transform var(--of-transition-fast, 0.15s)" }}>
             ▼
           </span>
           {label}

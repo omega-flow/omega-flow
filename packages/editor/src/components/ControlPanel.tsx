@@ -4,54 +4,54 @@ import { TextField } from "../primitives";
 import type { ControlPanelProps } from "../context/types";
 
 const panelStyle: React.CSSProperties = {
-  backgroundColor: "#fff",
-  borderRadius: "8px",
-  padding: "12px",
-  boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+  backgroundColor: "var(--of-panel-bg, #fff)",
+  borderRadius: "var(--of-panel-radius, 8px)",
+  padding: "var(--of-panel-padding, 12px)",
+  boxShadow: "var(--of-panel-shadow, 0 2px 8px rgba(0,0,0,0.1))",
   minWidth: "220px",
 };
 
 const titleStyle: React.CSSProperties = {
-  fontSize: "12px",
-  fontWeight: 600,
-  color: "#374151",
-  marginBottom: "12px",
+  fontSize: "var(--of-panel-title-size, 12px)",
+  fontWeight: "var(--of-font-weight-semibold, 600)" as React.CSSProperties["fontWeight"],
+  color: "var(--of-panel-title-color, #374151)",
+  marginBottom: "var(--of-spacing-5, 12px)",
   textTransform: "uppercase",
   letterSpacing: "0.5px",
 };
 
 const actionsStyle: React.CSSProperties = {
   display: "flex",
-  gap: "8px",
-  marginTop: "12px",
+  gap: "var(--of-spacing-3, 8px)",
+  marginTop: "var(--of-spacing-5, 12px)",
 };
 
 const buttonStyle: React.CSSProperties = {
-  padding: "8px 16px",
-  fontSize: "13px",
-  fontWeight: 500,
-  borderRadius: "6px",
+  padding: "var(--of-button-padding, 8px 16px)",
+  fontSize: "var(--of-field-font-size, 13px)",
+  fontWeight: "var(--of-font-weight-medium, 500)" as React.CSSProperties["fontWeight"],
+  borderRadius: "var(--of-button-radius, 6px)",
   cursor: "pointer",
   border: "none",
-  transition: "all 0.15s",
+  transition: "all var(--of-transition-fast, 0.15s)",
 };
 
 const saveButtonStyle: React.CSSProperties = {
   ...buttonStyle,
-  backgroundColor: "#3B82F6",
-  color: "#fff",
+  backgroundColor: "var(--of-button-primary-bg, #3B82F6)",
+  color: "var(--of-button-primary-color, #fff)",
 };
 
 const saveButtonDisabledStyle: React.CSSProperties = {
   ...saveButtonStyle,
-  backgroundColor: "#93C5FD",
+  backgroundColor: "var(--of-button-primary-bg-disabled, #93C5FD)",
   cursor: "not-allowed",
 };
 
 const statusStyle: React.CSSProperties = {
-  fontSize: "11px",
-  color: "#6B7280",
-  marginTop: "8px",
+  fontSize: "var(--of-font-size-xs, 11px)",
+  color: "var(--of-color-text-tertiary, #6B7280)",
+  marginTop: "var(--of-spacing-3, 8px)",
 };
 
 /**
@@ -120,7 +120,10 @@ export function ControlPanel({
         <div
           style={{
             ...statusStyle,
-            color: saveStatus === "saved" ? "#059669" : "#DC2626",
+            color:
+              saveStatus === "saved"
+                ? "var(--of-color-status-success, #059669)"
+                : "var(--of-color-status-error, #DC2626)",
           }}
         >
           {saveStatus === "saved" ? "Saved successfully" : "Failed to save"}

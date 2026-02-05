@@ -4,18 +4,18 @@ import { useDragAndDrop } from "../hooks/useDragAndDrop";
 import type { NodesPanelProps, NodeTypeDefinition } from "../context/types";
 
 const panelStyle: React.CSSProperties = {
-  backgroundColor: "#fff",
-  borderRadius: "8px",
-  padding: "12px",
-  boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+  backgroundColor: "var(--of-panel-bg, #fff)",
+  borderRadius: "var(--of-panel-radius, 8px)",
+  padding: "var(--of-panel-padding, 12px)",
+  boxShadow: "var(--of-panel-shadow, 0 2px 8px rgba(0,0,0,0.1))",
   minWidth: "180px",
 };
 
 const titleStyle: React.CSSProperties = {
-  fontSize: "12px",
-  fontWeight: 600,
-  color: "#374151",
-  marginBottom: "12px",
+  fontSize: "var(--of-panel-title-size, 12px)",
+  fontWeight: "var(--of-font-weight-semibold, 600)" as React.CSSProperties["fontWeight"],
+  color: "var(--of-panel-title-color, #374151)",
+  marginBottom: "var(--of-spacing-5, 12px)",
   textTransform: "uppercase",
   letterSpacing: "0.5px",
 };
@@ -23,14 +23,14 @@ const titleStyle: React.CSSProperties = {
 const itemStyle: React.CSSProperties = {
   display: "flex",
   alignItems: "center",
-  gap: "8px",
-  padding: "8px 10px",
-  borderRadius: "6px",
+  gap: "var(--of-spacing-3, 8px)",
+  padding: "var(--of-spacing-3, 8px) var(--of-spacing-4, 10px)",
+  borderRadius: "var(--of-radius-md, 6px)",
   cursor: "grab",
-  marginBottom: "4px",
-  border: "1px solid #E5E7EB",
-  backgroundColor: "#fff",
-  transition: "all 0.15s",
+  marginBottom: "var(--of-spacing-1, 4px)",
+  border: "1px solid var(--of-color-border-secondary, #E5E7EB)",
+  backgroundColor: "var(--of-color-bg-primary, #fff)",
+  transition: "all var(--of-transition-fast, 0.15s)",
 };
 
 const itemIconStyle: React.CSSProperties = {
@@ -47,14 +47,14 @@ const itemTextStyle: React.CSSProperties = {
 };
 
 const itemLabelStyle: React.CSSProperties = {
-  fontSize: "13px",
-  fontWeight: 500,
-  color: "#111827",
+  fontSize: "var(--of-field-font-size, 13px)",
+  fontWeight: "var(--of-font-weight-medium, 500)" as React.CSSProperties["fontWeight"],
+  color: "var(--of-color-text-primary, #111827)",
 };
 
 const itemDescStyle: React.CSSProperties = {
-  fontSize: "11px",
-  color: "#6B7280",
+  fontSize: "var(--of-font-size-xs, 11px)",
+  color: "var(--of-color-text-tertiary, #6B7280)",
   marginTop: "2px",
 };
 
@@ -75,12 +75,16 @@ function NodeItem({
       draggable
       onDragStart={(e) => onDragStart(e, nodeType.type)}
       onMouseEnter={(e) => {
-        (e.currentTarget as HTMLElement).style.borderColor = "#3B82F6";
-        (e.currentTarget as HTMLElement).style.backgroundColor = "#F9FAFB";
+        (e.currentTarget as HTMLElement).style.borderColor =
+          "var(--of-color-border-focus, #3B82F6)";
+        (e.currentTarget as HTMLElement).style.backgroundColor =
+          "var(--of-color-bg-secondary, #F9FAFB)";
       }}
       onMouseLeave={(e) => {
-        (e.currentTarget as HTMLElement).style.borderColor = "#E5E7EB";
-        (e.currentTarget as HTMLElement).style.backgroundColor = "#fff";
+        (e.currentTarget as HTMLElement).style.borderColor =
+          "var(--of-color-border-secondary, #E5E7EB)";
+        (e.currentTarget as HTMLElement).style.backgroundColor =
+          "var(--of-color-bg-primary, #fff)";
       }}
     >
       <div style={itemIconStyle}>

@@ -11,13 +11,17 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
-    }
+    },
+    "./styles.css": "./dist/styles.css",
+    "./themes/light.css": "./dist/themes/light.css",
+    "./themes/dark.css": "./dist/themes/dark.css"
   },
   "files": [
     "dist"
   ],
   "scripts": {
-    "build": "tsup src/index.ts --format cjs,esm --dts --external react --external react-dom --external @xyflow/react",
+    "build": "tsup src/index.ts --format cjs,esm --dts --external react --external react-dom --external @xyflow/react && pnpm build:css",
+    "build:css": "mkdir -p dist/themes && cp src/styles/variables.css dist/styles.css && cp src/styles/themes/*.css dist/themes/",
     "dev": "tsup src/index.ts --format cjs,esm --dts --watch --external react --external react-dom --external @xyflow/react",
     "test": "jest --passWithNoTests",
     "test:coverage": "jest --coverage --passWithNoTests"

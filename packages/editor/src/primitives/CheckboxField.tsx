@@ -10,8 +10,8 @@ export interface CheckboxFieldProps {
 const containerStyle: React.CSSProperties = {
   display: "flex",
   alignItems: "center",
-  gap: "8px",
-  marginBottom: "12px",
+  gap: "var(--of-spacing-3, 8px)",
+  marginBottom: "var(--of-spacing-5, 12px)",
   cursor: "pointer",
 };
 
@@ -22,8 +22,8 @@ const checkboxStyle: React.CSSProperties = {
 };
 
 const labelStyle: React.CSSProperties = {
-  fontSize: "13px",
-  color: "#374151",
+  fontSize: "var(--of-field-font-size, 13px)",
+  color: "var(--of-color-text-secondary, #374151)",
   cursor: "pointer",
 };
 

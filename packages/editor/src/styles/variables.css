@@ -1,0 +1,147 @@
+/**
+ * Omega Flow Editor - CSS Custom Properties
+ *
+ * These variables can be overridden to customize the editor appearance.
+ * All variables use the --of- prefix (Omega Flow) to avoid collisions.
+ */
+
+:root,
+.omega-flow-editor,
+[data-omega-flow-theme] {
+  /* ============================================
+   * COLOR PALETTE
+   * ============================================ */
+
+  /* Background colors */
+  --of-color-bg-primary: #fff;
+  --of-color-bg-secondary: #F9FAFB;
+  --of-color-bg-tertiary: #F3F4F6;
+  --of-color-bg-disabled: #F3F4F6;
+
+  /* Text colors */
+  --of-color-text-primary: #111827;
+  --of-color-text-secondary: #374151;
+  --of-color-text-tertiary: #6B7280;
+  --of-color-text-muted: #9CA3AF;
+  --of-color-text-inverse: #fff;
+
+  /* Border colors */
+  --of-color-border-primary: #D1D5DB;
+  --of-color-border-secondary: #E5E7EB;
+  --of-color-border-focus: #3B82F6;
+
+  /* Interactive colors */
+  --of-color-interactive-primary: #3B82F6;
+  --of-color-interactive-primary-hover: #2563EB;
+  --of-color-interactive-primary-disabled: #93C5FD;
+
+  /* Status colors */
+  --of-color-status-success: #059669;
+  --of-color-status-error: #DC2626;
+  --of-color-status-error-bg: #FEE2E2;
+  --of-color-status-warning: #FF9800;
+
+  /* ============================================
+   * NODE COLORS
+   * ============================================ */
+
+  --of-node-trigger-color: #4CAF50;
+  --of-node-action-color: #2196F3;
+  --of-node-condition-color: #FF9800;
+  --of-node-exit-color: #F44336;
+  --of-node-wait-color: #9C27B0;
+  --of-node-trigger-timeout-color: #607D8B;
+
+  /* Node common styling */
+  --of-node-bg: var(--of-color-bg-primary);
+  --of-node-content-color: #666;
+  --of-node-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+  /* ============================================
+   * SPACING
+   * ============================================ */
+
+  --of-spacing-1: 4px;
+  --of-spacing-2: 6px;
+  --of-spacing-3: 8px;
+  --of-spacing-4: 10px;
+  --of-spacing-5: 12px;
+  --of-spacing-6: 16px;
+  --of-spacing-7: 20px;
+
+  /* ============================================
+   * TYPOGRAPHY
+   * ============================================ */
+
+  /* Font sizes */
+  --of-font-size-xs: 11px;
+  --of-font-size-sm: 12px;
+  --of-font-size-md: 13px;
+  --of-font-size-lg: 14px;
+
+  /* Font weights */
+  --of-font-weight-normal: 400;
+  --of-font-weight-medium: 500;
+  --of-font-weight-semibold: 600;
+
+  /* Font family */
+  --of-font-family-base: system-ui, sans-serif;
+  --of-font-family-mono: monospace;
+
+  /* ============================================
+   * BORDER RADIUS
+   * ============================================ */
+
+  --of-radius-sm: 4px;
+  --of-radius-md: 6px;
+  --of-radius-lg: 8px;
+
+  /* ============================================
+   * SHADOWS
+   * ============================================ */
+
+  --of-shadow-panel: 0 2px 8px rgba(0, 0, 0, 0.1);
+  --of-shadow-node: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+  /* ============================================
+   * TRANSITIONS
+   * ============================================ */
+
+  --of-transition-fast: 0.15s;
+  --of-transition-normal: 0.2s;
+
+  /* ============================================
+   * COMPONENT-SPECIFIC VARIABLES
+   * ============================================ */
+
+  /* Panel */
+  --of-panel-bg: var(--of-color-bg-primary);
+  --of-panel-shadow: var(--of-shadow-panel);
+  --of-panel-radius: var(--of-radius-lg);
+  --of-panel-padding: var(--of-spacing-5);
+  --of-panel-title-color: var(--of-color-text-secondary);
+  --of-panel-title-size: var(--of-font-size-sm);
+
+  /* Field */
+  --of-field-bg: var(--of-color-bg-primary);
+  --of-field-border: var(--of-color-border-primary);
+  --of-field-border-focus: var(--of-color-border-focus);
+  --of-field-border-error: var(--of-color-status-error);
+  --of-field-radius: var(--of-radius-md);
+  --of-field-padding: 8px 10px;
+  --of-field-font-size: var(--of-font-size-md);
+  --of-field-label-color: var(--of-color-text-secondary);
+  --of-field-label-size: var(--of-font-size-sm);
+  --of-field-hint-color: var(--of-color-text-tertiary);
+  --of-field-error-color: var(--of-color-status-error);
+
+  /* Button */
+  --of-button-primary-bg: var(--of-color-interactive-primary);
+  --of-button-primary-color: var(--of-color-text-inverse);
+  --of-button-primary-bg-hover: var(--of-color-interactive-primary-hover);
+  --of-button-primary-bg-disabled: var(--of-color-interactive-primary-disabled);
+  --of-button-danger-bg: var(--of-color-status-error-bg);
+  --of-button-danger-color: var(--of-color-status-error);
+  --of-button-radius: var(--of-radius-md);
+  --of-button-padding: 8px 16px;
+}

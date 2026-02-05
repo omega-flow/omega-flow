@@ -13,12 +13,13 @@ export interface TextAreaFieldProps {
 }
 
 const textareaStyle: React.CSSProperties = {
-  padding: "8px 10px",
-  borderRadius: "6px",
-  border: "1px solid #D1D5DB",
-  fontSize: "13px",
+  padding: "var(--of-field-padding, 8px 10px)",
+  borderRadius: "var(--of-field-radius, 6px)",
+  border: "1px solid var(--of-field-border, #D1D5DB)",
+  fontSize: "var(--of-field-font-size, 13px)",
+  color: "var(--of-color-text-primary, #111827)",
   outline: "none",
-  transition: "border-color 0.15s",
+  transition: "border-color var(--of-transition-fast, 0.15s)",
   resize: "vertical",
   fontFamily: "inherit",
 };
@@ -46,14 +47,20 @@ export function TextAreaField({
         disabled={disabled}
         style={{
           ...textareaStyle,
-          borderColor: error ? "#DC2626" : "#D1D5DB",
-          backgroundColor: disabled ? "#F3F4F6" : "#fff",
+          borderColor: error
+            ? "var(--of-field-border-error, #DC2626)"
+            : "var(--of-field-border, #D1D5DB)",
+          backgroundColor: disabled
+            ? "var(--of-color-bg-disabled, #F3F4F6)"
+            : "var(--of-field-bg, #fff)",
         }}
         onFocus={(e) => {
-          if (!error) e.target.style.borderColor = "#3B82F6";
+          if (!error)
+            e.target.style.borderColor = "var(--of-field-border-focus, #3B82F6)";
         }}
         onBlur={(e) => {
-          if (!error) e.target.style.borderColor = "#D1D5DB";
+          if (!error)
+            e.target.style.borderColor = "var(--of-field-border, #D1D5DB)";
         }}
       />
     </Field>

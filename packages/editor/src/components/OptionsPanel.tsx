@@ -5,18 +5,18 @@ import type { OptionsPanelProps } from "../context/types";
 import type { WorkflowFrequency } from "@omega-flow/types";
 
 const panelStyle: React.CSSProperties = {
-  backgroundColor: "#fff",
-  borderRadius: "8px",
-  padding: "12px",
-  boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+  backgroundColor: "var(--of-panel-bg, #fff)",
+  borderRadius: "var(--of-panel-radius, 8px)",
+  padding: "var(--of-panel-padding, 12px)",
+  boxShadow: "var(--of-panel-shadow, 0 2px 8px rgba(0,0,0,0.1))",
   minWidth: "220px",
 };
 
 const titleStyle: React.CSSProperties = {
-  fontSize: "12px",
-  fontWeight: 600,
-  color: "#374151",
-  marginBottom: "12px",
+  fontSize: "var(--of-panel-title-size, 12px)",
+  fontWeight: "var(--of-font-weight-semibold, 600)" as React.CSSProperties["fontWeight"],
+  color: "var(--of-panel-title-color, #374151)",
+  marginBottom: "var(--of-spacing-5, 12px)",
   textTransform: "uppercase",
   letterSpacing: "0.5px",
 };

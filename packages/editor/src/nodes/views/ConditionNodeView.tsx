@@ -2,7 +2,7 @@ import React from "react";
 import type { NodeProps } from "@xyflow/react";
 import { BaseNodeView } from "./BaseNodeView";
 
-const CONDITION_COLOR = "#FF9800";
+const CONDITION_COLOR = "var(--of-node-condition-color, #FF9800)";
 
 interface ConditionData {
   conditions?: {

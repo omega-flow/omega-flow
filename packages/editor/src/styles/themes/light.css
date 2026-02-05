@@ -1,0 +1,50 @@
+/**
+ * Omega Flow Editor - Light Theme
+ *
+ * This is the default theme that matches the original hardcoded styling.
+ * Import this file for explicit light theme support.
+ */
+
+[data-omega-flow-theme="light"],
+.omega-flow-theme-light {
+  /* Background colors */
+  --of-color-bg-primary: #fff;
+  --of-color-bg-secondary: #F9FAFB;
+  --of-color-bg-tertiary: #F3F4F6;
+  --of-color-bg-disabled: #F3F4F6;
+
+  /* Text colors */
+  --of-color-text-primary: #111827;
+  --of-color-text-secondary: #374151;
+  --of-color-text-tertiary: #6B7280;
+  --of-color-text-muted: #9CA3AF;
+  --of-color-text-inverse: #fff;
+
+  /* Border colors */
+  --of-color-border-primary: #D1D5DB;
+  --of-color-border-secondary: #E5E7EB;
+  --of-color-border-focus: #3B82F6;
+
+  /* Interactive colors */
+  --of-color-interactive-primary: #3B82F6;
+  --of-color-interactive-primary-hover: #2563EB;
+  --of-color-interactive-primary-disabled: #93C5FD;
+
+  /* Status colors */
+  --of-color-status-success: #059669;
+  --of-color-status-error: #DC2626;
+  --of-color-status-error-bg: #FEE2E2;
+  --of-color-status-warning: #FF9800;
+
+  /* Node colors */
+  --of-node-trigger-color: #4CAF50;
+  --of-node-action-color: #2196F3;
+  --of-node-condition-color: #FF9800;
+  --of-node-exit-color: #F44336;
+  --of-node-wait-color: #9C27B0;
+  --of-node-trigger-timeout-color: #607D8B;
+
+  /* Node common */
+  --of-node-bg: #fff;
+  --of-node-content-color: #666;
+}

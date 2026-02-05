@@ -2,7 +2,7 @@ import React from "react";
 import type { NodeProps } from "@xyflow/react";
 import { BaseNodeView } from "./BaseNodeView";
 
-const ACTION_COLOR = "#2196F3";
+const ACTION_COLOR = "var(--of-node-action-color, #2196F3)";
 
 export function ActionNodeView({ id, data, selected }: NodeProps) {
   const nodeData = data as Record<string, unknown>;

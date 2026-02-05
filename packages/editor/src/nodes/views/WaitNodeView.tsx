@@ -2,7 +2,7 @@ import React from "react";
 import type { NodeProps } from "@xyflow/react";
 import { BaseNodeView } from "./BaseNodeView";
 
-const WAIT_COLOR = "#9C27B0";
+const WAIT_COLOR = "var(--of-node-wait-color, #9C27B0)";
 
 function formatDuration(ms: number): string {
   if (ms < 1000) return `${ms}ms`;

@@ -3,59 +3,59 @@ import { useSelectedNode } from "../hooks/useSelectedNode";
 import type { DetailPanelProps } from "../context/types";
 
 const panelStyle: React.CSSProperties = {
-  backgroundColor: "#fff",
-  borderRadius: "8px",
-  padding: "12px",
-  boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+  backgroundColor: "var(--of-panel-bg, #fff)",
+  borderRadius: "var(--of-panel-radius, 8px)",
+  padding: "var(--of-panel-padding, 12px)",
+  boxShadow: "var(--of-panel-shadow, 0 2px 8px rgba(0,0,0,0.1))",
   minWidth: "280px",
   maxWidth: "320px",
 };
 
 const titleStyle: React.CSSProperties = {
-  fontSize: "12px",
-  fontWeight: 600,
-  color: "#374151",
-  marginBottom: "12px",
+  fontSize: "var(--of-panel-title-size, 12px)",
+  fontWeight: "var(--of-font-weight-semibold, 600)" as React.CSSProperties["fontWeight"],
+  color: "var(--of-panel-title-color, #374151)",
+  marginBottom: "var(--of-spacing-5, 12px)",
   textTransform: "uppercase",
   letterSpacing: "0.5px",
 };
 
 const emptyStyle: React.CSSProperties = {
-  fontSize: "13px",
-  color: "#6B7280",
+  fontSize: "var(--of-field-font-size, 13px)",
+  color: "var(--of-color-text-tertiary, #6B7280)",
   textAlign: "center",
-  padding: "20px 0",
+  padding: "var(--of-spacing-7, 20px) 0",
 };
 
 const headerStyle: React.CSSProperties = {
   display: "flex",
   alignItems: "center",
-  gap: "8px",
-  marginBottom: "16px",
-  paddingBottom: "12px",
-  borderBottom: "1px solid #E5E7EB",
+  gap: "var(--of-spacing-3, 8px)",
+  marginBottom: "var(--of-spacing-6, 16px)",
+  paddingBottom: "var(--of-spacing-5, 12px)",
+  borderBottom: "1px solid var(--of-color-border-secondary, #E5E7EB)",
 };
 
 const nodeTypeStyle: React.CSSProperties = {
-  fontSize: "14px",
-  fontWeight: 600,
-  color: "#111827",
+  fontSize: "var(--of-font-size-lg, 14px)",
+  fontWeight: "var(--of-font-weight-semibold, 600)" as React.CSSProperties["fontWeight"],
+  color: "var(--of-color-text-primary, #111827)",
 };
 
 const nodeIdStyle: React.CSSProperties = {
-  fontSize: "11px",
-  color: "#9CA3AF",
-  fontFamily: "monospace",
+  fontSize: "var(--of-font-size-xs, 11px)",
+  color: "var(--of-color-text-muted, #9CA3AF)",
+  fontFamily: "var(--of-font-family-mono, monospace)",
 };
 
 const deleteButtonStyle: React.CSSProperties = {
   marginLeft: "auto",
-  padding: "4px 8px",
-  fontSize: "11px",
-  color: "#DC2626",
-  backgroundColor: "#FEE2E2",
+  padding: "var(--of-spacing-1, 4px) var(--of-spacing-3, 8px)",
+  fontSize: "var(--of-font-size-xs, 11px)",
+  color: "var(--of-button-danger-color, #DC2626)",
+  backgroundColor: "var(--of-button-danger-bg, #FEE2E2)",
   border: "none",
-  borderRadius: "4px",
+  borderRadius: "var(--of-radius-sm, 4px)",
   cursor: "pointer",
 };
 

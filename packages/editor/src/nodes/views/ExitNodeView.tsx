@@ -2,7 +2,7 @@ import React from "react";
 import type { NodeProps } from "@xyflow/react";
 import { BaseNodeView } from "./BaseNodeView";
 
-const EXIT_COLOR = "#F44336";
+const EXIT_COLOR = "var(--of-node-exit-color, #F44336)";
 
 export function ExitNodeView({ id, data, selected }: NodeProps) {
   return (

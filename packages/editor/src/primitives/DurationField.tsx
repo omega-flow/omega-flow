@@ -35,25 +35,27 @@ function msToUnit(ms: number): { value: number; unit: DurationUnit } {
 
 const containerStyle: React.CSSProperties = {
   display: "flex",
-  gap: "8px",
+  gap: "var(--of-spacing-3, 8px)",
 };
 
 const inputStyle: React.CSSProperties = {
   flex: 1,
-  padding: "8px 10px",
-  borderRadius: "6px",
-  border: "1px solid #D1D5DB",
-  fontSize: "13px",
+  padding: "var(--of-field-padding, 8px 10px)",
+  borderRadius: "var(--of-field-radius, 6px)",
+  border: "1px solid var(--of-field-border, #D1D5DB)",
+  fontSize: "var(--of-field-font-size, 13px)",
+  color: "var(--of-color-text-primary, #111827)",
   outline: "none",
 };
 
 const selectStyle: React.CSSProperties = {
-  padding: "8px 10px",
-  borderRadius: "6px",
-  border: "1px solid #D1D5DB",
-  fontSize: "13px",
+  padding: "var(--of-field-padding, 8px 10px)",
+  borderRadius: "var(--of-field-radius, 6px)",
+  border: "1px solid var(--of-field-border, #D1D5DB)",
+  fontSize: "var(--of-field-font-size, 13px)",
+  color: "var(--of-color-text-primary, #111827)",
   outline: "none",
-  backgroundColor: "#fff",
+  backgroundColor: "var(--of-field-bg, #fff)",
 };
 
 /**
@@ -102,8 +104,12 @@ export function DurationField({
           disabled={disabled}
           style={{
             ...inputStyle,
-            borderColor: error ? "#DC2626" : "#D1D5DB",
-            backgroundColor: disabled ? "#F3F4F6" : "#fff",
+            borderColor: error
+              ? "var(--of-field-border-error, #DC2626)"
+              : "var(--of-field-border, #D1D5DB)",
+            backgroundColor: disabled
+              ? "var(--of-color-bg-disabled, #F3F4F6)"
+              : "var(--of-field-bg, #fff)",
           }}
         />
         <select
@@ -112,7 +118,9 @@ export function DurationField({
           disabled={disabled}
           style={{
             ...selectStyle,
-            backgroundColor: disabled ? "#F3F4F6" : "#fff",
+            backgroundColor: disabled
+              ? "var(--of-color-bg-disabled, #F3F4F6)"
+              : "var(--of-field-bg, #fff)",
           }}
         >
           {units.map((u) => (

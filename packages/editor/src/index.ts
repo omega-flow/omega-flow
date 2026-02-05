@@ -88,3 +88,6 @@ export type {
   JsonFieldProps,
   FieldGroupProps,
 } from "./primitives";
+
+// Theming utilities
+export { themeVars, cssVar } from "./styles";

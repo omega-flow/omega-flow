@@ -1,0 +1,69 @@
+/**
+ * Omega Flow Editor - Dark Theme
+ *
+ * Usage:
+ * 1. Import both styles.css and this file
+ * 2. Add data-omega-flow-theme="dark" or class="omega-flow-theme-dark"
+ *    to a wrapper element (use <html> for global dark mode)
+ *
+ * Example (global): document.documentElement.setAttribute('data-omega-flow-theme', 'dark')
+ * Example (scoped): <div data-omega-flow-theme="dark">...</div>
+ */
+
+[data-omega-flow-theme="dark"],
+.omega-flow-theme-dark {
+  /* Background colors */
+  --of-color-bg-primary: #1F2937;
+  --of-color-bg-secondary: #111827;
+  --of-color-bg-tertiary: #374151;
+  --of-color-bg-disabled: #374151;
+
+  /* Text colors */
+  --of-color-text-primary: #F9FAFB;
+  --of-color-text-secondary: #E5E7EB;
+  --of-color-text-tertiary: #9CA3AF;
+  --of-color-text-muted: #6B7280;
+  --of-color-text-inverse: #111827;
+
+  /* Border colors */
+  --of-color-border-primary: #4B5563;
+  --of-color-border-secondary: #374151;
+  --of-color-border-focus: #60A5FA;
+
+  /* Interactive colors */
+  --of-color-interactive-primary: #3B82F6;
+  --of-color-interactive-primary-hover: #60A5FA;
+  --of-color-interactive-primary-disabled: #1E40AF;
+
+  /* Status colors */
+  --of-color-status-success: #10B981;
+  --of-color-status-error: #EF4444;
+  --of-color-status-error-bg: #7F1D1D;
+  --of-color-status-warning: #F59E0B;
+
+  /* Node colors - slightly adjusted for dark mode visibility */
+  --of-node-trigger-color: #4ADE80;
+  --of-node-action-color: #60A5FA;
+  --of-node-condition-color: #FBBF24;
+  --of-node-exit-color: #F87171;
+  --of-node-wait-color: #C084FC;
+  --of-node-trigger-timeout-color: #94A3B8;
+
+  /* Node common */
+  --of-node-bg: #374151;
+  --of-node-content-color: #9CA3AF;
+
+  /* Shadows adjusted for dark mode */
+  --of-shadow-panel: 0 2px 8px rgba(0, 0, 0, 0.3);
+  --of-shadow-node: 0 2px 4px rgba(0, 0, 0, 0.3);
+
+  /* Panel overrides */
+  --of-panel-bg: #1F2937;
+  --of-panel-title-color: #E5E7EB;
+
+  /* Field overrides */
+  --of-field-bg: #374151;
+  --of-field-border: #4B5563;
+  --of-field-label-color: #E5E7EB;
+  --of-field-hint-color: #9CA3AF;
+}

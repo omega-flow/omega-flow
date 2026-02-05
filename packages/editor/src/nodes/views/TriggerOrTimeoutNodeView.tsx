@@ -2,7 +2,7 @@ import React from "react";
 import type { NodeProps } from "@xyflow/react";
 import { BaseNodeView } from "./BaseNodeView";
 
-const TRIGGER_OR_TIMEOUT_COLOR = "#607D8B";
+const TRIGGER_OR_TIMEOUT_COLOR = "var(--of-node-trigger-timeout-color, #607D8B)";
 
 function formatDuration(ms: number): string {
   if (ms < 1000) return `${ms}ms`;
