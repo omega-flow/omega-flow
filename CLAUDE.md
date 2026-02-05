@@ -37,6 +37,17 @@ Navigate to specific package or use pnpm filtering:
 - Dev server: `cd apps/sampleServer && pnpm dev` (runs on port 5010)
 - Build: `pnpm --filter=@omega-flow/sample-server run build`
 
+**For @omega-flow/sample-app:**
+
+- Dev server: `cd apps/sampleApp && pnpm dev` (runs on port 5001)
+- Build: `pnpm --filter=@omega-flow/sample-app run build`
+
+**For @omega-flow/doc:**
+
+- Dev server: `cd packages/doc && pnpm dev`
+- Build: `pnpm --filter=@omega-flow/doc run build`
+- Preview built docs: `cd packages/doc && pnpm preview`
+
 ### Running a single test file:
 
 ```bash
@@ -53,10 +64,12 @@ This is a monorepo containing packages and apps:
 - **@omega-flow/types** - TypeScript types & JSON Schema (Ajv) for workflow, events, context
 - **@omega-flow/engine** - Workflow engine that executes workflows, manages state, and handles events
 - **@omega-flow/editor** - React-based workflow editor components (in development)
+- **@omega-flow/doc** (`packages/doc`) - VitePress documentation site containing API reference and guides
 
 ### Apps
 
 - **@omega-flow/sample-server** (`apps/sampleServer`) - Express development server with file-based DB for workflows and contexts. Implements `WorkflowStore` and `WorkflowMemory` interfaces. Run with `pnpm dev` (port 5010). See `apps/sampleServer/README.md` for API docs.
+- **@omega-flow/sample-app** (`apps/sampleApp`) - React + Vite sample application demonstrating the workflow editor. Features a workflow list page and workflow editor page. Uses `@omega-flow/editor` and `@omega-flow/types` packages. Run with `pnpm dev` (port 5001).
 
 ## Core Architecture
 
