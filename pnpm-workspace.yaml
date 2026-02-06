@@ -1,7 +1,7 @@
-catalog:
-  "@xyflow/react": ^12.8.4
-
 packages:
-  - "packages/*"
-  - "apps/*"
-  - "tools/*"
+  - packages/*
+  - apps/*
+  - tools/*
+
+catalog:
+  '@xyflow/react': ^12.10.0
