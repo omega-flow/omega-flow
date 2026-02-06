@@ -111,8 +111,7 @@ export const defaultTranslations: TranslationDictionary = {
 
   // ── Primitives / fields ────────────────────────────────────
   "fields.json.invalidJson": "Invalid JSON",
-  "fields.duration.milliseconds": "Milliseconds",
-  "fields.duration.seconds": "Seconds",
-  "fields.duration.minutes": "Minutes",
-  "fields.duration.hours": "Hours",
+  "fields.duration.days": "d",
+  "fields.duration.hours": "h",
+  "fields.duration.minutes": "m",
 };

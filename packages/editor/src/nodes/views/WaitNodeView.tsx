@@ -2,15 +2,9 @@ import React from "react";
 import type { NodeProps } from "@xyflow/react";
 import { BaseNodeView } from "./BaseNodeView";
 import { useTranslation } from "../../i18n";
+import { formatDuration } from "../../utils/duration";
 
 const WAIT_COLOR = "var(--of-node-wait-color, #9C27B0)";
-
-function formatDuration(ms: number): string {
-  if (ms < 1000) return `${ms}ms`;
-  if (ms < 60000) return `${ms / 1000}s`;
-  if (ms < 3600000) return `${ms / 60000}min`;
-  return `${ms / 3600000}h`;
-}
 
 export function WaitNodeView({ id, data, selected }: NodeProps) {
   const t = useTranslation();

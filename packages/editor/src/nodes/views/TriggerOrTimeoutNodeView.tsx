@@ -2,15 +2,9 @@ import React from "react";
 import type { NodeProps } from "@xyflow/react";
 import { BaseNodeView } from "./BaseNodeView";
 import { useTranslation } from "../../i18n";
+import { formatDuration } from "../../utils/duration";
 
 const TRIGGER_OR_TIMEOUT_COLOR = "var(--of-node-trigger-timeout-color, #607D8B)";
-
-function formatDuration(ms: number): string {
-  if (ms < 1000) return `${ms}ms`;
-  if (ms < 60000) return `${ms / 1000}s`;
-  if (ms < 3600000) return `${ms / 60000}min`;
-  return `${ms / 3600000}h`;
-}
 
 interface TriggerOrTimeoutData {
   params?: {

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Field } from "./Field";
 import { useTranslation } from "../i18n";
+import { msToParts, partsToMs, type DurationParts } from "../utils/duration";
 
 export interface DurationFieldProps {
   label: string;
@@ -12,56 +13,36 @@ export interface DurationFieldProps {
   hint?: string;
 }
 
-type DurationUnit = "ms" | "s" | "min" | "h";
-
-const unitDefs: { value: DurationUnit; labelKey: string; multiplier: number }[] = [
-  { value: "ms", labelKey: "fields.duration.milliseconds", multiplier: 1 },
-  { value: "s", labelKey: "fields.duration.seconds", multiplier: 1000 },
-  { value: "min", labelKey: "fields.duration.minutes", multiplier: 60000 },
-  { value: "h", labelKey: "fields.duration.hours", multiplier: 3600000 },
-];
-
-function msToUnit(ms: number): { value: number; unit: DurationUnit } {
-  if (ms >= 3600000 && ms % 3600000 === 0) {
-    return { value: ms / 3600000, unit: "h" };
-  }
-  if (ms >= 60000 && ms % 60000 === 0) {
-    return { value: ms / 60000, unit: "min" };
-  }
-  if (ms >= 1000 && ms % 1000 === 0) {
-    return { value: ms / 1000, unit: "s" };
-  }
-  return { value: ms, unit: "ms" };
-}
-
 const containerStyle: React.CSSProperties = {
   display: "flex",
   gap: "var(--of-spacing-3, 8px)",
 };
 
-const inputStyle: React.CSSProperties = {
-  flex: 1,
-  padding: "var(--of-field-padding, 8px 10px)",
-  borderRadius: "var(--of-field-radius, 6px)",
-  border: "1px solid var(--of-field-border, #D1D5DB)",
-  fontSize: "var(--of-field-font-size, 13px)",
-  color: "var(--of-color-text-primary, #111827)",
-  outline: "none",
+const unitGroupStyle: React.CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  gap: "var(--of-spacing-2, 4px)",
 };
 
-const selectStyle: React.CSSProperties = {
+const inputStyle: React.CSSProperties = {
+  width: "60px",
   padding: "var(--of-field-padding, 8px 10px)",
   borderRadius: "var(--of-field-radius, 6px)",
   border: "1px solid var(--of-field-border, #D1D5DB)",
   fontSize: "var(--of-field-font-size, 13px)",
   color: "var(--of-color-text-primary, #111827)",
   outline: "none",
-  backgroundColor: "var(--of-field-bg, #fff)",
+  textAlign: "center" as const,
+};
+
+const labelStyle: React.CSSProperties = {
+  fontSize: "var(--of-field-font-size, 13px)",
+  color: "var(--of-color-text-secondary, #6B7280)",
 };
 
 /**
- * Duration input field with unit selector (ms, s, min, h).
- * Value is stored in milliseconds but displayed in a user-friendly unit.
+ * Duration input field with separate inputs for days, hours, and minutes.
+ * Value is stored in milliseconds but displayed as composite parts.
  */
 export function DurationField({
   label,
@@ -72,65 +53,70 @@ export function DurationField({
   hint,
 }: DurationFieldProps) {
   const t = useTranslation();
-  const initial = msToUnit(value);
-  const [displayValue, setDisplayValue] = useState(initial.value);
-  const [unit, setUnit] = useState<DurationUnit>(initial.unit);
+  const initial = msToParts(value);
+  const [parts, setParts] = useState<DurationParts>(initial);
 
   // Update display when external value changes
   useEffect(() => {
-    const converted = msToUnit(value);
-    setDisplayValue(converted.value);
-    setUnit(converted.unit);
+    const converted = msToParts(value);
+    setParts(converted);
   }, [value]);
 
-  const handleValueChange = (newValue: number) => {
-    setDisplayValue(newValue);
-    const unitInfo = unitDefs.find((u) => u.value === unit)!;
-    onChange(newValue * unitInfo.multiplier);
+  const handlePartChange = (part: keyof DurationParts, newValue: number) => {
+    const sanitizedValue = Math.max(0, Math.floor(newValue) || 0);
+    const newParts = { ...parts, [part]: sanitizedValue };
+    setParts(newParts);
+    onChange(partsToMs(newParts));
   };
 
-  const handleUnitChange = (newUnit: DurationUnit) => {
-    setUnit(newUnit);
-    const unitInfo = unitDefs.find((u) => u.value === newUnit)!;
-    onChange(displayValue * unitInfo.multiplier);
-  };
+  const getInputStyle = (): React.CSSProperties => ({
+    ...inputStyle,
+    borderColor: error
+      ? "var(--of-field-border-error, #DC2626)"
+      : "var(--of-field-border, #D1D5DB)",
+    backgroundColor: disabled
+      ? "var(--of-color-bg-disabled, #F3F4F6)"
+      : "var(--of-field-bg, #fff)",
+  });
 
   return (
     <Field label={label} error={error} hint={hint}>
       <div style={containerStyle}>
-        <input
-          type="number"
-          value={displayValue}
-          onChange={(e) => handleValueChange(parseFloat(e.target.value) || 0)}
-          min={0}
-          disabled={disabled}
-          style={{
-            ...inputStyle,
-            borderColor: error
-              ? "var(--of-field-border-error, #DC2626)"
-              : "var(--of-field-border, #D1D5DB)",
-            backgroundColor: disabled
-              ? "var(--of-color-bg-disabled, #F3F4F6)"
-              : "var(--of-field-bg, #fff)",
-          }}
-        />
-        <select
-          value={unit}
-          onChange={(e) => handleUnitChange(e.target.value as DurationUnit)}
-          disabled={disabled}
-          style={{
-            ...selectStyle,
-            backgroundColor: disabled
-              ? "var(--of-color-bg-disabled, #F3F4F6)"
-              : "var(--of-field-bg, #fff)",
-          }}
-        >
-          {unitDefs.map((u) => (
-            <option key={u.value} value={u.value}>
-              {t(u.labelKey)}
-            </option>
-          ))}
-        </select>
+        <div style={unitGroupStyle}>
+          <input
+            type="number"
+            value={parts.days}
+            onChange={(e) => handlePartChange("days", parseFloat(e.target.value))}
+            min={0}
+            disabled={disabled}
+            style={getInputStyle()}
+          />
+          <span style={labelStyle}>{t("fields.duration.days")}</span>
+        </div>
+        <div style={unitGroupStyle}>
+          <input
+            type="number"
+            value={parts.hours}
+            onChange={(e) => handlePartChange("hours", parseFloat(e.target.value))}
+            min={0}
+            max={23}
+            disabled={disabled}
+            style={getInputStyle()}
+          />
+          <span style={labelStyle}>{t("fields.duration.hours")}</span>
+        </div>
+        <div style={unitGroupStyle}>
+          <input
+            type="number"
+            value={parts.minutes}
+            onChange={(e) => handlePartChange("minutes", parseFloat(e.target.value))}
+            min={0}
+            max={59}
+            disabled={disabled}
+            style={getInputStyle()}
+          />
+          <span style={labelStyle}>{t("fields.duration.minutes")}</span>
+        </div>
       </div>
     </Field>
   );
