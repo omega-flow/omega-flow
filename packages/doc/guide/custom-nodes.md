@@ -30,24 +30,15 @@ interface NodeTypeDefinition {
   // Initial data when node is created
   defaultData: Record<string, unknown>;
 
-  // Output connection handles
-  sourceHandles: HandleDefinition[];
-
-  // Input connection handles
-  targetHandles: HandleDefinition[];
-
   // Component rendered on the canvas
   ViewComponent: ComponentType<NodeViewProps>;
 
   // Component rendered in the detail panel
   DetailComponent: ComponentType<NodeDetailProps>;
 }
-
-interface HandleDefinition {
-  id: string;
-  label?: string;
-}
 ```
+
+Connection handles (input/output ports) are defined in the `ViewComponent` using `BaseNodeView`. See [Step 3](#step-3-create-the-view-component) for details.
 
 ## Creating a Custom Node
 
@@ -185,8 +176,6 @@ const sendEmailNodeType: NodeTypeDefinition = {
     body: "",
     template: "",
   },
-  sourceHandles: [{ id: "output", label: "Next" }],
-  targetHandles: [{ id: "input", label: "In" }],
   ViewComponent: SendEmailNodeView,
   DetailComponent: SendEmailNodeDetail,
 };
@@ -312,8 +301,6 @@ export const sendEmailNodeType: NodeTypeDefinition = {
     body: "",
     template: "",
   },
-  sourceHandles: [{ id: "output", label: "Next" }],
-  targetHandles: [{ id: "input", label: "In" }],
   ViewComponent: SendEmailNodeView,
   DetailComponent: SendEmailNodeDetail,
 };
@@ -321,51 +308,72 @@ export const sendEmailNodeType: NodeTypeDefinition = {
 
 ## Multiple Output Handles
 
-For nodes that need branching (like conditions), define multiple source handles:
+For nodes that need branching (like conditions), define multiple source handles in the ViewComponent:
 
 ```tsx
-const branchNodeType: NodeTypeDefinition = {
-  type: "Branch",
-  label: "Branch",
-  defaultData: { condition: "" },
-  sourceHandles: [
-    { id: "yes", label: "Yes" },
-    { id: "no", label: "No" },
-    { id: "error", label: "Error" },
-  ],
-  targetHandles: [{ id: "input", label: "In" }],
-  // ...
-};
+function BranchNodeView({ id, data, selected }: NodeViewProps) {
+  return (
+    <BaseNodeView
+      id={id}
+      data={data as Record<string, unknown>}
+      selected={selected}
+      label="Branch"
+      color="#FF9800"
+      sourceHandles={[
+        { id: "yes", label: "Yes" },
+        { id: "no", label: "No" },
+        { id: "error", label: "Error" },
+      ]}
+      targetHandles={[{ id: "input", label: "In" }]}
+    >
+      {/* Node content */}
+    </BaseNodeView>
+  );
+}
 ```
 
 ## Nodes Without Inputs (Start Nodes)
 
-For nodes that start a workflow (like Trigger):
+For nodes that start a workflow (like Trigger), omit target handles:
 
 ```tsx
-const startNodeType: NodeTypeDefinition = {
-  type: "Start",
-  label: "Start",
-  defaultData: {},
-  sourceHandles: [{ id: "output", label: "Next" }],
-  targetHandles: [],  // No inputs
-  // ...
-};
+function StartNodeView({ id, data, selected }: NodeViewProps) {
+  return (
+    <BaseNodeView
+      id={id}
+      data={data as Record<string, unknown>}
+      selected={selected}
+      label="Start"
+      color="#4CAF50"
+      sourceHandles={[{ id: "output", label: "Next" }]}
+      targetHandles={[]}  // No inputs
+    >
+      {/* Node content */}
+    </BaseNodeView>
+  );
+}
 ```
 
 ## Nodes Without Outputs (End Nodes)
 
-For nodes that terminate a workflow (like Exit):
+For nodes that terminate a workflow (like Exit), omit source handles:
 
 ```tsx
-const endNodeType: NodeTypeDefinition = {
-  type: "End",
-  label: "End",
-  defaultData: {},
-  sourceHandles: [],  // No outputs
-  targetHandles: [{ id: "input", label: "In" }],
-  // ...
-};
+function EndNodeView({ id, data, selected }: NodeViewProps) {
+  return (
+    <BaseNodeView
+      id={id}
+      data={data as Record<string, unknown>}
+      selected={selected}
+      label="End"
+      color="#F44336"
+      sourceHandles={[]}  // No outputs
+      targetHandles={[{ id: "input", label: "In" }]}
+    >
+      {/* Node content */}
+    </BaseNodeView>
+  );
+}
 ```
 
 ## Using Built-in Views and Details

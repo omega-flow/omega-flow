@@ -39,10 +39,6 @@ export interface NodeTypeDefinition {
   Icon?: ComponentType<{ size?: number }>;
   /** Initial data when node is created */
   defaultData: Record<string, unknown>;
-  /** Output connection handles */
-  sourceHandles: HandleDefinition[];
-  /** Input connection handles */
-  targetHandles: HandleDefinition[];
   /** Component to render on the canvas */
   ViewComponent: ComponentType<NodeViewProps>;
   /** Component to render in the detail panel */
