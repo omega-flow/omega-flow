@@ -1,5 +1,6 @@
 import React from "react";
 import { DurationField, FieldGroup } from "../../primitives";
+import { useTranslation } from "../../i18n";
 import type { NodeDetailProps } from "../types";
 
 interface WaitData {
@@ -13,6 +14,7 @@ interface WaitData {
  * Allows setting the wait duration.
  */
 export function WaitNodeDetail({ node, onChange }: NodeDetailProps) {
+  const t = useTranslation();
   const data = node.data as WaitData;
 
   const handleDurationChange = (duration: number) => {
@@ -23,12 +25,12 @@ export function WaitNodeDetail({ node, onChange }: NodeDetailProps) {
   };
 
   return (
-    <FieldGroup label="Wait Configuration">
+    <FieldGroup label={t("nodeDetails.wait.group")}>
       <DurationField
-        label="Duration"
+        label={t("nodeDetails.wait.durationLabel")}
         value={data.params?.duration ?? 60000}
         onChange={handleDurationChange}
-        hint="How long to pause before continuing to the next node"
+        hint={t("nodeDetails.wait.durationHint")}
       />
     </FieldGroup>
   );

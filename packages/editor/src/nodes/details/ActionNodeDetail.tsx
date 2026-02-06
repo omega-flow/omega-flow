@@ -1,5 +1,6 @@
 import React from "react";
 import { TextField, JsonField, FieldGroup } from "../../primitives";
+import { useTranslation } from "../../i18n";
 import type { NodeDetailProps } from "../types";
 
 interface ActionData {
@@ -12,6 +13,7 @@ interface ActionData {
  * Allows setting the action name and parameters.
  */
 export function ActionNodeDetail({ node, onChange }: NodeDetailProps) {
+  const t = useTranslation();
   const data = node.data as ActionData;
 
   const handleActionChange = (action: string) => {
@@ -29,19 +31,19 @@ export function ActionNodeDetail({ node, onChange }: NodeDetailProps) {
   };
 
   return (
-    <FieldGroup label="Action Configuration">
+    <FieldGroup label={t("nodeDetails.action.group")}>
       <TextField
-        label="Action Name"
+        label={t("nodeDetails.action.nameLabel")}
         value={data.action ?? ""}
         onChange={handleActionChange}
-        placeholder="e.g., sendEmail, createTask"
-        hint="The action to perform when this node is reached"
+        placeholder={t("nodeDetails.action.namePlaceholder")}
+        hint={t("nodeDetails.action.nameHint")}
       />
       <JsonField
-        label="Parameters"
+        label={t("nodeDetails.action.paramsLabel")}
         value={data.params ?? {}}
         onChange={handleParamsChange}
-        hint="JSON object with action parameters"
+        hint={t("nodeDetails.action.paramsHint")}
         rows={4}
       />
     </FieldGroup>

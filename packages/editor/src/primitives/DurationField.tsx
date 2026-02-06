@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Field } from "./Field";
+import { useTranslation } from "../i18n";
 
 export interface DurationFieldProps {
   label: string;
@@ -13,11 +14,11 @@ export interface DurationFieldProps {
 
 type DurationUnit = "ms" | "s" | "min" | "h";
 
-const units: { value: DurationUnit; label: string; multiplier: number }[] = [
-  { value: "ms", label: "Milliseconds", multiplier: 1 },
-  { value: "s", label: "Seconds", multiplier: 1000 },
-  { value: "min", label: "Minutes", multiplier: 60000 },
-  { value: "h", label: "Hours", multiplier: 3600000 },
+const unitDefs: { value: DurationUnit; labelKey: string; multiplier: number }[] = [
+  { value: "ms", labelKey: "fields.duration.milliseconds", multiplier: 1 },
+  { value: "s", labelKey: "fields.duration.seconds", multiplier: 1000 },
+  { value: "min", labelKey: "fields.duration.minutes", multiplier: 60000 },
+  { value: "h", labelKey: "fields.duration.hours", multiplier: 3600000 },
 ];
 
 function msToUnit(ms: number): { value: number; unit: DurationUnit } {
@@ -70,6 +71,7 @@ export function DurationField({
   error,
   hint,
 }: DurationFieldProps) {
+  const t = useTranslation();
   const initial = msToUnit(value);
   const [displayValue, setDisplayValue] = useState(initial.value);
   const [unit, setUnit] = useState<DurationUnit>(initial.unit);
@@ -83,13 +85,13 @@ export function DurationField({
 
   const handleValueChange = (newValue: number) => {
     setDisplayValue(newValue);
-    const unitInfo = units.find((u) => u.value === unit)!;
+    const unitInfo = unitDefs.find((u) => u.value === unit)!;
     onChange(newValue * unitInfo.multiplier);
   };
 
   const handleUnitChange = (newUnit: DurationUnit) => {
     setUnit(newUnit);
-    const unitInfo = units.find((u) => u.value === newUnit)!;
+    const unitInfo = unitDefs.find((u) => u.value === newUnit)!;
     onChange(displayValue * unitInfo.multiplier);
   };
 
@@ -123,9 +125,9 @@ export function DurationField({
               : "var(--of-field-bg, #fff)",
           }}
         >
-          {units.map((u) => (
+          {unitDefs.map((u) => (
             <option key={u.value} value={u.value}>
-              {u.label}
+              {t(u.labelKey)}
             </option>
           ))}
         </select>

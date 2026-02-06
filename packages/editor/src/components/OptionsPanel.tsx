@@ -1,5 +1,6 @@
 import React from "react";
 import { useWorkflowEditorContext } from "../context/WorkflowEditorContext";
+import { useTranslation } from "../i18n";
 import { SelectField, NumberField, FieldGroup } from "../primitives";
 import type { OptionsPanelProps } from "../context/types";
 import type { WorkflowFrequency } from "@omega-flow/types";
@@ -21,11 +22,6 @@ const titleStyle: React.CSSProperties = {
   letterSpacing: "0.5px",
 };
 
-const frequencyOptions = [
-  { value: "one_time", label: "One time" },
-  { value: "every_rematch", label: "Every rematch" },
-];
-
 /**
  * Panel for editing workflow options like frequency.
  */
@@ -35,6 +31,12 @@ export function OptionsPanel({
   customOptions,
 }: OptionsPanelProps) {
   const { options, setOptions } = useWorkflowEditorContext();
+  const t = useTranslation();
+
+  const frequencyOptions = [
+    { value: "one_time", label: t("panels.options.frequencyOneTime") },
+    { value: "every_rematch", label: t("panels.options.frequencyEveryRematch") },
+  ];
 
   const handleFrequencyTypeChange = (type: string) => {
     const newFrequency: WorkflowFrequency = {
@@ -57,25 +59,25 @@ export function OptionsPanel({
 
   return (
     <div style={panelStyle} className={className}>
-      <div style={titleStyle}>Options</div>
+      <div style={titleStyle}>{t("panels.options.title")}</div>
 
       {showFrequency && (
-        <FieldGroup label="Frequency">
+        <FieldGroup label={t("panels.options.frequencyGroup")}>
           <SelectField
-            label="Type"
+            label={t("panels.options.frequencyTypeLabel")}
             value={options.frequency?.type ?? "one_time"}
             options={frequencyOptions}
             onChange={handleFrequencyTypeChange}
-            hint="How often this workflow can run for a subject"
+            hint={t("panels.options.frequencyTypeHint")}
           />
 
           {options.frequency?.type === "every_rematch" && (
             <NumberField
-              label="Interval (seconds)"
+              label={t("panels.options.intervalLabel")}
               value={options.frequency?.interval ?? 3600}
               onChange={handleIntervalChange}
               min={1}
-              hint="Minimum time between runs"
+              hint={t("panels.options.intervalHint")}
             />
           )}
         </FieldGroup>

@@ -162,3 +162,59 @@ The Workflow Manager orchestrates multiple workflows:
 - Node implementations must override both `acceptEvent()` and `nextNode()` methods
 - Use `setState()`/`getState()` to share data between `acceptEvent()` and `nextNode()`
 - Test files follow pattern: `WorkflowEngine.*.test.ts` in `packages/engine/test/`
+
+## Editor Localization
+
+The editor (`@omega-flow/editor`) has a built-in localization system that custom node developers can also use.
+
+### Key Files
+
+- `packages/editor/src/i18n/types.ts` - `TranslationFunction` and `TranslationDictionary` types
+- `packages/editor/src/i18n/defaults.ts` - Default English translations (~70 keys)
+- `packages/editor/src/i18n/TranslationContext.tsx` - React context, provider, and `useTranslation` hook
+
+### Translation Key Naming Convention
+
+- `panels.*` - Panel UI (ControlPanel, DetailPanel, NodesPanel, OptionsPanel)
+- `nodes.*` - Node view labels and empty states (canvas rendering)
+- `nodeDetails.*` - Node detail editor labels and hints (property panel)
+- `fields.*` - Shared primitive field strings (DurationField, JsonField)
+- `nodeTypes.*` - Default node type definitions (label/description in NodesPanel)
+
+### Adding New UI Strings
+
+When adding new user-facing strings to editor components:
+
+1. Add the key to `packages/editor/src/i18n/defaults.ts`
+2. Use `const t = useTranslation()` in the component
+3. Replace hardcoded string with `t("your.key.path")`
+4. For interpolation, use `{{param}}` syntax: `t("key", { param: "value" })`
+
+## Editor Theming
+
+The editor uses CSS custom properties (variables) for styling, allowing consumers to customize appearance without framework dependencies.
+
+### Key Files
+
+- `packages/editor/src/styles/variables.css` - All CSS custom properties with defaults (light theme)
+- `packages/editor/src/styles/themes/dark.css` - Dark theme overrides
+- `packages/editor/src/styles/index.ts` - Exports `themeVars` object and `cssVar` utility
+
+### CSS Variable Naming Convention
+
+Pattern: `--of-{category}-{element}-{property}[-{variant}]`
+
+- `--of-` prefix = Omega Flow (prevents collisions)
+- Categories: `color`, `node`, `spacing`, `font`, `radius`, `shadow`, `transition`, `panel`, `field`, `button`
+- Examples: `--of-color-bg-primary`, `--of-field-border-focus`, `--of-node-trigger-color`.
+
+### Node Colors
+
+Each node type has a dedicated CSS variable:
+
+- `--of-node-trigger-color` (default: #4CAF50)
+- `--of-node-action-color` (default: #2196F3)
+- `--of-node-condition-color` (default: #FF9800)
+- `--of-node-exit-color` (default: #F44336)
+- `--of-node-wait-color` (default: #9C27B0)
+- `--of-node-trigger-timeout-color` (default: #607D8B)

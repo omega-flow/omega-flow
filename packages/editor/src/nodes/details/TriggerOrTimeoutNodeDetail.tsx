@@ -1,5 +1,6 @@
 import React from "react";
 import { TextField, DurationField, FieldGroup } from "../../primitives";
+import { useTranslation } from "../../i18n";
 import type { NodeDetailProps } from "../types";
 
 interface TriggerOrTimeoutData {
@@ -14,6 +15,7 @@ interface TriggerOrTimeoutData {
  * Allows setting both the event type and timeout duration.
  */
 export function TriggerOrTimeoutNodeDetail({ node, onChange }: NodeDetailProps) {
+  const t = useTranslation();
   const data = node.data as TriggerOrTimeoutData;
 
   const handleEventChange = (event: string) => {
@@ -31,19 +33,19 @@ export function TriggerOrTimeoutNodeDetail({ node, onChange }: NodeDetailProps) 
   };
 
   return (
-    <FieldGroup label="Trigger or Timeout Configuration">
+    <FieldGroup label={t("nodeDetails.triggerOrTimeout.group")}>
       <TextField
-        label="Event Type"
+        label={t("nodeDetails.triggerOrTimeout.eventLabel")}
         value={data.params?.event ?? ""}
         onChange={handleEventChange}
-        placeholder="e.g., payment.received"
-        hint="The event type to wait for"
+        placeholder={t("nodeDetails.triggerOrTimeout.eventPlaceholder")}
+        hint={t("nodeDetails.triggerOrTimeout.eventHint")}
       />
       <DurationField
-        label="Timeout Duration"
+        label={t("nodeDetails.triggerOrTimeout.durationLabel")}
         value={data.params?.duration ?? 60000}
         onChange={handleDurationChange}
-        hint="Max time to wait before timing out"
+        hint={t("nodeDetails.triggerOrTimeout.durationHint")}
       />
     </FieldGroup>
   );

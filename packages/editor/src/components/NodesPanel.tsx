@@ -1,6 +1,7 @@
 import React from "react";
 import { useNodeRegistry } from "../hooks/useNodeRegistry";
 import { useDragAndDrop } from "../hooks/useDragAndDrop";
+import { useTranslation } from "../i18n";
 import type { NodesPanelProps, NodeTypeDefinition } from "../context/types";
 
 const panelStyle: React.CSSProperties = {
@@ -111,6 +112,7 @@ export function NodesPanel({
 }: NodesPanelProps) {
   const { nodeTypesList } = useNodeRegistry();
   const { onDragStart } = useDragAndDrop();
+  const t = useTranslation();
 
   const filteredNodeTypes = filter
     ? nodeTypesList.filter(filter)
@@ -118,7 +120,7 @@ export function NodesPanel({
 
   return (
     <div style={panelStyle} className={className}>
-      <div style={titleStyle}>Nodes</div>
+      <div style={titleStyle}>{t("panels.nodes.title")}</div>
       {filteredNodeTypes.map((nodeType) =>
         renderItem ? (
           <div

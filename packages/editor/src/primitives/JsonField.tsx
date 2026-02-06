@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Field } from "./Field";
+import { useTranslation } from "../i18n";
 
 export interface JsonFieldProps {
   label: string;
@@ -36,6 +37,7 @@ export function JsonField({
   error: externalError,
   hint,
 }: JsonFieldProps) {
+  const t = useTranslation();
   const [text, setText] = useState(() => JSON.stringify(value, null, 2));
   const [parseError, setParseError] = useState<string | null>(null);
 
@@ -52,7 +54,7 @@ export function JsonField({
       setParseError(null);
       onChange(parsed);
     } catch (e) {
-      setParseError("Invalid JSON");
+      setParseError(t("fields.json.invalidJson"));
     }
   };
 

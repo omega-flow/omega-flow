@@ -1,5 +1,6 @@
 import React from "react";
 import { FieldGroup } from "../../primitives";
+import { useTranslation } from "../../i18n";
 import type { NodeDetailProps } from "../types";
 
 /**
@@ -7,10 +8,11 @@ import type { NodeDetailProps } from "../types";
  * Exit nodes have no configurable properties.
  */
 export function ExitNodeDetail(_props: NodeDetailProps) {
+  const t = useTranslation();
   return (
-    <FieldGroup label="Exit Node">
+    <FieldGroup label={t("nodeDetails.exit.group")}>
       <p style={{ fontSize: "13px", color: "#6B7280", margin: 0 }}>
-        This node ends the workflow. No configuration needed.
+        {t("nodeDetails.exit.message")}
       </p>
     </FieldGroup>
   );

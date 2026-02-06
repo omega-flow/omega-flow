@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useWorkflowEditorContext } from "../context/WorkflowEditorContext";
+import { useTranslation } from "../i18n";
 import { TextField } from "../primitives";
 import type { ControlPanelProps } from "../context/types";
 
@@ -61,12 +62,13 @@ export function ControlPanel({
   className,
   showName = true,
   showSaveButton = true,
-  saveButtonLabel = "Save",
+  saveButtonLabel,
   onSave,
   renderActions,
 }: ControlPanelProps) {
   const { name, setName, isDirty, getWorkflow, markClean } =
     useWorkflowEditorContext();
+  const t = useTranslation();
   const [isSaving, setIsSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<"saved" | "error" | null>(null);
 
@@ -91,14 +93,14 @@ export function ControlPanel({
 
   return (
     <div style={panelStyle} className={className}>
-      <div style={titleStyle}>Workflow</div>
+      <div style={titleStyle}>{t("panels.control.title")}</div>
 
       {showName && (
         <TextField
-          label="Name"
+          label={t("panels.control.nameLabel")}
           value={name}
           onChange={setName}
-          placeholder="Workflow name"
+          placeholder={t("panels.control.namePlaceholder")}
         />
       )}
 
@@ -109,7 +111,7 @@ export function ControlPanel({
             onClick={handleSave}
             disabled={isSaving || !isDirty}
           >
-            {isSaving ? "Saving..." : saveButtonLabel}
+            {isSaving ? t("panels.control.saving") : (saveButtonLabel ?? "Save")}
           </button>
         )}
 
@@ -126,12 +128,12 @@ export function ControlPanel({
                 : "var(--of-color-status-error, #DC2626)",
           }}
         >
-          {saveStatus === "saved" ? "Saved successfully" : "Failed to save"}
+          {saveStatus === "saved" ? t("panels.control.savedSuccessfully") : t("panels.control.failedToSave")}
         </div>
       )}
 
       {isDirty && !saveStatus && (
-        <div style={statusStyle}>Unsaved changes</div>
+        <div style={statusStyle}>{t("panels.control.unsavedChanges")}</div>
       )}
     </div>
   );

@@ -1,11 +1,12 @@
 import React from "react";
 import { ReactFlowProvider } from "@xyflow/react";
 import { WorkflowEditorProvider } from "../context/WorkflowEditorContext";
+import { TranslationProvider } from "../i18n";
 import type { WorkflowEditorProps } from "../context/types";
 
 /**
  * Main wrapper component for the workflow editor.
- * Provides context and state management for all child components.
+ * Provides context, state management, and translation for all child components.
  *
  * @example
  * ```tsx
@@ -22,17 +23,24 @@ export function WorkflowEditor({
   nodeTypes,
   onWorkflowChange,
   onDirtyChange,
+  translationFn,
+  translations,
 }: WorkflowEditorProps) {
   return (
     <ReactFlowProvider>
-      <WorkflowEditorProvider
-        workflow={workflow}
-        nodeTypes={nodeTypes}
-        onWorkflowChange={onWorkflowChange}
-        onDirtyChange={onDirtyChange}
+      <TranslationProvider
+        translationFn={translationFn}
+        translations={translations}
       >
-        {children}
-      </WorkflowEditorProvider>
+        <WorkflowEditorProvider
+          workflow={workflow}
+          nodeTypes={nodeTypes}
+          onWorkflowChange={onWorkflowChange}
+          onDirtyChange={onDirtyChange}
+        >
+          {children}
+        </WorkflowEditorProvider>
+      </TranslationProvider>
     </ReactFlowProvider>
   );
 }

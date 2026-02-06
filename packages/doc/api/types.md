@@ -367,8 +367,17 @@ interface WorkflowEditorProps {
   nodeTypes?: NodeTypeDefinition[];
   onWorkflowChange?: (workflow: Workflow) => void;
   onDirtyChange?: (isDirty: boolean) => void;
+  translationFn?: TranslationFunction;
+  translations?: TranslationDictionary;
 }
 ```
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `translationFn` | `TranslationFunction` | Custom translation function (replaces built-in resolver) |
+| `translations` | `TranslationDictionary` | Dictionary merged on top of defaults (ignored when `translationFn` is set) |
+
+See [Localization](/guide/localization) for usage details.
 
 #### NodesPanelProps
 
@@ -475,6 +484,45 @@ if (!validate(workflow)) {
   console.error("Invalid workflow:", validate.errors);
 }
 ```
+
+---
+
+## Localization Types
+
+### TranslationFunction
+
+```typescript
+type TranslationFunction = (
+  key: string,
+  params?: Record<string, string>
+) => string;
+```
+
+The core function signature for translating strings. Accepts a dot-separated key and optional interpolation parameters (`{{param}}`).
+
+---
+
+### TranslationDictionary
+
+```typescript
+type TranslationDictionary = Record<string, string>;
+```
+
+A flat mapping of keys to translation strings. Supports `{{param}}` interpolation placeholders.
+
+---
+
+### TranslationProviderProps
+
+```typescript
+interface TranslationProviderProps {
+  children: ReactNode;
+  translationFn?: TranslationFunction;
+  translations?: TranslationDictionary;
+}
+```
+
+Props for the `TranslationProvider` component (used internally by `WorkflowEditor`).
 
 ---
 

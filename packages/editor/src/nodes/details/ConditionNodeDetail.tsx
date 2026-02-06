@@ -1,5 +1,6 @@
 import React from "react";
 import { JsonField, FieldGroup } from "../../primitives";
+import { useTranslation } from "../../i18n";
 import type { NodeDetailProps } from "../types";
 
 interface ConditionData {
@@ -14,6 +15,7 @@ interface ConditionData {
  * Allows editing json-rules-engine conditions.
  */
 export function ConditionNodeDetail({ node, onChange }: NodeDetailProps) {
+  const t = useTranslation();
   const data = node.data as ConditionData;
 
   const handleConditionsChange = (conditions: unknown) => {
@@ -24,12 +26,12 @@ export function ConditionNodeDetail({ node, onChange }: NodeDetailProps) {
   };
 
   return (
-    <FieldGroup label="Condition Configuration">
+    <FieldGroup label={t("nodeDetails.condition.group")}>
       <JsonField
-        label="Conditions"
+        label={t("nodeDetails.condition.conditionsLabel")}
         value={data.conditions ?? { all: [] }}
         onChange={handleConditionsChange}
-        hint="JSON rules engine format. Use 'all' or 'any' arrays with conditions like: { fact: 'amount', operator: 'greaterThan', value: 100 }"
+        hint={t("nodeDetails.condition.conditionsHint")}
         rows={10}
       />
     </FieldGroup>

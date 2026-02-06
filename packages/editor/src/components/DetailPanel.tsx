@@ -1,5 +1,6 @@
 import React from "react";
 import { useSelectedNode } from "../hooks/useSelectedNode";
+import { useTranslation } from "../i18n";
 import type { DetailPanelProps } from "../context/types";
 
 const panelStyle: React.CSSProperties = {
@@ -65,18 +66,19 @@ const deleteButtonStyle: React.CSSProperties = {
  */
 export function DetailPanel({
   className,
-  emptyMessage = "Select a node to edit its properties",
+  emptyMessage,
   showNodeType = true,
   showNodeId = false,
 }: DetailPanelProps) {
   const { selectedNode, nodeType, updateSelectedNode, removeSelectedNode } =
     useSelectedNode();
+  const t = useTranslation();
 
   if (!selectedNode || !nodeType) {
     return (
       <div style={panelStyle} className={className}>
-        <div style={titleStyle}>Properties</div>
-        <div style={emptyStyle}>{emptyMessage}</div>
+        <div style={titleStyle}>{t("panels.detail.title")}</div>
+        <div style={emptyStyle}>{emptyMessage ?? t("panels.detail.emptyMessage")}</div>
       </div>
     );
   }
@@ -85,7 +87,7 @@ export function DetailPanel({
 
   return (
     <div style={panelStyle} className={className}>
-      <div style={titleStyle}>Properties</div>
+      <div style={titleStyle}>{t("panels.detail.title")}</div>
 
       <div style={headerStyle}>
         <div>
@@ -95,9 +97,9 @@ export function DetailPanel({
         <button
           style={deleteButtonStyle}
           onClick={removeSelectedNode}
-          title="Delete node"
+          title={t("panels.detail.deleteTitle")}
         >
-          Delete
+          {t("panels.detail.delete")}
         </button>
       </div>
 

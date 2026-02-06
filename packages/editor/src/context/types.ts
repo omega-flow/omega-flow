@@ -1,6 +1,7 @@
 import type { ReactNode, ComponentType } from "react";
 import type { Node, Edge, Workflow, WorkflowOptions } from "@omega-flow/types";
 import type { NodeProps } from "@xyflow/react";
+import type { TranslationFunction, TranslationDictionary } from "../i18n/types";
 
 /**
  * Definition for a handle (connection point) on a node
@@ -141,6 +142,28 @@ export interface WorkflowEditorProps {
   onWorkflowChange?: (workflow: Workflow) => void;
   /** Callback when dirty state changes */
   onDirtyChange?: (isDirty: boolean) => void;
+  /**
+   * Custom translation function that fully replaces the built-in resolver.
+   * Use this to plug in any i18n library (i18next, react-intl, etc.).
+   *
+   * ```tsx
+   * <WorkflowEditor translationFn={(key, params) => i18n.t(key, params)}>
+   * ```
+   *
+   * Takes precedence over `translations` if both are provided.
+   */
+  translationFn?: TranslationFunction;
+  /**
+   * Flat dictionary merged on top of default English strings.
+   * Use this for simple overrides or full translations without an external i18n library.
+   *
+   * ```tsx
+   * <WorkflowEditor translations={{ "panels.control.title": "Flujo" }}>
+   * ```
+   *
+   * Ignored when `translationFn` is provided.
+   */
+  translations?: TranslationDictionary;
 }
 
 /**

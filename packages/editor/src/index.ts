@@ -91,3 +91,16 @@ export type {
 
 // Theming utilities
 export { themeVars, cssVar } from "./styles";
+
+// Localization
+export {
+  useTranslation,
+  TranslationProvider,
+  createTranslationFunction,
+  defaultTranslations,
+} from "./i18n";
+export type {
+  TranslationFunction,
+  TranslationDictionary,
+  TranslationProviderProps,
+} from "./i18n";

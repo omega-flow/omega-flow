@@ -1,5 +1,6 @@
 import React from "react";
 import { TextField, FieldGroup } from "../../primitives";
+import { useTranslation } from "../../i18n";
 import type { NodeDetailProps } from "../types";
 
 interface TriggerData {
@@ -13,6 +14,7 @@ interface TriggerData {
  * Allows setting the event type that triggers this node.
  */
 export function TriggerNodeDetail({ node, onChange }: NodeDetailProps) {
+  const t = useTranslation();
   const data = node.data as TriggerData;
 
   const handleEventChange = (event: string) => {
@@ -23,13 +25,13 @@ export function TriggerNodeDetail({ node, onChange }: NodeDetailProps) {
   };
 
   return (
-    <FieldGroup label="Trigger Configuration">
+    <FieldGroup label={t("nodeDetails.trigger.group")}>
       <TextField
-        label="Event Type"
+        label={t("nodeDetails.trigger.eventLabel")}
         value={data.params?.event ?? ""}
         onChange={handleEventChange}
-        placeholder="e.g., user.signup, order.placed"
-        hint="The event type that will start this workflow"
+        placeholder={t("nodeDetails.trigger.eventPlaceholder")}
+        hint={t("nodeDetails.trigger.eventHint")}
       />
     </FieldGroup>
   );

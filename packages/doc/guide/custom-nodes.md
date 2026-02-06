@@ -416,9 +416,11 @@ See the [Primitives API](/api/primitives) for details.
 5. **Helpful hints** - Add hint text to fields for guidance
 6. **Validation** - Validate data in the detail component
 7. **Collapsible groups** - Group advanced options to reduce clutter
+8. **Use `useTranslation`** - Use the `useTranslation()` hook for all user-facing strings so your nodes support localization. See [Localization](/guide/localization) for details.
 
 ## Next Steps
 
 - Explore [Primitives API](/api/primitives) for all form fields
 - See [Types Reference](/api/types) for all TypeScript types
 - Check the [Hooks API](/api/hooks) for programmatic control
+- Read the [Localization Guide](/guide/localization) for translating custom nodes
