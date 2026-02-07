@@ -88,6 +88,59 @@ function App() {
 export default App;
 ```
 
+## Quick Start: Workflow Engine
+
+For backend execution without the visual editor:
+
+```typescript
+import {
+  WorkflowManager,
+  WorkflowModel,
+  InMemoryWorkflowStore,
+  InMemoryWorkflowMemory,
+  InMemoryWorkflowScheduler,
+} from "@omega-flow/engine";
+import nodeTypes from "@omega-flow/engine/nodes";
+import type { Workflow, Event } from "@omega-flow/types";
+
+// Define a workflow
+const welcomeWorkflow: Workflow = {
+  id: "welcome",
+  name: "Welcome Flow",
+  flow: {
+    nodes: [
+      { id: "t1", type: "Trigger", data: { params: { event: "user.signup" } }, position: { x: 0, y: 0 } },
+      { id: "a1", type: "Action", data: { action: "sendWelcomeEmail" }, position: { x: 0, y: 100 } },
+      { id: "e1", type: "Exit", data: {}, position: { x: 0, y: 200 } },
+    ],
+    edges: [
+      { id: "e1-t1-a1", source: "t1", target: "a1" },
+      { id: "e2-a1-e1", source: "a1", target: "e1" },
+    ],
+  },
+  options: { frequency: { type: "one_time" } }
+};
+
+// Create manager
+const manager = new WorkflowManager({
+  workflowStore: new InMemoryWorkflowStore("default", [welcomeWorkflow]),
+  workflowMemory: new InMemoryWorkflowMemory(),
+  workflowScheduler: new InMemoryWorkflowScheduler(),
+  nodeModels: nodeTypes,
+  eventExtractor: (event) => ["default", event.data.userId],
+});
+
+// Process an event
+const event: Event = {
+  id: "evt-1",
+  type: "user.signup",
+  time: Date.now(),
+  data: { userId: "user-123" }
+};
+
+await manager.processEvent(event);
+```
+
 ## Key Concepts
 
 ### Workflow Structure
@@ -164,9 +217,11 @@ omega-flow/
 ## Next Steps
 
 1. **[Core Concepts](/guide/core-concepts)** - Understand workflows, nodes, events, and context
-2. **[Editor Setup](/guide/editor-setup)** - Detailed guide for setting up the editor
-3. **[Custom Nodes](/guide/custom-nodes)** - Create your own node types
-4. **[API Reference](/api/components)** - Explore all components and hooks
+2. **[Executing Workflows](/guide/engine-execution)** - Detailed guide for running workflows with the engine
+3. **[Editor Setup](/guide/editor-setup)** - Detailed guide for setting up the visual editor
+4. **[Custom Nodes (Engine)](/guide/engine-custom-nodes)** - Create custom node execution logic
+5. **[Custom Nodes (Editor)](/guide/custom-nodes)** - Create custom node visual components
+6. **[API Reference](/api/components)** - Explore all editor components and hooks
 
 ## Development Commands
 

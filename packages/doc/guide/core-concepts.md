@@ -378,6 +378,7 @@ Each node type has a corresponding model class implementing:
 
 ## Next Steps
 
+- Learn how to [execute workflows](/guide/engine-execution) with the engine
 - Learn how to [set up the editor](/guide/editor-setup)
-- Create [custom nodes](/guide/custom-nodes)
+- Create custom nodes for the [engine](/guide/engine-custom-nodes) and [editor](/guide/custom-nodes)
 - Explore the [API reference](/api/components)

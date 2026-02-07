@@ -1,10 +1,18 @@
-# Custom Nodes
+# Custom Nodes for Editor
 
-This guide explains how to create custom node types for the Omega Flow editor.
+This guide explains how to create custom node types for the Omega Flow visual editor.
+
+::: tip Complete Custom Node Implementation
+A complete custom node implementation requires both:
+1. **Editor-side**: NodeTypeDefinition (this guide) - handles visual representation
+2. **Engine-side**: NodeModel class (see [Custom Nodes for Engine](/guide/engine-custom-nodes)) - handles execution logic
+
+Both parts use the same `type` identifier to connect them.
+:::
 
 ## Overview
 
-Each node type consists of:
+Each node type in the editor consists of:
 1. **NodeTypeDefinition** - Metadata and configuration
 2. **ViewComponent** - Renders the node on the canvas
 3. **DetailComponent** - Renders the properties panel
@@ -428,6 +436,7 @@ See the [Primitives API](/api/primitives) for details.
 
 ## Next Steps
 
+- Create the [engine-side custom node](/guide/engine-custom-nodes) for execution logic
 - Explore [Primitives API](/api/primitives) for all form fields
 - See [Types Reference](/api/types) for all TypeScript types
 - Check the [Hooks API](/api/hooks) for programmatic control
