@@ -10,6 +10,18 @@ const validateContext = ajv.compile(ContextSchema);
 export function createContextRoutes(memory: FileWorkflowMemory): Router {
   const router = Router();
 
+  // GET /api/contexts/:domain - List ALL contexts in domain (across all subjects)
+  router.get("/:domain", async (req, res) => {
+    try {
+      const { domain } = req.params;
+      const contexts = await memory.getAllContexts(domain);
+      res.json(contexts);
+    } catch (error) {
+      console.error("Error listing all contexts:", error);
+      res.status(500).json({ error: "Failed to list contexts" });
+    }
+  });
+
   // GET /api/contexts/:domain/:subjectId - List all contexts for a subject in domain
   router.get("/:domain/:subjectId", async (req, res) => {
     try {

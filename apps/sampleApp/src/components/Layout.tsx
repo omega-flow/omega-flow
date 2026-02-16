@@ -51,6 +51,9 @@ export function Layout() {
           <Link to="/" style={navLinkStyle}>
             Workflows
           </Link>
+          <Link to="/debugger" style={navLinkStyle}>
+            Debugger
+          </Link>
         </nav>
       </header>
       <main style={mainStyle}>

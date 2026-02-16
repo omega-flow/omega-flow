@@ -94,6 +94,28 @@ export class FileWorkflowMemory implements WorkflowMemory {
     await writeFile(filePath, JSON.stringify(context, null, 2), "utf-8");
   }
 
+  async getAllContexts(domain: string): Promise<Array<Context & { subjectId: string }>> {
+    try {
+      const domainPath = this.getDomainPath(domain);
+      const subjects = await readdir(domainPath);
+      const allContexts: Array<Context & { subjectId: string }> = [];
+
+      for (const subjectId of subjects) {
+        const subjectContexts = await this.getAllContextsForSubject(domain, subjectId);
+        for (const ctx of subjectContexts) {
+          allContexts.push({ ...ctx, subjectId });
+        }
+      }
+
+      return allContexts;
+    } catch (error: unknown) {
+      if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+        return [];
+      }
+      throw error;
+    }
+  }
+
   async deleteContext(domain: string, workflowId: string, subjectId: string, instanceId: string): Promise<void> {
     try {
       const filePath = this.getContextPath(domain, subjectId, workflowId, instanceId);

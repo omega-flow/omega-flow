@@ -6,6 +6,7 @@ import { FileWorkflowStore } from "./stores/FileWorkflowStore.js";
 import { FileWorkflowMemory } from "./stores/FileWorkflowMemory.js";
 import { createWorkflowRoutes } from "./routes/workflows.js";
 import { createContextRoutes } from "./routes/contexts.js";
+import { createExecuteRoutes } from "./routes/execute.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -25,6 +26,7 @@ const workflowMemory = new FileWorkflowMemory(DB_PATH);
 // Mount routes
 app.use("/api/workflows", createWorkflowRoutes(workflowStore));
 app.use("/api/contexts", createContextRoutes(workflowMemory));
+app.use("/api/execute", createExecuteRoutes(workflowStore, workflowMemory));
 
 // Health check
 app.get("/health", (_req, res) => {

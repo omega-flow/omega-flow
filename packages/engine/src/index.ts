@@ -1,6 +1,8 @@
 import WorkflowModel from "./engine/WorkflowModel";
+import nodeModels from "./nodes";
 
 export { WorkflowModel };
+export { nodeModels };
 
 // Export manager components
 export {

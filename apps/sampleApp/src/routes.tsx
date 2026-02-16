@@ -1,6 +1,6 @@
 import { createBrowserRouter } from "react-router-dom";
 import { Layout } from "./components/Layout";
-import { WorkflowListPage, WorkflowEditorPage } from "./pages";
+import { WorkflowListPage, WorkflowEditorPage, DebuggerPage } from "./pages";
 
 export const router = createBrowserRouter([
   {
@@ -14,6 +14,10 @@ export const router = createBrowserRouter([
       {
         path: "workflows/:workflowId",
         element: <WorkflowEditorPage />,
+      },
+      {
+        path: "debugger",
+        element: <DebuggerPage />,
       },
     ],
   },
