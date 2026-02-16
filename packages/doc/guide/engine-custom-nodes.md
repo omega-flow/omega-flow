@@ -131,13 +131,13 @@ import {
   InMemoryWorkflowStore,
   InMemoryWorkflowMemory,
   InMemoryWorkflowScheduler,
+  nodeModels,
 } from "@omega-flow/engine";
-import defaultNodeTypes from "@omega-flow/engine/nodes";
 import HttpRequestNode from "./nodes/HttpRequestNode";
 
 // Combine default nodes with custom nodes
 const allNodeTypes = {
-  ...defaultNodeTypes,
+  ...nodeModels,
   HttpRequest: HttpRequestNode,
 };
 
@@ -418,12 +418,11 @@ Nodes receive the same event that triggered them. Upstream node state can be acc
 
 ```typescript
 import { describe, it, expect } from "vitest";
-import { WorkflowModel } from "@omega-flow/engine";
-import defaultNodeTypes from "@omega-flow/engine/nodes";
+import { WorkflowModel, nodeModels } from "@omega-flow/engine";
 import HttpRequestNode from "./HttpRequestNode";
 
-const nodeTypes = {
-  ...defaultNodeTypes,
+const allNodeTypes = {
+  ...nodeModels,
   HttpRequest: HttpRequestNode,
 };
 
@@ -446,7 +445,7 @@ describe("HttpRequestNode", () => {
   };
 
   it("should process HTTP request and continue", async () => {
-    const wf = new WorkflowModel(workflow, nodeTypes);
+    const wf = new WorkflowModel(workflow, allNodeTypes);
     wf.start();
 
     await wf.acceptEvent({
@@ -463,7 +462,7 @@ describe("HttpRequestNode", () => {
 
 ## Built-in Node Types Reference
 
-The engine includes these node types in `@omega-flow/engine/nodes`:
+The engine includes these node types in `nodeModels` exported from `@omega-flow/engine`:
 
 | Type | Description | acceptEvent | nextNode |
 |------|-------------|-------------|----------|

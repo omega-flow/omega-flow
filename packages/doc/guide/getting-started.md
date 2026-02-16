@@ -99,8 +99,8 @@ import {
   InMemoryWorkflowStore,
   InMemoryWorkflowMemory,
   InMemoryWorkflowScheduler,
+  nodeModels,
 } from "@omega-flow/engine";
-import nodeTypes from "@omega-flow/engine/nodes";
 import type { Workflow, Event } from "@omega-flow/types";
 
 // Define a workflow
@@ -126,7 +126,7 @@ const manager = new WorkflowManager({
   workflowStore: new InMemoryWorkflowStore("default", [welcomeWorkflow]),
   workflowMemory: new InMemoryWorkflowMemory(),
   workflowScheduler: new InMemoryWorkflowScheduler(),
-  nodeModels: nodeTypes,
+  nodeModels,
   eventExtractor: (event) => ["default", event.data.userId],
 });
 

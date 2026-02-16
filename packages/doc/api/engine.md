@@ -52,14 +52,14 @@ import {
   InMemoryWorkflowStore,
   InMemoryWorkflowMemory,
   InMemoryWorkflowScheduler,
+  nodeModels,
 } from "@omega-flow/engine";
-import nodeTypes from "@omega-flow/engine/nodes";
 
 const manager = new WorkflowManager({
   workflowStore: new InMemoryWorkflowStore("default", workflows),
   workflowMemory: new InMemoryWorkflowMemory(),
   workflowScheduler: new InMemoryWorkflowScheduler(),
-  nodeModels: nodeTypes,
+  nodeModels,
   eventExtractor: (event) => ["default", event.data.userId],
 });
 
@@ -178,11 +178,10 @@ Finds a node by its ID.
 ### Example
 
 ```typescript
-import { WorkflowModel } from "@omega-flow/engine";
-import nodeTypes from "@omega-flow/engine/nodes";
+import { WorkflowModel, nodeModels } from "@omega-flow/engine";
 
 // Create and start
-const workflow = new WorkflowModel(workflowDef, nodeTypes);
+const workflow = new WorkflowModel(workflowDef, nodeModels);
 workflow.start();
 
 // Process event
@@ -445,10 +444,10 @@ new InMemoryWorkflowScheduler()
 
 ## Built-in Node Types
 
-Available from `@omega-flow/engine/nodes`:
+Available from `@omega-flow/engine`:
 
 ```typescript
-import nodeTypes from "@omega-flow/engine/nodes";
+import { nodeModels } from "@omega-flow/engine";
 // { Trigger, Action, Condition, Wait, TriggerOrTimeout, Exit }
 ```
 

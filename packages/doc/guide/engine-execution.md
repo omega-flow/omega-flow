@@ -29,8 +29,8 @@ import {
   InMemoryWorkflowStore,
   InMemoryWorkflowMemory,
   InMemoryWorkflowScheduler,
+  nodeModels,
 } from "@omega-flow/engine";
-import nodeTypes from "@omega-flow/engine/nodes";
 import type { Workflow, Event } from "@omega-flow/types";
 
 // 1. Define a workflow
@@ -58,7 +58,7 @@ const manager = new WorkflowManager({
   workflowStore: new InMemoryWorkflowStore("default", [myWorkflow]),
   workflowMemory: new InMemoryWorkflowMemory(),
   workflowScheduler: new InMemoryWorkflowScheduler(),
-  nodeModels: nodeTypes,
+  nodeModels,
   eventExtractor: (event) => ["default", event.data.userId],
 });
 
@@ -154,11 +154,10 @@ When `processEvent` is called:
 For simpler use cases or testing, you can use `WorkflowModel` directly:
 
 ```typescript
-import { WorkflowModel } from "@omega-flow/engine";
-import nodeTypes from "@omega-flow/engine/nodes";
+import { WorkflowModel, nodeModels } from "@omega-flow/engine";
 
 // Create and start a workflow
-const workflow = new WorkflowModel(myWorkflow, nodeTypes);
+const workflow = new WorkflowModel(myWorkflow, nodeModels);
 workflow.start();
 
 // Process an event
@@ -192,7 +191,7 @@ const context = workflow.getContext();
 // Save context to your database...
 
 // Later, restore and continue
-const workflow = new WorkflowModel(myWorkflow, nodeTypes);
+const workflow = new WorkflowModel(myWorkflow, nodeModels);
 workflow.setContext(savedContext);
 workflow.start();
 
@@ -379,14 +378,13 @@ Use the built-in in-memory implementations for testing:
 
 ```typescript
 import { describe, it, expect, beforeEach } from "vitest";
-import { WorkflowModel } from "@omega-flow/engine";
-import nodeTypes from "@omega-flow/engine/nodes";
+import { WorkflowModel, nodeModels } from "@omega-flow/engine";
 
 describe("My Workflow", () => {
   let workflow: WorkflowModel;
 
   beforeEach(() => {
-    workflow = new WorkflowModel(myWorkflow, nodeTypes);
+    workflow = new WorkflowModel(myWorkflow, nodeModels);
     workflow.start();
   });
 
