@@ -52,11 +52,34 @@ db/
 
 | Method | Endpoint                                                   | Description                        |
 | ------ | ---------------------------------------------------------- | ---------------------------------- |
+| GET    | `/api/contexts/:domain`                                    | List all contexts in domain        |
 | GET    | `/api/contexts/:domain/:subjectId`                         | List all contexts for subject      |
 | GET    | `/api/contexts/:domain/:subjectId/:workflowId`             | List contexts for subject+workflow |
 | GET    | `/api/contexts/:domain/:subjectId/:workflowId/:instanceId` | Get specific context               |
 | POST   | `/api/contexts/:domain/:subjectId/:workflowId`             | Save context                       |
 | DELETE | `/api/contexts/:domain/:subjectId/:workflowId/:instanceId` | Delete context                     |
+
+### Execute API
+
+| Method | Endpoint               | Description                              |
+| ------ | ---------------------- | ---------------------------------------- |
+| POST   | `/api/execute/:domain` | Execute an event through WorkflowManager |
+
+#### Execute Request Body
+
+```json
+{
+  "type": "event.type",
+  "data": {
+    "subjectId": "user-123",
+    "customField": "value"
+  }
+}
+```
+
+- `type` (required): Event type that triggers workflows
+- `data.subjectId` (required): Identifies the subject for the workflow
+- Event `id` and `time` are auto-generated
 
 ## Postman Collection
 
@@ -102,4 +125,23 @@ curl -X POST http://localhost:5010/api/workflows/default \
 
 ```bash
 curl http://localhost:5010/api/workflows/default
+```
+
+### Execute an Event
+
+```bash
+curl -X POST http://localhost:5010/api/execute/default \
+  -H "Content-Type: application/json" \
+  -d '{
+    "type": "user.signup",
+    "data": {
+      "subjectId": "user-123"
+    }
+  }'
+```
+
+### List All Contexts
+
+```bash
+curl http://localhost:5010/api/contexts/default
 ```
