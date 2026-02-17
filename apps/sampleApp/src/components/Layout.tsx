@@ -1,64 +1,27 @@
-import React from "react";
-import { Outlet, Link } from "react-router-dom";
-
-const layoutStyle: React.CSSProperties = {
-  minHeight: "100vh",
-  display: "flex",
-  flexDirection: "column",
-};
-
-const headerStyle: React.CSSProperties = {
-  backgroundColor: "#1F2937",
-  color: "#fff",
-  padding: "12px 24px",
-  display: "flex",
-  alignItems: "center",
-  gap: "24px",
-};
-
-const logoStyle: React.CSSProperties = {
-  fontSize: "18px",
-  fontWeight: 600,
-  color: "#fff",
-  textDecoration: "none",
-};
-
-const navStyle: React.CSSProperties = {
-  display: "flex",
-  gap: "16px",
-};
-
-const navLinkStyle: React.CSSProperties = {
-  color: "#D1D5DB",
-  textDecoration: "none",
-  fontSize: "14px",
-};
-
-const mainStyle: React.CSSProperties = {
-  flex: 1,
-  display: "flex",
-  flexDirection: "column",
-};
+import { Outlet, Link as RouterLink } from "react-router-dom";
+import { Box, Flex, HStack, Link } from "@chakra-ui/react";
 
 export function Layout() {
   return (
-    <div style={layoutStyle}>
-      <header style={headerStyle}>
-        <Link to="/" style={logoStyle}>
-          Omega Flow
-        </Link>
-        <nav style={navStyle}>
-          <Link to="/" style={navLinkStyle}>
-            Workflows
+    <Flex minH="100vh" direction="column">
+      <Box as="header" bg="gray.800" color="white" px="6" py="3">
+        <HStack gap="6">
+          <Link asChild fontSize="lg" fontWeight="600" color="white" _hover={{ textDecoration: "none" }}>
+            <RouterLink to="/">Omega Flow</RouterLink>
           </Link>
-          <Link to="/debugger" style={navLinkStyle}>
-            Debugger
-          </Link>
-        </nav>
-      </header>
-      <main style={mainStyle}>
+          <HStack as="nav" gap="4">
+            <Link asChild color="gray.300" fontSize="sm" _hover={{ color: "white", textDecoration: "none" }}>
+              <RouterLink to="/">Workflows</RouterLink>
+            </Link>
+            <Link asChild color="gray.300" fontSize="sm" _hover={{ color: "white", textDecoration: "none" }}>
+              <RouterLink to="/debugger">Debugger</RouterLink>
+            </Link>
+          </HStack>
+        </HStack>
+      </Box>
+      <Flex as="main" flex="1" direction="column">
         <Outlet />
-      </main>
-    </div>
+      </Flex>
+    </Flex>
   );
 }

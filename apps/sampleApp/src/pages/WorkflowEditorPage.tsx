@@ -1,5 +1,5 @@
-import React, { useCallback, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useCallback, useState } from "react";
+import { useParams, Link as RouterLink } from "react-router-dom";
 import { ReactFlow, Background, Controls, Panel } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 // Import Omega Flow editor styles for theming support
@@ -22,59 +22,7 @@ import {
 import { useWorkflow } from "../hooks/useWorkflow";
 import { useAutoSave } from "../hooks/useAutoSave";
 import { updateWorkflow } from "../api/workflows";
-
-const pageStyle: React.CSSProperties = {
-  height: "calc(100vh - 52px)",
-  display: "flex",
-  flexDirection: "column",
-};
-
-const toolbarStyle: React.CSSProperties = {
-  backgroundColor: "#fff",
-  borderBottom: "1px solid #E5E7EB",
-  padding: "8px 16px",
-  display: "flex",
-  alignItems: "center",
-  gap: "16px",
-};
-
-const backLinkStyle: React.CSSProperties = {
-  color: "#6B7280",
-  textDecoration: "none",
-  fontSize: "14px",
-  display: "flex",
-  alignItems: "center",
-  gap: "4px",
-};
-
-const statusStyle: React.CSSProperties = {
-  marginLeft: "auto",
-  fontSize: "12px",
-  color: "#6B7280",
-};
-
-const editorContainerStyle: React.CSSProperties = {
-  flex: 1,
-  position: "relative",
-};
-
-const loadingStyle: React.CSSProperties = {
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  height: "100%",
-  color: "#6B7280",
-};
-
-const errorStyle: React.CSSProperties = {
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  height: "100%",
-  color: "#DC2626",
-  flexDirection: "column",
-  gap: "16px",
-};
+import { Box, Flex, HStack, Link, Text } from "@chakra-ui/react";
 
 function EditorCanvas() {
   const { nodes, onNodesChange } = useNodes();
@@ -112,19 +60,26 @@ function EditorCanvas() {
 
   return (
     <>
-      <div style={toolbarStyle}>
-        <Link to="/" style={backLinkStyle}>
-          &larr; Back to Workflows
+      <HStack
+        bg="white"
+        borderBottom="1px solid"
+        borderColor="gray.200"
+        px="4"
+        py="2"
+        gap="4"
+      >
+        <Link asChild color="gray.500" fontSize="sm" display="flex" alignItems="center" gap="1" _hover={{ textDecoration: "none" }}>
+          <RouterLink to="/">&larr; Back to Workflows</RouterLink>
         </Link>
-        <span style={statusStyle}>
+        <Text ml="auto" fontSize="xs" color="gray.500">
           {saveStatus === "saving" && "Saving..."}
           {saveStatus === "saved" && "Saved"}
           {saveStatus === "error" && "Error saving"}
           {saveStatus === "idle" && isDirty && "Unsaved changes"}
-        </span>
-      </div>
+        </Text>
+      </HStack>
 
-      <div style={editorContainerStyle}>
+      <Box flex="1" position="relative">
         <ReactFlow
           nodes={nodes}
           edges={edges}
@@ -156,7 +111,7 @@ function EditorCanvas() {
             <DetailPanel />
           </Panel>
         </ReactFlow>
-      </div>
+      </Box>
     </>
   );
 }
@@ -167,43 +122,45 @@ export function WorkflowEditorPage() {
 
   if (isLoading) {
     return (
-      <div style={pageStyle}>
-        <div style={loadingStyle}>Loading workflow...</div>
-      </div>
+      <Flex direction="column" h="calc(100vh - 52px)">
+        <Flex align="center" justify="center" h="100%" color="gray.500">
+          Loading workflow...
+        </Flex>
+      </Flex>
     );
   }
 
   if (error) {
     return (
-      <div style={pageStyle}>
-        <div style={errorStyle}>
-          <p>Error: {error.message}</p>
-          <Link to="/" style={{ color: "#3B82F6" }}>
-            Back to Workflows
+      <Flex direction="column" h="calc(100vh - 52px)">
+        <Flex align="center" justify="center" h="100%" direction="column" gap="4" color="red.600">
+          <Text>Error: {error.message}</Text>
+          <Link asChild color="blue.500">
+            <RouterLink to="/">Back to Workflows</RouterLink>
           </Link>
-        </div>
-      </div>
+        </Flex>
+      </Flex>
     );
   }
 
   if (!workflow) {
     return (
-      <div style={pageStyle}>
-        <div style={errorStyle}>
-          <p>Workflow not found</p>
-          <Link to="/" style={{ color: "#3B82F6" }}>
-            Back to Workflows
+      <Flex direction="column" h="calc(100vh - 52px)">
+        <Flex align="center" justify="center" h="100%" direction="column" gap="4" color="red.600">
+          <Text>Workflow not found</Text>
+          <Link asChild color="blue.500">
+            <RouterLink to="/">Back to Workflows</RouterLink>
           </Link>
-        </div>
-      </div>
+        </Flex>
+      </Flex>
     );
   }
 
   return (
-    <div style={pageStyle}>
+    <Flex direction="column" h="calc(100vh - 52px)">
       <WorkflowEditor workflow={workflow} nodeTypes={defaultNodeTypes}>
         <EditorCanvas />
       </WorkflowEditor>
-    </div>
+    </Flex>
   );
 }

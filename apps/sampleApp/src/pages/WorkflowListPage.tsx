@@ -1,102 +1,18 @@
-import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { Link as RouterLink, useNavigate } from "react-router-dom";
 import { useWorkflows } from "../hooks/useWorkflows";
 import { deleteWorkflow } from "../api/workflows";
 import { CreateWorkflowDialog } from "../components/CreateWorkflowDialog";
-
-const pageStyle: React.CSSProperties = {
-  padding: "24px",
-  maxWidth: "1200px",
-  margin: "0 auto",
-};
-
-const headerStyle: React.CSSProperties = {
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "center",
-  marginBottom: "24px",
-};
-
-const titleStyle: React.CSSProperties = {
-  fontSize: "24px",
-  fontWeight: 600,
-  color: "#111827",
-};
-
-const createButtonStyle: React.CSSProperties = {
-  padding: "10px 20px",
-  fontSize: "14px",
-  fontWeight: 500,
-  backgroundColor: "#3B82F6",
-  color: "#fff",
-  border: "none",
-  borderRadius: "8px",
-  cursor: "pointer",
-};
-
-const listStyle: React.CSSProperties = {
-  display: "grid",
-  gap: "12px",
-};
-
-const itemStyle: React.CSSProperties = {
-  backgroundColor: "#fff",
-  border: "1px solid #E5E7EB",
-  borderRadius: "8px",
-  padding: "16px 20px",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "space-between",
-};
-
-const itemLinkStyle: React.CSSProperties = {
-  flex: 1,
-  textDecoration: "none",
-};
-
-const itemNameStyle: React.CSSProperties = {
-  fontSize: "16px",
-  fontWeight: 500,
-  color: "#111827",
-};
-
-const itemIdStyle: React.CSSProperties = {
-  fontSize: "12px",
-  color: "#9CA3AF",
-  fontFamily: "monospace",
-  marginTop: "4px",
-};
-
-const deleteButtonStyle: React.CSSProperties = {
-  padding: "6px 12px",
-  fontSize: "12px",
-  backgroundColor: "#FEE2E2",
-  color: "#DC2626",
-  border: "none",
-  borderRadius: "6px",
-  cursor: "pointer",
-};
-
-const emptyStyle: React.CSSProperties = {
-  textAlign: "center",
-  padding: "48px",
-  color: "#6B7280",
-  fontSize: "16px",
-};
-
-const loadingStyle: React.CSSProperties = {
-  textAlign: "center",
-  padding: "48px",
-  color: "#6B7280",
-};
-
-const errorStyle: React.CSSProperties = {
-  backgroundColor: "#FEF2F2",
-  color: "#DC2626",
-  padding: "16px",
-  borderRadius: "8px",
-  marginBottom: "16px",
-};
+import {
+  Box,
+  Button,
+  Container,
+  Flex,
+  Heading,
+  Link,
+  Stack,
+  Text,
+} from "@chakra-ui/react";
 
 export function WorkflowListPage() {
   const { workflows, isLoading, error, refetch } = useWorkflows();
@@ -125,45 +41,73 @@ export function WorkflowListPage() {
 
   if (isLoading) {
     return (
-      <div style={pageStyle}>
-        <div style={loadingStyle}>Loading workflows...</div>
-      </div>
+      <Container maxW="6xl" p="6">
+        <Text textAlign="center" py="12" color="gray.500">
+          Loading workflows...
+        </Text>
+      </Container>
     );
   }
 
   return (
-    <div style={pageStyle}>
-      <header style={headerStyle}>
-        <h1 style={titleStyle}>Workflows</h1>
-        <button style={createButtonStyle} onClick={() => setShowCreateDialog(true)}>
+    <Container maxW="6xl" p="6">
+      <Flex justify="space-between" align="center" mb="6">
+        <Heading size="xl">Workflows</Heading>
+        <Button colorPalette="blue" onClick={() => setShowCreateDialog(true)}>
           Create Workflow
-        </button>
-      </header>
+        </Button>
+      </Flex>
 
-      {error && <div style={errorStyle}>Error: {error.message}</div>}
-      {deleteError && <div style={errorStyle}>{deleteError}</div>}
+      {error && (
+        <Box bg="red.50" color="red.600" p="4" borderRadius="lg" mb="4">
+          Error: {error.message}
+        </Box>
+      )}
+      {deleteError && (
+        <Box bg="red.50" color="red.600" p="4" borderRadius="lg" mb="4">
+          {deleteError}
+        </Box>
+      )}
 
       {workflows.length === 0 ? (
-        <div style={emptyStyle}>
+        <Text textAlign="center" py="12" color="gray.500" fontSize="md">
           No workflows yet. Create your first workflow to get started.
-        </div>
+        </Text>
       ) : (
-        <div style={listStyle}>
+        <Stack gap="3">
           {workflows.map((workflow) => (
-            <div key={workflow.id} style={itemStyle}>
-              <Link to={`/workflows/${workflow.id}`} style={itemLinkStyle}>
-                <div style={itemNameStyle}>{workflow.name || "Untitled"}</div>
-                <div style={itemIdStyle}>{workflow.id}</div>
+            <Flex
+              key={workflow.id}
+              bg="white"
+              border="1px solid"
+              borderColor="gray.200"
+              borderRadius="lg"
+              px="5"
+              py="4"
+              align="center"
+              justify="space-between"
+            >
+              <Link asChild flex="1" _hover={{ textDecoration: "none" }}>
+                <RouterLink to={`/workflows/${workflow.id}`}>
+                  <Text fontWeight="500" color="gray.900">
+                    {workflow.name || "Untitled"}
+                  </Text>
+                  <Text fontSize="xs" color="gray.400" fontFamily="mono" mt="1">
+                    {workflow.id}
+                  </Text>
+                </RouterLink>
               </Link>
-              <button
-                style={deleteButtonStyle}
+              <Button
+                size="xs"
+                variant="subtle"
+                colorPalette="red"
                 onClick={(e) => handleDelete(workflow.id, e)}
               >
                 Delete
-              </button>
-            </div>
+              </Button>
+            </Flex>
           ))}
-        </div>
+        </Stack>
       )}
 
       {showCreateDialog && (
@@ -172,6 +116,6 @@ export function WorkflowListPage() {
           onCreated={handleCreated}
         />
       )}
-    </div>
+    </Container>
   );
 }

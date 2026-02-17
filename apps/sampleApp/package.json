@@ -10,6 +10,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@chakra-ui/react": "^3.33.0",
+    "@emotion/react": "^11.14.0",
     "@omega-flow/editor": "workspace:*",
     "@omega-flow/types": "workspace:*",
     "@xyflow/react": "catalog:",
@@ -29,6 +31,7 @@
     "globals": "^17.3.0",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.54.0",
-    "vite": "^7.3.1"
+    "vite": "^7.3.1",
+    "vite-tsconfig-paths": "^6.1.1"
   }
 }

@@ -1,197 +1,24 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link as RouterLink } from "react-router-dom";
 import { useContexts } from "../hooks/useContexts";
 import { useWorkflows } from "../hooks/useWorkflows";
 import { executeEvent } from "../api/execute";
 import { deleteContext } from "../api/contexts";
-
-const pageStyle: React.CSSProperties = {
-  padding: "24px",
-  maxWidth: "1400px",
-  margin: "0 auto",
-};
-
-const headerStyle: React.CSSProperties = {
-  marginBottom: "24px",
-};
-
-const titleStyle: React.CSSProperties = {
-  fontSize: "24px",
-  fontWeight: 600,
-  color: "#111827",
-};
-
-const gridStyle: React.CSSProperties = {
-  display: "grid",
-  gridTemplateColumns: "400px 1fr",
-  gap: "24px",
-};
-
-const sectionStyle: React.CSSProperties = {
-  backgroundColor: "#fff",
-  border: "1px solid #E5E7EB",
-  borderRadius: "8px",
-  padding: "20px",
-};
-
-const sectionTitleStyle: React.CSSProperties = {
-  fontSize: "16px",
-  fontWeight: 600,
-  color: "#111827",
-  marginBottom: "16px",
-};
-
-const formGroupStyle: React.CSSProperties = {
-  marginBottom: "16px",
-};
-
-const labelStyle: React.CSSProperties = {
-  display: "block",
-  fontSize: "14px",
-  fontWeight: 500,
-  color: "#374151",
-  marginBottom: "6px",
-};
-
-const inputStyle: React.CSSProperties = {
-  width: "100%",
-  padding: "10px 12px",
-  fontSize: "14px",
-  border: "1px solid #D1D5DB",
-  borderRadius: "6px",
-  boxSizing: "border-box",
-};
-
-const textareaStyle: React.CSSProperties = {
-  ...inputStyle,
-  minHeight: "120px",
-  fontFamily: "monospace",
-  resize: "vertical",
-};
-
-const buttonStyle: React.CSSProperties = {
-  padding: "10px 20px",
-  fontSize: "14px",
-  fontWeight: 500,
-  backgroundColor: "#3B82F6",
-  color: "#fff",
-  border: "none",
-  borderRadius: "8px",
-  cursor: "pointer",
-};
-
-const buttonDisabledStyle: React.CSSProperties = {
-  ...buttonStyle,
-  backgroundColor: "#9CA3AF",
-  cursor: "not-allowed",
-};
-
-const secondaryButtonStyle: React.CSSProperties = {
-  ...buttonStyle,
-  backgroundColor: "#6B7280",
-};
-
-const successStyle: React.CSSProperties = {
-  backgroundColor: "#D1FAE5",
-  color: "#065F46",
-  padding: "12px",
-  borderRadius: "6px",
-  fontSize: "13px",
-  marginTop: "16px",
-  fontFamily: "monospace",
-};
-
-const errorStyle: React.CSSProperties = {
-  backgroundColor: "#FEF2F2",
-  color: "#DC2626",
-  padding: "12px",
-  borderRadius: "6px",
-  fontSize: "14px",
-  marginTop: "16px",
-};
-
-const tableStyle: React.CSSProperties = {
-  width: "100%",
-  borderCollapse: "collapse",
-  fontSize: "14px",
-};
-
-const thStyle: React.CSSProperties = {
-  textAlign: "left",
-  padding: "10px 12px",
-  backgroundColor: "#F9FAFB",
-  borderBottom: "1px solid #E5E7EB",
-  fontWeight: 500,
-  color: "#374151",
-};
-
-const tdStyle: React.CSSProperties = {
-  padding: "10px 12px",
-  borderBottom: "1px solid #E5E7EB",
-  color: "#111827",
-};
-
-const clickableRowStyle: React.CSSProperties = {
-  cursor: "pointer",
-};
-
-const statusBadgeStyle = (completed: boolean): React.CSSProperties => ({
-  display: "inline-block",
-  padding: "2px 8px",
-  borderRadius: "9999px",
-  fontSize: "12px",
-  fontWeight: 500,
-  backgroundColor: completed ? "#D1FAE5" : "#FEF3C7",
-  color: completed ? "#065F46" : "#92400E",
-});
-
-const detailsStyle: React.CSSProperties = {
-  backgroundColor: "#F9FAFB",
-  padding: "16px",
-  borderRadius: "6px",
-  marginTop: "16px",
-  fontSize: "13px",
-  fontFamily: "monospace",
-  whiteSpace: "pre-wrap",
-  wordBreak: "break-all",
-  maxHeight: "400px",
-  overflow: "auto",
-};
-
-const actionsStyle: React.CSSProperties = {
-  display: "flex",
-  gap: "8px",
-  marginTop: "12px",
-};
-
-const deleteButtonStyle: React.CSSProperties = {
-  padding: "6px 12px",
-  fontSize: "12px",
-  backgroundColor: "#FEE2E2",
-  color: "#DC2626",
-  border: "none",
-  borderRadius: "6px",
-  cursor: "pointer",
-};
-
-const emptyStyle: React.CSSProperties = {
-  textAlign: "center",
-  padding: "32px",
-  color: "#6B7280",
-};
-
-const loadingStyle: React.CSSProperties = {
-  textAlign: "center",
-  padding: "32px",
-  color: "#6B7280",
-};
-
-const headerRowStyle: React.CSSProperties = {
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "center",
-  marginBottom: "16px",
-};
+import {
+  Badge,
+  Box,
+  Button,
+  Container,
+  Field,
+  Flex,
+  Grid,
+  Heading,
+  Input,
+  Link,
+  Table,
+  Text,
+  Textarea,
+} from "@chakra-ui/react";
 
 export function DebuggerPage() {
   const { contexts, isLoading, error: contextsError, refetch } = useContexts();
@@ -253,95 +80,107 @@ export function DebuggerPage() {
     `${ctx.workflowId}-${ctx.instanceId}`;
 
   return (
-    <div style={pageStyle}>
-      <header style={headerStyle}>
-        <h1 style={titleStyle}>Debugger</h1>
-      </header>
+    <Container maxW="7xl" p="6">
+      <Box mb="6">
+        <Heading size="xl">Debugger</Heading>
+      </Box>
 
-      <div style={gridStyle}>
-        <div style={sectionStyle}>
-          <h2 style={sectionTitleStyle}>Event Creator</h2>
+      <Grid gridTemplateColumns="400px 1fr" gap="6">
+        {/* Event Creator */}
+        <Box bg="white" border="1px solid" borderColor="gray.200" borderRadius="lg" p="5">
+          <Heading size="md" mb="4">Event Creator</Heading>
           <form onSubmit={handleSubmit}>
-            <div style={formGroupStyle}>
-              <label style={labelStyle}>Subject ID</label>
-              <input
-                type="text"
-                style={inputStyle}
+            <Field.Root mb="4">
+              <Field.Label fontSize="sm" fontWeight="500" color="gray.700">
+                Subject ID
+              </Field.Label>
+              <Input
                 value={subjectId}
                 onChange={(e) => setSubjectId(e.target.value)}
                 placeholder="e.g., user-123"
                 required
               />
-            </div>
-            <div style={formGroupStyle}>
-              <label style={labelStyle}>Event Type</label>
-              <input
-                type="text"
-                style={inputStyle}
+            </Field.Root>
+            <Field.Root mb="4">
+              <Field.Label fontSize="sm" fontWeight="500" color="gray.700">
+                Event Type
+              </Field.Label>
+              <Input
                 value={eventType}
                 onChange={(e) => setEventType(e.target.value)}
                 placeholder="e.g., user_signup"
                 required
               />
-            </div>
-            <div style={formGroupStyle}>
-              <label style={labelStyle}>Event Data (JSON)</label>
-              <textarea
-                style={textareaStyle}
+            </Field.Root>
+            <Field.Root mb="4">
+              <Field.Label fontSize="sm" fontWeight="500" color="gray.700">
+                Event Data (JSON)
+              </Field.Label>
+              <Textarea
                 value={eventData}
                 onChange={(e) => setEventData(e.target.value)}
                 placeholder='{"key": "value"}'
+                minH="120px"
+                fontFamily="mono"
+                resize="vertical"
               />
-            </div>
-            <button
+            </Field.Root>
+            <Button
               type="submit"
-              style={isSubmitting ? buttonDisabledStyle : buttonStyle}
+              colorPalette="blue"
               disabled={isSubmitting}
             >
               {isSubmitting ? "Sending..." : "Send Event"}
-            </button>
+            </Button>
           </form>
 
           {submitResult && (
-            <div style={successStyle}>
-              Event sent successfully!
-              {"\n"}ID: {submitResult.id}
-              {"\n"}Time: {new Date(submitResult.time).toISOString()}
-            </div>
+            <Box bg="green.100" color="green.800" p="3" borderRadius="md" mt="4" fontSize="sm" fontFamily="mono" whiteSpace="pre-wrap">
+              Event sent successfully!{"\n"}ID: {submitResult.id}{"\n"}Time: {new Date(submitResult.time).toISOString()}
+            </Box>
           )}
 
-          {submitError && <div style={errorStyle}>{submitError}</div>}
-        </div>
+          {submitError && (
+            <Box bg="red.50" color="red.600" p="3" borderRadius="md" mt="4" fontSize="sm">
+              {submitError}
+            </Box>
+          )}
+        </Box>
 
-        <div style={sectionStyle}>
-          <div style={headerRowStyle}>
-            <h2 style={sectionTitleStyle}>Workflow Instances</h2>
-            <button style={secondaryButtonStyle} onClick={refetch}>
+        {/* Workflow Instances */}
+        <Box bg="white" border="1px solid" borderColor="gray.200" borderRadius="lg" p="5">
+          <Flex justify="space-between" align="center" mb="4">
+            <Heading size="md">Workflow Instances</Heading>
+            <Button variant="solid" colorPalette="gray" onClick={refetch}>
               Refresh
-            </button>
-          </div>
+            </Button>
+          </Flex>
 
           {contextsError && (
-            <div style={errorStyle}>Error: {contextsError.message}</div>
+            <Box bg="red.50" color="red.600" p="3" borderRadius="md" mb="4" fontSize="sm">
+              Error: {contextsError.message}
+            </Box>
           )}
 
           {isLoading ? (
-            <div style={loadingStyle}>Loading contexts...</div>
+            <Text textAlign="center" py="8" color="gray.500">
+              Loading contexts...
+            </Text>
           ) : contexts.length === 0 ? (
-            <div style={emptyStyle}>
+            <Text textAlign="center" py="8" color="gray.500">
               No workflow instances yet. Send an event to start a workflow.
-            </div>
+            </Text>
           ) : (
-            <table style={tableStyle}>
-              <thead>
-                <tr>
-                  <th style={thStyle}>Workflow</th>
-                  <th style={thStyle}>Subject ID</th>
-                  <th style={thStyle}>Current Node</th>
-                  <th style={thStyle}>Status</th>
-                </tr>
-              </thead>
-              <tbody>
+            <Table.Root size="sm" interactive>
+              <Table.Header>
+                <Table.Row>
+                  <Table.ColumnHeader>Workflow</Table.ColumnHeader>
+                  <Table.ColumnHeader>Subject ID</Table.ColumnHeader>
+                  <Table.ColumnHeader>Current Node</Table.ColumnHeader>
+                  <Table.ColumnHeader>Status</Table.ColumnHeader>
+                </Table.Row>
+              </Table.Header>
+              <Table.Body>
                 {contexts.map((ctx) => {
                   const key = getContextKey(ctx);
                   const workflow = workflowMap.get(ctx.workflowId);
@@ -349,51 +188,62 @@ export function DebuggerPage() {
 
                   return (
                     <React.Fragment key={key}>
-                      <tr
-                        style={clickableRowStyle}
+                      <Table.Row
+                        cursor="pointer"
                         onClick={() =>
                           setExpandedContext(isExpanded ? null : key)
                         }
                       >
-                        <td style={tdStyle}>
+                        <Table.Cell>
                           <Link
-                            to={`/workflows/${ctx.workflowId}`}
-                            style={{ textDecoration: "none", color: "inherit" }}
-                            onClick={(e) => e.stopPropagation()}
+                            asChild
+                            onClick={(e: React.MouseEvent) => e.stopPropagation()}
                           >
-                            <div style={{ fontWeight: 500, color: "#3B82F6" }}>
-                              {workflow?.name || "Unknown"}
-                            </div>
-                            <div
-                              style={{
-                                fontSize: "11px",
-                                color: "#9CA3AF",
-                                fontFamily: "monospace",
-                              }}
-                            >
-                              {ctx.workflowId}
-                            </div>
+                            <RouterLink to={`/workflows/${ctx.workflowId}`}>
+                              <Text fontWeight="500" color="blue.500">
+                                {workflow?.name || "Unknown"}
+                              </Text>
+                              <Text fontSize="2xs" color="gray.400" fontFamily="mono">
+                                {ctx.workflowId}
+                              </Text>
+                            </RouterLink>
                           </Link>
-                        </td>
-                        <td style={tdStyle}>{ctx.subjectId}</td>
-                        <td style={{ ...tdStyle, fontFamily: "monospace" }}>
+                        </Table.Cell>
+                        <Table.Cell>{ctx.subjectId}</Table.Cell>
+                        <Table.Cell fontFamily="mono">
                           {ctx.currentNodeId || "-"}
-                        </td>
-                        <td style={tdStyle}>
-                          <span style={statusBadgeStyle(ctx.isCompleted ?? false)}>
+                        </Table.Cell>
+                        <Table.Cell>
+                          <Badge
+                            colorPalette={ctx.isCompleted ? "green" : "yellow"}
+                            variant="subtle"
+                          >
                             {ctx.isCompleted ? "Completed" : "Active"}
-                          </span>
-                        </td>
-                      </tr>
+                          </Badge>
+                        </Table.Cell>
+                      </Table.Row>
                       {isExpanded && (
-                        <tr>
-                          <td colSpan={4} style={{ padding: "0 12px 16px" }}>
-                            <div style={detailsStyle}>
+                        <Table.Row>
+                          <Table.Cell colSpan={4} p="0" px="3" pb="4">
+                            <Box
+                              bg="gray.50"
+                              p="4"
+                              borderRadius="md"
+                              mt="4"
+                              fontSize="xs"
+                              fontFamily="mono"
+                              whiteSpace="pre-wrap"
+                              wordBreak="break-all"
+                              maxH="400px"
+                              overflow="auto"
+                            >
                               {JSON.stringify(ctx, null, 2)}
-                            </div>
-                            <div style={actionsStyle}>
-                              <button
-                                style={deleteButtonStyle}
+                            </Box>
+                            <Flex gap="2" mt="3">
+                              <Button
+                                size="xs"
+                                variant="subtle"
+                                colorPalette="red"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   handleDeleteContext(
@@ -404,19 +254,19 @@ export function DebuggerPage() {
                                 }}
                               >
                                 Delete Instance
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
+                              </Button>
+                            </Flex>
+                          </Table.Cell>
+                        </Table.Row>
                       )}
                     </React.Fragment>
                   );
                 })}
-              </tbody>
-            </table>
+              </Table.Body>
+            </Table.Root>
           )}
-        </div>
-      </div>
-    </div>
+        </Box>
+      </Grid>
+    </Container>
   );
 }
