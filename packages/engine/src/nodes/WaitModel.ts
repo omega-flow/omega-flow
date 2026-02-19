@@ -60,13 +60,23 @@ export default class WaitModel extends NodeModel {
   }
 
   /**
-   * Starts the waiting period by recording the start time.
+   * Starts the waiting period by recording the start time and scheduling a timeout event.
    * @param time - The timestamp when waiting begins (usually event.time)
+   * @param eventData - Optional event data to include in the scheduled timeout (for routing)
    */
-  startWaiting(time: number) {
+  async startWaiting(time: number, eventData?: any) {
     this.updateState({ waitStartsAt: time });
 
-    // TODO: Trigger scheduler to wake up when wait is over
+    if (this.services.scheduler) {
+      const duration = this.getData().params.duration || 0;
+      const timeoutEvent: Event = {
+        id: `timeout_${this.getId()}_${Date.now()}`,
+        type: "system:timeout",
+        time: time + duration,
+        data: eventData,
+      };
+      await this.services.scheduler.schedule(timeoutEvent, duration);
+    }
   }
 
   /**
@@ -112,7 +122,7 @@ export default class WaitModel extends NodeModel {
       return false;
     } else {
       // Start waiting and stay pending
-      this.startWaiting(event.time);
+      await this.startWaiting(event.time, event.data);
       return false;
     }
   }

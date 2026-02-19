@@ -15,6 +15,7 @@ import {
 
 import NodeModel from "./NodeModel";
 import EdgeModel from "./EdgeModel";
+import type { NodeServices } from "./NodeServices";
 
 /**
  * Core workflow execution engine that manages the lifecycle of a single workflow instance.
@@ -74,7 +75,8 @@ class WorkflowModel {
    */
   constructor(
     workflow: Workflow,
-    nodeModels: Record<string, typeof NodeModel>
+    nodeModels: Record<string, typeof NodeModel>,
+    services?: NodeServices
   ) {
     const ajv = new Ajv();
     const validate = ajv.compile(WorkflowSchema);
@@ -98,7 +100,11 @@ class WorkflowModel {
       if (!model) {
         throw new Error(`Node type ${node.type} not found`);
       }
-      return model.create(node);
+      const instance = model.create(node);
+      if (services) {
+        instance.services = services;
+      }
+      return instance;
     });
 
     // Map edges to their classes

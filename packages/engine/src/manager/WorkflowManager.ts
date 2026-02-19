@@ -222,7 +222,7 @@ export class WorkflowManager {
     domain: string,
     subjectId: string
   ): Promise<void> {
-    const workflow = new WorkflowModel(workflowDef, this.nodeModels);
+    const workflow = new WorkflowModel(workflowDef, this.nodeModels, { scheduler: this.workflowScheduler });
     workflow.start();
 
     const startNode = workflow.getStartNode();
@@ -269,7 +269,7 @@ export class WorkflowManager {
     domain: string,
     subjectId: string
   ): Promise<void> {
-    const workflow = new WorkflowModel(workflowDef, this.nodeModels);
+    const workflow = new WorkflowModel(workflowDef, this.nodeModels, { scheduler: this.workflowScheduler });
     workflow.setContext(context);
     workflow.start();
 

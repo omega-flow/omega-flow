@@ -80,13 +80,14 @@ Executes a single workflow instance. Manages the lifecycle of workflow execution
 ### Constructor
 
 ```typescript
-new WorkflowModel(workflow: Workflow, nodeModels: Record<string, typeof NodeModel>)
+new WorkflowModel(workflow: Workflow, nodeModels: Record<string, typeof NodeModel>, services?: NodeServices)
 ```
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
 | `workflow` | `Workflow` | The workflow definition to execute |
 | `nodeModels` | `Record<string, typeof NodeModel>` | Map of node type names to their classes |
+| `services` | `NodeServices` | Optional services bag injected into all nodes |
 
 ### Properties
 
@@ -225,6 +226,7 @@ new NodeModel(node: Node)
 | `node` | `Node` | The underlying node definition |
 | `connections` | `Connection[]` | Outgoing connections to other nodes |
 | `state` | `any` | Internal state for cross-method data sharing |
+| `services` | `NodeServices` | Services available to the node (scheduler, etc.) |
 
 ### Methods
 
@@ -357,6 +359,32 @@ class MyCustomNode extends NodeModel {
   }
 }
 ```
+
+---
+
+## NodeServices
+
+Interface for services injected into nodes by the workflow engine. This provides an extensible way to give nodes access to infrastructure without polluting the base class with individual properties.
+
+```typescript
+interface NodeServices {
+  scheduler?: WorkflowScheduler;
+}
+```
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `scheduler` | `WorkflowScheduler` | Optional scheduler for nodes that need to schedule future events |
+
+Nodes access services via `this.services`:
+
+```typescript
+if (this.services.scheduler) {
+  await this.services.scheduler.schedule(event, delayMs);
+}
+```
+
+When using `WorkflowManager`, services are automatically constructed and injected. When using `WorkflowModel` directly, pass services as the third constructor argument.
 
 ---
 

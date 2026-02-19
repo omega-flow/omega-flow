@@ -352,6 +352,63 @@ export default class CompleteNode extends NodeModel {
 }
 ```
 
+## Accessing Services
+
+Nodes can access shared services via `this.services`. Services are automatically injected by `WorkflowModel` during node instantiation. The `NodeServices` interface is extensible — currently it provides access to the scheduler.
+
+### Using the Scheduler
+
+Nodes that need to schedule future events (e.g., timeouts) can use `this.services.scheduler`:
+
+```typescript
+import NodeModel from "@omega-flow/engine/engine/NodeModel";
+import type { Node, Event } from "@omega-flow/types";
+
+export default class DelayNode extends NodeModel {
+  static create(node: Node): DelayNode {
+    if (node.type !== "Delay") throw new Error("Node type must be Delay");
+    return new this(node);
+  }
+
+  async acceptEvent(event: Event): Promise<boolean> {
+    const state = this.getState();
+    const { delay } = this.getData().params || {};
+
+    // Already waiting — check if timeout arrived
+    if (state.waitStartedAt) {
+      if (event.type === "system:timeout" && event.time >= state.waitStartedAt + delay) {
+        return true; // Done waiting
+      }
+      return false; // Still waiting
+    }
+
+    // First call — schedule timeout and start waiting
+    this.setState({ waitStartedAt: event.time });
+
+    if (this.services.scheduler) {
+      const timeoutEvent: Event = {
+        id: `timeout_${this.getId()}_${Date.now()}`,
+        type: "system:timeout",
+        time: event.time + delay,
+        data: event.data,
+      };
+      await this.services.scheduler.schedule(timeoutEvent, delay);
+    }
+
+    return false;
+  }
+
+  async nextNode(event: Event): Promise<NodeModel | null> {
+    const handle = this.getSourceHandles()[0];
+    return this.getTargetNodeFromSourceHandle(handle);
+  }
+}
+```
+
+::: tip
+When no scheduler is provided (e.g., in unit tests), `this.services.scheduler` is `undefined`. Always guard access with an `if` check so nodes degrade gracefully.
+:::
+
 ## State Management
 
 Use `setState`, `getState`, and `updateState` to manage node state:

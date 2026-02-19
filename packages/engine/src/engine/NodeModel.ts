@@ -2,6 +2,7 @@ import { type Node, type Event } from "@omega-flow/types";
 
 import EdgeModel from "./EdgeModel";
 import { type Connection } from "./Connection";
+import type { NodeServices } from "./NodeServices";
 
 /**
  * Base class for all workflow node types.
@@ -46,6 +47,9 @@ class NodeModel {
 
   /** Internal state that persists across event processing. Use setState/getState to access. */
   state: any;
+
+  /** Services available to nodes (scheduler, etc.) */
+  services: NodeServices = {};
 
   /**
    * Creates a new NodeModel instance.
