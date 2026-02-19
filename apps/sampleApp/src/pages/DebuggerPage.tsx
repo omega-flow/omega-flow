@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Link as RouterLink } from "react-router-dom";
 import { useContexts } from "../hooks/useContexts";
 import { useWorkflows } from "../hooks/useWorkflows";
@@ -6,6 +6,7 @@ import { useScheduler } from "../hooks/useScheduler";
 import { executeEvent } from "../api/execute";
 import { deleteContext } from "../api/contexts";
 import { fireScheduledEvent } from "../api/scheduler";
+import { toaster } from "../components/Toaster";
 import {
   Badge,
   Box,
@@ -17,6 +18,7 @@ import {
   Heading,
   Input,
   Link,
+  Switch,
   Table,
   Text,
   Textarea,
@@ -39,6 +41,56 @@ export function DebuggerPage() {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [expandedContext, setExpandedContext] = useState<string | null>(null);
   const [firingId, setFiringId] = useState<string | null>(null);
+  const [autoFire, setAutoFire] = useState(false);
+  const autoFireRef = useRef(false);
+  const autoFiringRef = useRef(false);
+
+  // Keep ref in sync with state so the interval callback sees the latest value
+  useEffect(() => {
+    autoFireRef.current = autoFire;
+  }, [autoFire]);
+
+  const autoFireDueEvents = useCallback(async () => {
+    if (!autoFireRef.current || autoFiringRef.current) return;
+
+    const now = Date.now();
+    const dueEvents = scheduledEvents.filter((e) => e.fireAt <= now);
+    if (dueEvents.length === 0) return;
+
+    autoFiringRef.current = true;
+    try {
+      for (const entry of dueEvents) {
+        await fireScheduledEvent(entry.scheduleId);
+        toaster.create({
+          title: "Event auto-fired",
+          description: `${entry.event.type} (${entry.event.data?.subjectId || "—"})`,
+          type: "info",
+          duration: 3000,
+        });
+      }
+      refetchScheduler();
+      refetch();
+    } catch (err) {
+      toaster.create({
+        title: "Auto-fire failed",
+        description: err instanceof Error ? err.message : "Unknown error",
+        type: "error",
+        duration: 5000,
+      });
+    } finally {
+      autoFiringRef.current = false;
+    }
+  }, [scheduledEvents, refetchScheduler, refetch]);
+
+  // Poll and auto-fire every 2 seconds
+  useEffect(() => {
+    if (!autoFire) return;
+    const interval = setInterval(() => {
+      refetchScheduler();
+      autoFireDueEvents();
+    }, 2000);
+    return () => clearInterval(interval);
+  }, [autoFire, autoFireDueEvents, refetchScheduler]);
 
   const workflowMap = new Map(workflows.map((w) => [w.id, w]));
 
@@ -61,6 +113,7 @@ export function DebuggerPage() {
       const result = await executeEvent(eventType, subjectId, parsedData);
       setSubmitResult({ id: result.event.id, time: result.event.time });
       refetch();
+      refetchScheduler();
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : "Failed to execute event");
     } finally {
@@ -189,9 +242,21 @@ export function DebuggerPage() {
         <Box bg="white" border="1px solid" borderColor="gray.200" borderRadius="lg" p="5" mt="6">
           <Flex justify="space-between" align="center" mb="4">
             <Heading size="md">Scheduled Events</Heading>
-            <Button variant="solid" colorPalette="gray" size="sm" onClick={refetchScheduler}>
-              Refresh
-            </Button>
+            <Flex align="center" gap="3">
+              <Switch.Root
+                size="sm"
+                colorPalette="green"
+                checked={autoFire}
+                onCheckedChange={(e) => setAutoFire(e.checked)}
+              >
+                <Switch.HiddenInput />
+                <Switch.Control />
+                <Switch.Label fontSize="xs" color="gray.600">Auto-fire</Switch.Label>
+              </Switch.Root>
+              <Button variant="solid" colorPalette="gray" size="sm" onClick={refetchScheduler}>
+                Refresh
+              </Button>
+            </Flex>
           </Flex>
 
           {schedulerLoading ? (
