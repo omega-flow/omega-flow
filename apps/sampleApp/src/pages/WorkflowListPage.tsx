@@ -50,7 +50,7 @@ export function WorkflowListPage() {
   }
 
   return (
-    <Container maxW="6xl" p="6">
+    <Container maxW="7xl" p="6">
       <Flex justify="space-between" align="center" mb="6">
         <Heading size="xl">Workflows</Heading>
         <Button colorPalette="blue" onClick={() => setShowCreateDialog(true)}>

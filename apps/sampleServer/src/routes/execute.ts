@@ -2,12 +2,12 @@ import { Router } from "express";
 import { nanoid } from "nanoid";
 import {
   WorkflowManager,
-  InMemoryWorkflowScheduler,
   nodeModels,
 } from "@omega-flow/engine";
 import type { Event } from "@omega-flow/types";
 import type { FileWorkflowStore } from "../stores/FileWorkflowStore.js";
 import type { FileWorkflowMemory } from "../stores/FileWorkflowMemory.js";
+import type { FileWorkflowScheduler } from "../stores/FileWorkflowScheduler.js";
 
 interface ExecuteRequestBody {
   type: string;
@@ -20,6 +20,7 @@ interface ExecuteRequestBody {
 export function createExecuteRoutes(
   workflowStore: FileWorkflowStore,
   workflowMemory: FileWorkflowMemory,
+  workflowScheduler: FileWorkflowScheduler,
 ): Router {
   const router = Router();
 
@@ -48,15 +49,14 @@ export function createExecuteRoutes(
       };
 
       // Create WorkflowManager
-      const scheduler = new InMemoryWorkflowScheduler();
       const manager = new WorkflowManager({
         workflowStore,
         workflowMemory,
-        workflowScheduler: scheduler,
+        workflowScheduler,
         nodeModels,
         eventExtractor: (evt) => [domain, evt.data?.subjectId as string],
       });
-      scheduler.setWorkflowManager(manager);
+      workflowScheduler.setWorkflowManager(manager);
 
       // Process the event
       await manager.processEvent(event);

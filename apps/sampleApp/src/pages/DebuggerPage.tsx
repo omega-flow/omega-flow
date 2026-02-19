@@ -2,8 +2,10 @@ import React, { useState } from "react";
 import { Link as RouterLink } from "react-router-dom";
 import { useContexts } from "../hooks/useContexts";
 import { useWorkflows } from "../hooks/useWorkflows";
+import { useScheduler } from "../hooks/useScheduler";
 import { executeEvent } from "../api/execute";
 import { deleteContext } from "../api/contexts";
+import { fireScheduledEvent } from "../api/scheduler";
 import {
   Badge,
   Box,
@@ -23,6 +25,11 @@ import {
 export function DebuggerPage() {
   const { contexts, isLoading, error: contextsError, refetch } = useContexts();
   const { workflows } = useWorkflows();
+  const {
+    scheduledEvents,
+    isLoading: schedulerLoading,
+    refetch: refetchScheduler,
+  } = useScheduler();
 
   const [subjectId, setSubjectId] = useState("");
   const [eventType, setEventType] = useState("");
@@ -31,6 +38,7 @@ export function DebuggerPage() {
   const [submitResult, setSubmitResult] = useState<{ id: string; time: number } | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [expandedContext, setExpandedContext] = useState<string | null>(null);
+  const [firingId, setFiringId] = useState<string | null>(null);
 
   const workflowMap = new Map(workflows.map((w) => [w.id, w]));
 
@@ -79,6 +87,35 @@ export function DebuggerPage() {
   const getContextKey = (ctx: { workflowId: string; instanceId: string }) =>
     `${ctx.workflowId}-${ctx.instanceId}`;
 
+  const handleFire = async (scheduleId: string) => {
+    setFiringId(scheduleId);
+    try {
+      await fireScheduledEvent(scheduleId);
+      refetchScheduler();
+      refetch();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to fire event");
+    } finally {
+      setFiringId(null);
+    }
+  };
+
+  const formatTimeToFire = (fireAt: number) => {
+    const now = Date.now();
+    const diff = fireAt - now;
+    const absDiff = Math.abs(diff);
+    const seconds = Math.floor(absDiff / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+
+    let label: string;
+    if (hours > 0) label = `${hours}h ${minutes % 60}m`;
+    else if (minutes > 0) label = `${minutes}m ${seconds % 60}s`;
+    else label = `${seconds}s`;
+
+    return diff <= 0 ? `${label} ago` : `in ${label}`;
+  };
+
   return (
     <Container maxW="7xl" p="6">
       <Box mb="6">
@@ -86,6 +123,7 @@ export function DebuggerPage() {
       </Box>
 
       <Grid gridTemplateColumns="400px 1fr" gap="6">
+        <Box>
         {/* Event Creator */}
         <Box bg="white" border="1px solid" borderColor="gray.200" borderRadius="lg" p="5">
           <Heading size="md" mb="4">Event Creator</Heading>
@@ -145,6 +183,63 @@ export function DebuggerPage() {
               {submitError}
             </Box>
           )}
+        </Box>
+
+        {/* Scheduled Events */}
+        <Box bg="white" border="1px solid" borderColor="gray.200" borderRadius="lg" p="5" mt="6">
+          <Flex justify="space-between" align="center" mb="4">
+            <Heading size="md">Scheduled Events</Heading>
+            <Button variant="solid" colorPalette="gray" size="sm" onClick={refetchScheduler}>
+              Refresh
+            </Button>
+          </Flex>
+
+          {schedulerLoading ? (
+            <Text textAlign="center" py="4" color="gray.500" fontSize="sm">
+              Loading...
+            </Text>
+          ) : scheduledEvents.length === 0 ? (
+            <Text textAlign="center" py="4" color="gray.500" fontSize="sm">
+              No scheduled events.
+            </Text>
+          ) : (
+            <Box>
+              {scheduledEvents.map((entry) => {
+                const isPast = entry.fireAt <= Date.now();
+                return (
+                  <Flex
+                    key={entry.scheduleId}
+                    justify="space-between"
+                    align="center"
+                    p="3"
+                    borderBottom="1px solid"
+                    borderColor="gray.100"
+                  >
+                    <Box>
+                      <Text fontSize="sm" fontWeight="500">
+                        {entry.event.type}
+                      </Text>
+                      <Text fontSize="xs" color="gray.500">
+                        Subject: {entry.event.data?.subjectId || "—"}
+                      </Text>
+                      <Text fontSize="xs" color={isPast ? "orange.500" : "gray.500"}>
+                        {formatTimeToFire(entry.fireAt)}
+                      </Text>
+                    </Box>
+                    <Button
+                      size="xs"
+                      colorPalette={isPast ? "blue" : "gray"}
+                      disabled={!isPast || firingId === entry.scheduleId}
+                      onClick={() => handleFire(entry.scheduleId)}
+                    >
+                      {firingId === entry.scheduleId ? "Firing..." : "Fire"}
+                    </Button>
+                  </Flex>
+                );
+              })}
+            </Box>
+          )}
+        </Box>
         </Box>
 
         {/* Workflow Instances */}
