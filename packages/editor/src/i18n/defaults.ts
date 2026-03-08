@@ -35,7 +35,7 @@ export const defaultTranslations: TranslationDictionary = {
   "panels.options.frequencyTypeHint": "How often this workflow can run for a subject",
   "panels.options.frequencyOneTime": "One time",
   "panels.options.frequencyEveryRematch": "Every rematch",
-  "panels.options.intervalLabel": "Interval (seconds)",
+  "panels.options.intervalLabel": "Interval",
   "panels.options.intervalHint": "Minimum time between runs",
 
   // ── Node Views (canvas) ────────────────────────────────────

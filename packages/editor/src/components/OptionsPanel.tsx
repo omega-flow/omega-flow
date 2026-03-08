@@ -1,7 +1,7 @@
 import React from "react";
 import { useWorkflowEditorContext } from "../context/WorkflowEditorContext";
 import { useTranslation } from "../i18n";
-import { SelectField, NumberField, FieldGroup } from "../primitives";
+import { SelectField, DurationField, FieldGroup } from "../primitives";
 import type { OptionsPanelProps } from "../context/types";
 import type { WorkflowFrequency } from "@omega-flow/types";
 
@@ -48,11 +48,12 @@ export function OptionsPanel({
     setOptions({ ...options, frequency: newFrequency });
   };
 
-  const handleIntervalChange = (interval: number) => {
+  const handleIntervalChange = (ms: number) => {
     if (options.frequency) {
+      const intervalInSeconds = Math.round(ms / 1000);
       setOptions({
         ...options,
-        frequency: { ...options.frequency, interval },
+        frequency: { ...options.frequency, interval: intervalInSeconds },
       });
     }
   };
@@ -72,11 +73,10 @@ export function OptionsPanel({
           />
 
           {options.frequency?.type === "every_rematch" && (
-            <NumberField
+            <DurationField
               label={t("panels.options.intervalLabel")}
-              value={options.frequency?.interval ?? 3600}
+              value={(options.frequency?.interval ?? 3600) * 1000}
               onChange={handleIntervalChange}
-              min={1}
               hint={t("panels.options.intervalHint")}
             />
           )}
