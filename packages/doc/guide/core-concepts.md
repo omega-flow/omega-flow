@@ -138,14 +138,32 @@ Edges connect nodes and define the flow of execution.
 
 ### Handles
 
-Nodes can have multiple **handles** (connection points):
+Nodes have **handles** — the connection points where edges attach:
 
-- **Source handles** - Outputs (bottom of node)
-- **Target handles** - Inputs (top of node)
+- **Target handles** — inputs, rendered on the top of the node
+- **Source handles** — outputs, rendered on the bottom of the node
 
-For example, a Condition node has:
-- 1 target handle: `input`
-- 2 source handles: `true`, `false`
+When an edge leaves a specific output (e.g. the `true` branch of a Condition), set `sourceHandle` on the edge. Likewise, set `targetHandle` when the destination node has more than one input. For nodes with a single input/output, the handle id can be omitted on the edge.
+
+#### Handles on built-in nodes
+
+| Node | Target handles (inputs) | Source handles (outputs) |
+|------|-------------------------|--------------------------|
+| `Trigger` | — (entry point) | `output` |
+| `Action` | `input` | `output` |
+| `Condition` | `input` | `true`, `false` |
+| `Wait` | `input` | `output` |
+| `TriggerOrTimeout` | `input` | `output` |
+| `Exit` | `input` | — (terminates) |
+
+A few things to note:
+
+- **`Trigger`** has no target handle — it is always the starting point of a branch.
+- **`Exit`** has no source handle — it terminates the workflow.
+- **`Condition`** has two source handles. Edges leaving it **must** specify `sourceHandle: "true"` or `sourceHandle: "false"`.
+- **`TriggerOrTimeout`** has a single `output` — the node continues down the same edge regardless of whether the event arrived or the timeout fired. The reason for which one resolved is recorded on the context, not in the graph.
+
+Custom node types declare their own handles in the view component — see [Custom Nodes (Editor)](/guide/custom-nodes) for details.
 
 ## Events
 
