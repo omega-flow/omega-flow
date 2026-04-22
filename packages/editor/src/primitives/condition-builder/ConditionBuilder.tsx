@@ -1,12 +1,8 @@
-import React, { useState, useCallback, useEffect, useRef } from "react";
-import type {
-  ConditionBuilderProps,
-  ConditionBuilderValue,
-  ConditionGroupValue,
-} from "./types";
-import { ConditionGroup } from "./ConditionGroup";
+import React from "react";
+import type { Conditions, ConditionGroup } from "@omega-flow/types";
+import type { ConditionBuilderProps } from "./types";
+import { ConditionGroupView } from "./ConditionGroup";
 import { defaultOperators } from "./operators";
-import { fromEngineFormat, toEngineFormat } from "./conversion";
 import { useTranslation } from "../../i18n";
 
 const containerStyle: React.CSSProperties = {
@@ -54,10 +50,17 @@ const addGroupButtonStyle: React.CSSProperties = {
   marginTop: "var(--of-spacing-2, 6px)",
 };
 
+function normalize(value: Conditions | undefined): Conditions {
+  if (!value || !Array.isArray(value.groups) || value.groups.length === 0) {
+    return { groups: [{ operator: "all", conditions: [] }] };
+  }
+  return value;
+}
+
 /**
- * Visual condition builder for json-rules-engine rules.
+ * Visual condition builder for the unified Conditions format.
  *
- * Top level is always OR (any), each group inside can be AND or OR.
+ * Top level is always OR (between groups), each group inside can be AND or OR.
  */
 export function ConditionBuilder({
   value,
@@ -66,51 +69,27 @@ export function ConditionBuilder({
   operators = defaultOperators,
 }: ConditionBuilderProps) {
   const t = useTranslation();
+  const current = normalize(value);
 
-  const [builderValue, setBuilderValue] = useState<ConditionBuilderValue>(() =>
-    fromEngineFormat(value)
-  );
+  const emit = (groups: ConditionGroup[]) => {
+    onChange({ groups: groups.length > 0 ? groups : [{ operator: "all", conditions: [] }] });
+  };
 
-  // Track whether the latest value change came from this component
-  // so the sync effect can skip self-caused updates.
-  const isInternalChange = useRef(false);
-
-  // Sync only when the value changes externally (e.g., undo, dialog reset).
-  useEffect(() => {
-    if (isInternalChange.current) {
-      isInternalChange.current = false;
-      return;
-    }
-    setBuilderValue(fromEngineFormat(value));
-  }, [value]);
-
-  const emitChange = useCallback(
-    (next: ConditionBuilderValue) => {
-      isInternalChange.current = true;
-      setBuilderValue(next);
-      onChange(toEngineFormat(next));
-    },
-    [onChange]
-  );
-
-  const handleGroupChange = (index: number, group: ConditionGroupValue) => {
-    const groups = [...builderValue.groups];
+  const handleGroupChange = (index: number, group: ConditionGroup) => {
+    const groups = [...current.groups];
     groups[index] = group;
-    emitChange({ groups });
+    emit(groups);
   };
 
   const handleGroupRemove = (index: number) => {
-    const groups = builderValue.groups.filter((_, i) => i !== index);
-    emitChange({ groups: groups.length > 0 ? groups : [{ operator: "all", conditions: [] }] });
+    emit(current.groups.filter((_, i) => i !== index));
   };
 
   const handleAddGroup = () => {
-    emitChange({
-      groups: [
-        ...builderValue.groups,
-        { operator: "all", conditions: [{ fact: "", operator: "equal", value: "" }] },
-      ],
-    });
+    emit([
+      ...current.groups,
+      { operator: "all", conditions: [{ fact: "", operator: "equal", value: "" }] },
+    ]);
   };
 
   return (
@@ -119,7 +98,7 @@ export function ConditionBuilder({
         {t("conditionBuilder.topLevelLabel")}
       </div>
 
-      {builderValue.groups.map((group, index) => (
+      {current.groups.map((group, index) => (
         <React.Fragment key={index}>
           {index > 0 && (
             <div style={orDividerStyle}>
@@ -128,13 +107,13 @@ export function ConditionBuilder({
               <div style={orLineStyle} />
             </div>
           )}
-          <ConditionGroup
+          <ConditionGroupView
             group={group}
             properties={properties}
             operators={operators}
             onChange={(updated) => handleGroupChange(index, updated)}
             onRemove={() => handleGroupRemove(index)}
-            canRemove={builderValue.groups.length > 1}
+            canRemove={current.groups.length > 1}
           />
         </React.Fragment>
       ))}

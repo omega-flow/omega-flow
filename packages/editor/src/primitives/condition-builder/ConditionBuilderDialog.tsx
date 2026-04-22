@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
+import type { Conditions } from "@omega-flow/types";
 import type { ConditionBuilderDialogProps } from "./types";
 import { ConditionBuilder } from "./ConditionBuilder";
 import { useTranslation } from "../../i18n";
@@ -122,7 +123,7 @@ export function ConditionBuilderDialog({
   operators,
 }: ConditionBuilderDialogProps) {
   const t = useTranslation();
-  const [draft, setDraft] = useState<Record<string, unknown>>(value);
+  const [draft, setDraft] = useState<Conditions>(value);
   const backdropRef = useRef<HTMLDivElement>(null);
 
   // Reset draft when dialog opens
@@ -143,7 +144,7 @@ export function ConditionBuilderDialog({
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [open, onClose]);
 
-  const handleDraftChange = useCallback((next: Record<string, unknown>) => {
+  const handleDraftChange = useCallback((next: Conditions) => {
     setDraft(next);
   }, []);
 

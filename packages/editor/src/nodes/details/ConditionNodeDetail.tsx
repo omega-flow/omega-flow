@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import type { Conditions } from "@omega-flow/types";
 import { FieldGroup } from "../../primitives";
 import {
   ConditionBuilderDialog,
@@ -9,42 +10,26 @@ import { useTranslation } from "../../i18n";
 import type { NodeDetailProps } from "../types";
 
 interface ConditionData {
-  conditions?: {
-    all?: unknown[];
-    any?: unknown[];
-  };
+  conditions?: Conditions;
 }
 
 export interface ConditionNodeDetailProps extends NodeDetailProps {
   /** Available properties for the condition builder fact selector */
   conditionProperties?: ConditionProperties;
-  /** Custom operators for the condition builder (defaults to json-rules-engine built-ins) */
+  /** Custom operators for the condition builder (defaults to the built-in set) */
   conditionOperators?: OperatorOption[];
 }
 
-function countRules(conditions: ConditionData["conditions"]): number {
-  if (!conditions) return 0;
+const EMPTY_CONDITIONS: Conditions = {
+  groups: [{ operator: "all", conditions: [] }],
+};
 
-  let count = 0;
-
-  const countInArray = (arr: unknown[]) => {
-    for (const item of arr) {
-      if (item && typeof item === "object") {
-        const obj = item as Record<string, unknown>;
-        if ("fact" in obj) {
-          count++;
-        } else if (Array.isArray(obj.all)) {
-          countInArray(obj.all);
-        } else if (Array.isArray(obj.any)) {
-          countInArray(obj.any);
-        }
-      }
-    }
-  };
-
-  if (Array.isArray(conditions.all)) countInArray(conditions.all);
-  if (Array.isArray(conditions.any)) countInArray(conditions.any);
-  return count;
+function countRules(conditions: Conditions | undefined): number {
+  if (!conditions || !Array.isArray(conditions.groups)) return 0;
+  return conditions.groups.reduce(
+    (sum, group) => sum + (group.conditions?.length ?? 0),
+    0
+  );
 }
 
 const openButtonStyle: React.CSSProperties = {
@@ -81,13 +66,13 @@ export function ConditionNodeDetail({
   const data = node.data as ConditionData;
   const [dialogOpen, setDialogOpen] = useState(false);
 
-  const conditions = data.conditions ?? { all: [] };
+  const conditions = data.conditions ?? EMPTY_CONDITIONS;
   const ruleCount = countRules(conditions);
 
-  const handleConditionsChange = (updated: Record<string, unknown>) => {
+  const handleConditionsChange = (updated: Conditions) => {
     onChange({
       ...data,
-      conditions: updated as ConditionData["conditions"],
+      conditions: updated,
     });
   };
 
@@ -95,8 +80,8 @@ export function ConditionNodeDetail({
     ruleCount === 0
       ? t("conditionBuilder.noConditions")
       : ruleCount === 1
-        ? t("nodes.condition.ruleCountSingular")
-        : t("nodes.condition.ruleCount", { count: String(ruleCount) });
+        ? t("conditionBuilder.ruleCountSingular")
+        : t("conditionBuilder.ruleCount", { count: String(ruleCount) });
 
   return (
     <FieldGroup label={t("nodeDetails.condition.group")}>

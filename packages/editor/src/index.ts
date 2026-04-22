@@ -57,8 +57,6 @@ export {
   ConditionBuilder,
   ConditionBuilderDialog,
   defaultOperators,
-  fromEngineFormat,
-  toEngineFormat,
 } from "./primitives";
 
 // Types - Context
@@ -95,9 +93,6 @@ export type {
   ConditionProperty,
   ConditionPropertyGroup,
   ConditionProperties,
-  ConditionRule,
-  ConditionGroupValue,
-  ConditionBuilderValue,
   OperatorOption,
   ConditionBuilderProps,
   ConditionBuilderDialogProps,

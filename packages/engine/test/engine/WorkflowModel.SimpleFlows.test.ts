@@ -46,12 +46,17 @@ describe("WorkflowModel Simple Flow", () => {
             data: {
               label: "if user_id === 1",
               conditions: {
-                // json-rules-engine conditions
-                all: [
+                // unified condition format (top-level OR of groups)
+                groups: [
                   {
-                    fact: "user_id",
-                    operator: "equal",
-                    value: 1,
+                    operator: "all",
+                    conditions: [
+                      {
+                        fact: "user_id",
+                        operator: "equal",
+                        value: 1,
+                      },
+                    ],
                   },
                 ],
               },

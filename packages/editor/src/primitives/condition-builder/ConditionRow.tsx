@@ -1,9 +1,6 @@
 import React from "react";
-import type {
-  ConditionRule,
-  ConditionProperties,
-  OperatorOption,
-} from "./types";
+import type { ConditionRule } from "@omega-flow/types";
+import type { ConditionProperties, OperatorOption } from "./types";
 import { isPropertyGroup } from "./types";
 import { useTranslation } from "../../i18n";
 

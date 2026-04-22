@@ -129,6 +129,8 @@ export const defaultTranslations: TranslationDictionary = {
   "conditionBuilder.valuePlaceholder": "value",
   "conditionBuilder.emptyGroup": "No conditions yet. Add one below.",
   "conditionBuilder.noConditions": "No conditions configured",
+  "conditionBuilder.ruleCountSingular": "1 condition",
+  "conditionBuilder.ruleCount": "{{count}} conditions",
   "conditionBuilder.editButton": "Edit",
   "conditionBuilder.apply": "Apply",
   "conditionBuilder.cancel": "Cancel",

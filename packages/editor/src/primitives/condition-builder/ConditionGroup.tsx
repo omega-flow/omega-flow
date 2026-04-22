@@ -1,18 +1,14 @@
 import React from "react";
-import type {
-  ConditionGroupValue,
-  ConditionRule,
-  ConditionProperties,
-  OperatorOption,
-} from "./types";
+import type { ConditionGroup, ConditionRule } from "@omega-flow/types";
+import type { ConditionProperties, OperatorOption } from "./types";
 import { ConditionRow } from "./ConditionRow";
 import { useTranslation } from "../../i18n";
 
-interface ConditionGroupProps {
-  group: ConditionGroupValue;
+interface ConditionGroupViewProps {
+  group: ConditionGroup;
   properties: ConditionProperties;
   operators: OperatorOption[];
-  onChange: (group: ConditionGroupValue) => void;
+  onChange: (group: ConditionGroup) => void;
   onRemove: () => void;
   canRemove: boolean;
 }
@@ -85,14 +81,14 @@ function createEmptyRule(): ConditionRule {
 /**
  * A group of conditions with AND/OR operator toggle.
  */
-export function ConditionGroup({
+export function ConditionGroupView({
   group,
   properties,
   operators,
   onChange,
   onRemove,
   canRemove,
-}: ConditionGroupProps) {
+}: ConditionGroupViewProps) {
   const t = useTranslation();
 
   const handleOperatorChange = (operator: "all" | "any") => {
