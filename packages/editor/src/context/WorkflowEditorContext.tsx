@@ -42,6 +42,10 @@ type Action =
   | { type: "APPLY_NODE_CHANGES"; payload: NodeChange[] }
   | { type: "APPLY_EDGE_CHANGES"; payload: EdgeChange[] };
 
+function findSelectedNodeId(nodes: Node[]): string | null {
+  return nodes.find((n) => (n as Node & { selected?: boolean }).selected)?.id ?? null;
+}
+
 function createInitialState(
   workflow?: Workflow,
   nodeTypes?: NodeTypeDefinition[]
@@ -58,7 +62,7 @@ function createInitialState(
       edges: workflow.flow.edges,
       options: workflow.options,
       name: workflow.name,
-      selectedNodeId: null,
+      selectedNodeId: findSelectedNodeId(workflow.flow.nodes),
       isDirty: false,
       nodeTypes: nodeTypesMap,
     };
@@ -87,7 +91,7 @@ function reducer(state: WorkflowEditorState, action: Action): WorkflowEditorStat
         edges: workflow.flow.edges,
         options: workflow.options,
         name: workflow.name,
-        selectedNodeId: null,
+        selectedNodeId: findSelectedNodeId(workflow.flow.nodes),
         isDirty: false,
       };
     }
@@ -100,7 +104,7 @@ function reducer(state: WorkflowEditorState, action: Action): WorkflowEditorStat
           edges: state.workflow.flow.edges,
           options: state.workflow.options,
           name: state.workflow.name,
-          selectedNodeId: null,
+          selectedNodeId: findSelectedNodeId(state.workflow.flow.nodes),
           isDirty: false,
         };
       }
