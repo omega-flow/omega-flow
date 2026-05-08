@@ -525,7 +525,7 @@ The engine includes these node types in `nodeModels` exported from `@omega-flow/
 |------|-------------|-------------|----------|
 | `Trigger` | Waits for specific event type | True if `event.type === params.event` | First connected node |
 | `Action` | Pass-through action | Always true | First connected node |
-| `Condition` | Evaluates json-rules-engine conditions | Always true (stores result) | "true" or "false" handle |
+| `Condition` | Evaluates rules using the shared `Conditions` format | Always true (stores result) | "true" or "false" handle |
 | `Wait` | Pauses for duration | True when duration elapsed | First connected node |
 | `TriggerOrTimeout` | Waits for event or timeout | True on event match or timeout | First connected node |
 | `Exit` | Ends workflow | Always true | Returns null |

@@ -1,6 +1,6 @@
 import type { OperatorOption } from "./types";
 
-/** Default operators matching json-rules-engine built-in operators */
+/** Default operators supported by the engine's built-in condition evaluator */
 export const defaultOperators: OperatorOption[] = [
   { value: "equal", label: "equals" },
   { value: "notEqual", label: "does not equal" },

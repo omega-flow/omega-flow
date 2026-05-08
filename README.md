@@ -60,7 +60,7 @@ await manager.acceptEvent({
 ## Node Types
 
 - **Trigger** - Starts workflow when matching event is received
-- **Condition** - Routes execution based on rules (uses json-rules-engine)
+- **Condition** - Routes execution based on rules (built-in evaluator using the shared `Conditions` format)
 - **Action** - Performs an action and continues to next node
 - **Wait** - Pauses until timeout or specific event
 - **Exit** - Terminates the workflow

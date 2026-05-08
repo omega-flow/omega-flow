@@ -506,11 +506,11 @@ Pass-through node that accepts all events.
 
 ### Condition
 
-Evaluates conditions using json-rules-engine.
+Evaluates conditions using the built-in evaluator.
 
 | Config | Type | Description |
 |--------|------|-------------|
-| `data.conditions` | `object` | json-rules-engine conditions |
+| `data.conditions` | `Conditions` | Rule groups in the shared `Conditions` format from `@omega-flow/types` |
 
 **acceptEvent:** Always returns `true`, stores result in state
 

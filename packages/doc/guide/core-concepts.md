@@ -116,7 +116,7 @@ The engine and editor both ship the following types out of the box:
 |------|---------|
 | `Trigger` | Entry point — accepts events of a specific `event` type. |
 | `Action` | Pass-through step — record an action and continue. |
-| `Condition` | Branches on [json-rules-engine](https://github.com/CacheControl/json-rules-engine) rules. Has `true` / `false` outputs. |
+| `Condition` | Branches on rules in the shared `Conditions` format (top-level OR between groups; each group is `all` or `any`). Has `true` / `false` outputs. |
 | `Wait` | Pauses for a fixed duration (ms). |
 | `TriggerOrTimeout` | Continues on a matching event or after a timeout, whichever comes first. |
 | `Exit` | Terminates the workflow. |

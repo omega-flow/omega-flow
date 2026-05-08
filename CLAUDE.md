@@ -128,7 +128,7 @@ The workflow engine uses a **node-based event-driven architecture** where workfl
 Node implementations in `packages/engine/src/nodes/`:
 
 - **TriggerModel**: Accepts events matching a specific event type
-- **ConditionModel**: Evaluates conditions using json-rules-engine, routes to "true" or "false" output handles
+- **ConditionModel**: Evaluates conditions using the built-in evaluator (`Conditions` format from `@omega-flow/types`), routes to "true" or "false" output handles
 - **ActionModel**: Performs an action and moves to next node
 - **ExitModel**: Terminates the workflow
 - **WaitModel**: Pauses workflow until timeout or specific event
