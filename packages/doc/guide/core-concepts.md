@@ -46,15 +46,15 @@ A `NodeModel` is a class in `@omega-flow/engine` that implements how a node beha
 - `acceptEvent(event)` — Returns `true` when the node accepts the event and processing is complete; the engine then calls `nextNode()` to move forward. Returns `false` when the node does not accept this event — the workflow stays on the current node and waits for another.
 - `nextNode(event)` — called only after `acceptEvent` returned `true`. Returns the next `NodeModel`, or `null` to end the workflow.
 
-The engine ships built-in models for `Trigger`, `Action`, `Condition`, `Wait`, `TriggerOrTimeout`, and `Exit`, exported as the `nodeModels` map. You pass that map (optionally extended with your own) to `WorkflowManager`, which uses it to instantiate nodes when running a workflow:
+The engine ships built-in models for `Trigger`, `Action`, `Condition`, `Wait`, `TriggerOrTimeout`, and `Exit`, exported as the `defaultNodeModels` map. You pass that map (optionally extended with your own) to `WorkflowManager`, which uses it to instantiate nodes when running a workflow:
 
 ```typescript
-import { WorkflowManager, nodeModels } from "@omega-flow/engine";
+import { WorkflowManager, defaultNodeModels } from "@omega-flow/engine";
 import HttpRequestNode from "./nodes/HttpRequestNode";
 
 const manager = new WorkflowManager({
   // ...stores, memory, scheduler...
-  nodeModels: { ...nodeModels, HttpRequest: HttpRequestNode },
+  nodeModels: { ...defaultNodeModels, HttpRequest: HttpRequestNode },
 });
 ```
 

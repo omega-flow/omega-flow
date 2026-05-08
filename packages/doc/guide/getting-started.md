@@ -101,7 +101,7 @@ import {
   InMemoryWorkflowStore,
   InMemoryWorkflowMemory,
   InMemoryWorkflowScheduler,
-  nodeModels,
+  defaultNodeModels,
 } from "@omega-flow/engine";
 import type { Workflow, Event } from "@omega-flow/types";
 
@@ -146,7 +146,7 @@ const manager = new WorkflowManager({
   // Schedules timeouts and delayed events for Wait / TriggerOrTimeout nodes.
   workflowScheduler: new InMemoryWorkflowScheduler(),
   // Registry of node implementations (Trigger, Action, Condition, …).
-  nodeModels,
+  nodeModels: defaultNodeModels,
   // Maps an incoming Event to [tenantId, subjectId]. The engine uses the pair
   // to load/save the right Context — i.e. which workflow instance this event
   // belongs to. Return null to ignore an event.

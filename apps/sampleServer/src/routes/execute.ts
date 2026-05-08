@@ -2,7 +2,7 @@ import { Router } from "express";
 import { nanoid } from "nanoid";
 import {
   WorkflowManager,
-  nodeModels,
+  defaultNodeModels,
 } from "@omega-flow/engine";
 import type { Event } from "@omega-flow/types";
 import type { FileWorkflowStore } from "../stores/FileWorkflowStore.js";
@@ -53,7 +53,7 @@ export function createExecuteRoutes(
         workflowStore,
         workflowMemory,
         workflowScheduler,
-        nodeModels,
+        nodeModels: defaultNodeModels,
         eventExtractor: (evt) => [domain, evt.data?.subjectId as string],
       });
       workflowScheduler.setWorkflowManager(manager);
