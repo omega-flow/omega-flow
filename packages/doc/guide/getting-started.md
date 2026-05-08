@@ -6,11 +6,11 @@ Welcome to Omega Flow - a node-based event-driven workflow engine with a visual 
 
 Omega Flow consists of three main packages:
 
-| Package | Description |
-|---------|-------------|
-| `@omega-flow/types` | TypeScript types and JSON schemas for workflows, events, and context |
+| Package              | Description                                                                |
+| -------------------- | -------------------------------------------------------------------------- |
+| `@omega-flow/types`  | TypeScript types and JSON schemas for workflows, events, and context       |
 | `@omega-flow/engine` | Workflow engine that executes workflows, manages state, and handles events |
-| `@omega-flow/editor` | React-based visual workflow editor with customizable components |
+| `@omega-flow/editor` | React-based visual workflow editor with customizable components            |
 
 ## Installation
 
@@ -27,6 +27,8 @@ pnpm add @omega-flow/engine @omega-flow/types
 ```
 
 ## Quick Start: Visual Editor
+
+The editor is built directly on top of [React Flow](https://reactflow.dev) (`@xyflow/react`) — there's no wrapper hiding it. Anything React Flow exposes (custom edges, mini-map, viewport controls, selection, snapping, custom interaction handlers, etc.) works as documented in the React Flow docs.
 
 Here's a minimal workflow editor setup:
 
@@ -103,14 +105,25 @@ import {
 } from "@omega-flow/engine";
 import type { Workflow, Event } from "@omega-flow/types";
 
-// Define a workflow
+// Define a workflow inline or load it from a DB — it's just JSON.
+// The Workflow Editor saves workflows in this same format.
 const welcomeWorkflow: Workflow = {
   id: "welcome",
   name: "Welcome Flow",
   flow: {
     nodes: [
-      { id: "t1", type: "Trigger", data: { params: { event: "user.signup" } }, position: { x: 0, y: 0 } },
-      { id: "a1", type: "Action", data: { action: "sendWelcomeEmail" }, position: { x: 0, y: 100 } },
+      {
+        id: "t1",
+        type: "Trigger",
+        data: { params: { event: "user.signup" } },
+        position: { x: 0, y: 0 },
+      },
+      {
+        id: "a1",
+        type: "Action",
+        data: { action: "sendWelcomeEmail" },
+        position: { x: 0, y: 100 },
+      },
       { id: "e1", type: "Exit", data: {}, position: { x: 0, y: 200 } },
     ],
     edges: [
@@ -118,15 +131,25 @@ const welcomeWorkflow: Workflow = {
       { id: "e2-a1-e1", source: "a1", target: "e1" },
     ],
   },
-  options: { frequency: { type: "one_time" } }
+  options: { frequency: { type: "one_time" } },
 };
 
 // Create manager
 const manager = new WorkflowManager({
-  workflowStore: new InMemoryWorkflowStore("default", [welcomeWorkflow]),
+  // Store for workflow definitions. Swap for a DB-backed store in production.
+  // This InMemory constructor takes an array of `{ domain, workflow }` pairs
+  workflowStore: new InMemoryWorkflowStore([
+    { domain: "default", workflow: welcomeWorkflow },
+  ]),
+  // Persists per-Subject Context (current node, state, history) across events.
   workflowMemory: new InMemoryWorkflowMemory(),
+  // Schedules timeouts and delayed events for Wait / TriggerOrTimeout nodes.
   workflowScheduler: new InMemoryWorkflowScheduler(),
+  // Registry of node implementations (Trigger, Action, Condition, …).
   nodeModels,
+  // Maps an incoming Event to [tenantId, subjectId]. The engine uses the pair
+  // to load/save the right Context — i.e. which workflow instance this event
+  // belongs to. Return null to ignore an event.
   eventExtractor: (event) => ["default", event.data.userId],
 });
 
@@ -135,7 +158,7 @@ const event: Event = {
   id: "evt-1",
   type: "user.signup",
   time: Date.now(),
-  data: { userId: "user-123" }
+  data: { userId: "user-123" },
 };
 
 await manager.processEvent(event);
@@ -152,8 +175,8 @@ interface Workflow {
   id: string;
   name: string;
   flow: {
-    nodes: Node[];  // Steps in the workflow
-    edges: Edge[];  // Connections between steps
+    nodes: Node[]; // Steps in the workflow
+    edges: Edge[]; // Connections between steps
   };
   options: WorkflowOptions;
 }
@@ -163,14 +186,16 @@ interface Workflow {
 
 The editor comes with 6 node types:
 
-| Node | Purpose |
-|------|---------|
-| **Trigger** | Starts workflow on an event |
-| **Action** | Performs an action |
-| **Condition** | Branches based on rules |
-| **Wait** | Pauses for a duration |
+| Node                 | Purpose                      |
+| -------------------- | ---------------------------- |
+| **Trigger**          | Starts workflow on an event  |
+| **Action**           | Performs an action           |
+| **Condition**        | Branches based on rules      |
+| **Wait**             | Pauses for a duration        |
 | **TriggerOrTimeout** | Waits for event or times out |
-| **Exit** | Ends the workflow |
+| **Exit**             | Ends the workflow            |
+
+These are the built-ins, not the full set — you can extend them or register your own. See [Custom Nodes (Engine)](/guide/engine-custom-nodes) for execution logic and [Custom Nodes (Editor)](/guide/custom-nodes) for the visual side.
 
 ### Events
 
@@ -179,23 +204,28 @@ Events drive workflow execution:
 ```typescript
 interface Event {
   id: string;
-  time: number;    // Unix timestamp (ms)
-  type: string;    // e.g., "user.signup"
-  data?: any;      // Optional payload
+  time: number; // Unix timestamp (ms)
+  type: string; // e.g., "user.signup"
+  data?: any; // Optional payload
 }
 ```
 
 ## Sample Application
 
-Check out the sample app in `apps/sampleApp` for a complete implementation:
+Check out the sample app in `apps/sampleApp` for a complete implementation. It pairs with `apps/sampleServer`, an Express dev server with a file-based DB for workflows and contexts. Run both to try the editor end-to-end:
 
 ```bash
-# From the monorepo root
+# Terminal 1 — start the backend server (port 5010)
+cd apps/sampleServer
+pnpm dev
+
+# Terminal 2 — start the frontend editor (port 5001)
 cd apps/sampleApp
 pnpm dev
 ```
 
 The sample app demonstrates:
+
 - Setting up the workflow editor
 - Loading and saving workflows
 - Auto-save functionality
@@ -222,50 +252,3 @@ omega-flow/
 4. **[Custom Nodes (Engine)](/guide/engine-custom-nodes)** - Create custom node execution logic
 5. **[Custom Nodes (Editor)](/guide/custom-nodes)** - Create custom node visual components
 6. **[API Reference](/api/components)** - Explore all editor components and hooks
-
-## Development Commands
-
-### Build all packages
-
-```bash
-pnpm build
-```
-
-### Run tests
-
-```bash
-pnpm test
-```
-
-### Run sample application
-
-```bash
-# Start the backend server (port 5010)
-cd apps/sampleServer && pnpm dev
-
-# In another terminal, start the frontend (port 5173)
-cd apps/sampleApp && pnpm dev
-```
-
-## TypeScript Support
-
-All packages are written in TypeScript with full type definitions exported:
-
-```typescript
-import type {
-  Workflow,
-  WorkflowOptions,
-  WorkflowFrequency,
-  Event,
-  Context,
-  Node,
-  Edge,
-} from "@omega-flow/types";
-
-import type {
-  NodeTypeDefinition,
-  NodeViewProps,
-  NodeDetailProps,
-  WorkflowEditorProps,
-} from "@omega-flow/editor";
-```
