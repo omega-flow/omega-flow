@@ -22,6 +22,7 @@
     "dev:app": "pnpm --filter=@omega-flow/sample-app run dev",
     "dev:server": "pnpm --filter=@omega-flow/sample-server run dev",
     "dev:doc": "pnpm --filter=@omega-flow/doc run dev",
+    "dev:packages": "pnpm --filter=@omega-flow/types --filter=@omega-flow/engine --filter=@omega-flow/editor --parallel run dev",
     "changeset": "changeset",
     "version-packages": "changeset version",
     "release": "pnpm build && pnpm changeset publish",
