@@ -35,7 +35,10 @@ export function TriggerOrTimeoutNodeView({ id, data, selected }: NodeProps) {
       label={t("nodes.triggerOrTimeout.label")}
       color={TRIGGER_OR_TIMEOUT_COLOR}
       icon="⏰"
-      sourceHandles={[{ id: "output" }]}
+      sourceHandles={[
+        { id: "trigger", label: t("nodes.triggerOrTimeout.handleTrigger") },
+        { id: "timeout", label: t("nodes.triggerOrTimeout.handleTimeout") },
+      ]}
       targetHandles={[{ id: "input" }]}
     >
       {description || <em>{t("nodes.triggerOrTimeout.notConfigured")}</em>}

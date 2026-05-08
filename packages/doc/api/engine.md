@@ -537,9 +537,9 @@ Waits for event or timeout, whichever comes first.
 | `data.params.event` | `string` | Event type to listen for |
 | `data.params.duration` | `number` | Timeout duration in milliseconds |
 
-**acceptEvent:** Returns `true` on matching event or timeout
+**acceptEvent:** Returns `true` on matching event or timeout, recording which one resolved in state
 
-**nextNode:** Returns first connected node
+**nextNode:** Returns node from `"trigger"` or `"timeout"` handle based on which path resolved
 
 ### Exit
 

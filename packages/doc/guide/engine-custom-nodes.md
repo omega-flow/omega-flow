@@ -527,7 +527,7 @@ The engine includes these node types in `defaultNodeModels` exported from `@omeg
 | `Action` | Pass-through action | Always true | First connected node |
 | `Condition` | Evaluates rules using the shared `Conditions` format | Always true (stores result) | "true" or "false" handle |
 | `Wait` | Pauses for duration | True when duration elapsed | First connected node |
-| `TriggerOrTimeout` | Waits for event or timeout | True on event match or timeout | First connected node |
+| `TriggerOrTimeout` | Waits for event or timeout | True on event match or timeout | `"trigger"` or `"timeout"` handle |
 | `Exit` | Ends workflow | Always true | Returns null |
 
 ## Best Practices

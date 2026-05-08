@@ -140,7 +140,9 @@ describe("WorkflowModel Simple Wait", () => {
 
   describe("Simple Trigger or Timeout", () => {
     beforeEach(() => {
-      // 1 (TriggerORTimeout (10s)) > 2 (Action) > 3 (Exit)
+      // 1 (TriggerOrTimeout (10s))
+      //   ─ trigger ─> 2 (Action) > 3 (Exit)
+      //   ─ timeout ─> 4 (Action) > 5 (Exit)
       simpleWorkflow = {
         id: "1",
         flow: {
@@ -161,21 +163,37 @@ describe("WorkflowModel Simple Wait", () => {
             {
               id: "2",
               type: "Action",
-              data: { label: "Action label" },
-              position: { x: 0, y: 100 },
+              data: { label: "Trigger Action" },
+              position: { x: -100, y: 100 },
               measured: { width: 150, height: 36 },
             },
             {
               id: "3",
               type: "Exit",
-              data: { label: "Exit Label" },
-              position: { x: 0, y: 150 },
+              data: { label: "Trigger Exit" },
+              position: { x: -100, y: 150 },
+              measured: { width: 150, height: 36 },
+            },
+            {
+              id: "4",
+              type: "Action",
+              data: { label: "Timeout Action" },
+              position: { x: 100, y: 100 },
+              measured: { width: 150, height: 36 },
+            },
+            {
+              id: "5",
+              type: "Exit",
+              data: { label: "Timeout Exit" },
+              position: { x: 100, y: 150 },
               measured: { width: 150, height: 36 },
             },
           ],
           edges: [
-            { id: "e1d-2", source: "1", target: "2" },
-            { id: "e2d-3", source: "2", target: "3" },
+            { id: "e1-2", source: "1", sourceHandle: "trigger", target: "2" },
+            { id: "e2-3", source: "2", target: "3" },
+            { id: "e1-4", source: "1", sourceHandle: "timeout", target: "4" },
+            { id: "e4-5", source: "4", target: "5" },
           ],
           viewport: {
             x: 484.74631195103916,
@@ -194,7 +212,7 @@ describe("WorkflowModel Simple Wait", () => {
       expect(workflow.status).toBe("waiting");
     });
 
-    // 1 (wait) > 2 > 3
+    // 1 (wait) ─ timeout ─> 4 > 5
     it("should start, and continue on timeout", async () => {
       const workflow = new WorkflowModel(simpleWorkflow, nodeTypes);
       workflow.start();
@@ -220,13 +238,13 @@ describe("WorkflowModel Simple Wait", () => {
         time: 200, // this is 100s later (wait is only for 10s)
       };
       await workflow.acceptEvent(timeoutEvent);
-      // it should pass action node
-      // it should be on exit node and stop
-      expect(workflow.getCurrentNode().getId()).toBe("3");
+      // it should route via the "timeout" handle, pass action node 4
+      // and end on exit node 5
+      expect(workflow.getCurrentNode().getId()).toBe("5");
       expect(workflow.getStatus()).toBe("completed");
     });
 
-    // 1 (wait) > 2 > 3
+    // 1 (wait) ─ trigger ─> 2 > 3
     it("should start, and continue on event", async () => {
       const workflow = new WorkflowModel(simpleWorkflow, nodeTypes);
       workflow.start();
@@ -252,8 +270,8 @@ describe("WorkflowModel Simple Wait", () => {
         time: 105,
       };
       await workflow.acceptEvent(sampleEvent);
-      // it should pass action node
-      // it should be on exit node and stop
+      // it should route via the "trigger" handle, pass action node 2
+      // and end on exit node 3
       expect(workflow.getCurrentNode().getId()).toBe("3");
       expect(workflow.getStatus()).toBe("completed");
     });

@@ -140,7 +140,7 @@ Each handle has an id. Edges reference these ids via `sourceHandle` and `targetH
 | `Action` | `input` | `output` |
 | `Condition` | `input` | `true`, `false` |
 | `Wait` | `input` | `output` |
-| `TriggerOrTimeout` | `input` | `output` |
+| `TriggerOrTimeout` | `input` | `trigger`, `timeout` |
 | `Exit` | `input` | — (terminates) |
 
 A few notes on the built-ins:
@@ -148,7 +148,7 @@ A few notes on the built-ins:
 - **`Trigger`** has no target handle — it is always the starting point of a branch.
 - **`Exit`** has no source handle — it terminates the workflow.
 - **`Condition`** has two source handles. Edges leaving it **must** specify `sourceHandle: "true"` or `sourceHandle: "false"`.
-- **`TriggerOrTimeout`** has a single `output` — the node continues down the same edge whether the event arrived or the timeout fired. Which one resolved is recorded on the context, not in the graph.
+- **`TriggerOrTimeout`** has two source handles. Edges leaving it **must** specify `sourceHandle: "trigger"` (taken when the matching event arrives) or `sourceHandle: "timeout"` (taken when the duration elapses first).
 
 #### Defining handles on a custom node
 

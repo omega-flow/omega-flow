@@ -59,6 +59,8 @@ export const defaultTranslations: TranslationDictionary = {
   "nodes.triggerOrTimeout.notConfigured": "Not configured",
   "nodes.triggerOrTimeout.eventFallback": "event",
   "nodes.triggerOrTimeout.orDuration": "or {{duration}}",
+  "nodes.triggerOrTimeout.handleTrigger": "Trigger",
+  "nodes.triggerOrTimeout.handleTimeout": "Timeout",
 
   "nodes.exit.label": "Exit",
   "nodes.exit.endWorkflow": "End workflow",

@@ -8,8 +8,8 @@ import WaitModel from "./WaitModel";
  *
  * TriggerOrTimeoutModel extends WaitModel to add event-based triggering.
  * It will proceed when either:
- * 1. A matching event arrives (configured in params.event)
- * 2. The timeout duration elapses (configured in params.duration)
+ * 1. A matching event arrives (configured in params.event) — routes via the `trigger` source handle
+ * 2. The timeout duration elapses (configured in params.duration) — routes via the `timeout` source handle
  *
  * This is useful for scenarios like:
  * - "Wait for payment confirmation or timeout after 24 hours"
@@ -53,8 +53,8 @@ export default class TriggerOrTimeoutModel extends WaitModel {
 
   /**
    * Processes events, accepting either a matching trigger event or timeout completion.
-   * - If event type matches params.event: Immediately accepts
-   * - If already waiting and timeout elapsed: Accepts
+   * - If event type matches params.event: Records `resolvedBy: "trigger"` and accepts
+   * - If already waiting and timeout elapsed: Records `resolvedBy: "timeout"` and accepts
    * - If not waiting: Starts waiting and returns false
    * @param event - The event being processed
    * @returns True if event matches trigger or timeout completed, false if still waiting
@@ -64,11 +64,13 @@ export default class TriggerOrTimeoutModel extends WaitModel {
     // If event matches trigger, stop waiting and accept
     if (event.type === nodeData.params.event) {
       this.stopWaiting(event.time);
+      this.updateState({ resolvedBy: "trigger" });
       return true;
     } else if (this.isWaiting()) {
       // Wait is over, stop waiting and accept only if complete
       if (this.isWaitComplete(event.time)) {
         this.stopWaiting(event.time);
+        this.updateState({ resolvedBy: "timeout" });
         return true;
       }
       // Not complete, stay pending
@@ -81,14 +83,13 @@ export default class TriggerOrTimeoutModel extends WaitModel {
   }
 
   /**
-   * Returns the next node connected to this node's output.
+   * Routes execution to the `trigger` source handle if the matching event
+   * resolved the wait, or the `timeout` source handle if the duration elapsed.
    * @param _event - The event being processed (unused)
-   * @returns The next NodeModel, or null if no connection exists
+   * @returns The next NodeModel, or null if no connection exists for the resolved handle
    */
   async nextNode(_event: Event): Promise<NodeModel | null> {
-    const handle = this.getSourceHandles()[0];
-    const targetNode = this.getTargetNodeFromSourceHandle(handle);
-
-    return targetNode;
+    const { resolvedBy } = this.getState();
+    return this.getTargetNodeFromSourceHandle(resolvedBy);
   }
 }
