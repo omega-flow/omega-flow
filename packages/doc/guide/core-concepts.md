@@ -24,128 +24,115 @@ interface Workflow {
 
 ## Nodes
 
-Nodes are the building blocks of workflows. Each node type serves a specific purpose:
-
-### Trigger Node
-
-The starting point of a workflow. Waits for a specific event type.
+Nodes are the building blocks of workflows. A node in a saved workflow is just a small JSON object — an `id`, a `type` string, a `data` payload, and a `position` used by the visual editor to place the node on the canvas:
 
 ```typescript
 {
+  id: "trigger-1",
   type: "Trigger",
-  data: {
-    params: {
-      event: "user.signup"
-    }
-  }
+  data: { params: { event: "user.signup" } },
+  position: { x: 250, y: 0 }
 }
 ```
 
-### Action Node
+`position` is purely a visual concern — the engine ignores it. The editor reads and writes it as you drag nodes around.
 
-Performs an action and continues to the next node.
+The `type` string is what binds that object to runtime behaviour. Omega Flow looks up `type` in **two registries** — one in the engine, one in the editor — and a complete node implementation has an entry in both.
+
+### NodeModel — execution side (engine)
+
+A `NodeModel` is a class in `@omega-flow/engine` that implements how a node behaves when an event arrives. Every node type subclasses `NodeModel` and implements two methods:
+
+- `acceptEvent(event)` — Returns `true` when the node accepts the event and processing is complete; the engine then calls `nextNode()` to move forward. Returns `false` when the node does not accept this event — the workflow stays on the current node and waits for another.
+- `nextNode(event)` — called only after `acceptEvent` returned `true`. Returns the next `NodeModel`, or `null` to end the workflow.
+
+The engine ships built-in models for `Trigger`, `Action`, `Condition`, `Wait`, `TriggerOrTimeout`, and `Exit`, exported as the `nodeModels` map. You pass that map (optionally extended with your own) to `WorkflowManager`, which uses it to instantiate nodes when running a workflow:
 
 ```typescript
-{
-  type: "Action",
-  data: {
-    action: "send_welcome_email",
-    params: {
-      template: "welcome"
-    }
-  }
-}
+import { WorkflowManager, nodeModels } from "@omega-flow/engine";
+import HttpRequestNode from "./nodes/HttpRequestNode";
+
+const manager = new WorkflowManager({
+  // ...stores, memory, scheduler...
+  nodeModels: { ...nodeModels, HttpRequest: HttpRequestNode },
+});
 ```
 
-### Condition Node
+See [Custom Nodes (Engine)](/guide/engine-custom-nodes) for the full guide.
 
-Evaluates conditions and branches the flow. Uses [json-rules-engine](https://github.com/CacheControl/json-rules-engine) format.
+### NodeTypeDefinition — visual side (editor)
+
+A `NodeTypeDefinition` is the editor-side counterpart. It declares how the node looks and how it is configured:
 
 ```typescript
-{
-  type: "Condition",
-  data: {
-    conditions: {
-      all: [
-        {
-          fact: "user.plan",
-          operator: "equal",
-          value: "premium"
-        }
-      ]
-    }
-  }
+interface NodeTypeDefinition {
+  type: string;                                  // matches the engine NodeModel
+  label: string;                                 // shown in the NodesPanel
+  description?: string;
+  Icon?: ComponentType<{ size?: number }>;
+  defaultData: Record<string, unknown>;          // initial data on drop
+  ViewComponent: ComponentType<NodeViewProps>;   // canvas rendering + handles
+  DetailComponent: ComponentType<NodeDetailProps>; // properties panel form
 }
 ```
 
-Has two outputs: `true` and `false`.
+`@omega-flow/editor` ships definitions for the same six built-in types as `defaultNodeTypes`. You pass them to `WorkflowEditor`, optionally combined with your own:
 
-### Wait Node
+```tsx
+import { WorkflowEditor, defaultNodeTypes } from "@omega-flow/editor";
 
-Pauses the workflow for a specified duration.
-
-```typescript
-{
-  type: "Wait",
-  data: {
-    params: {
-      duration: 86400000  // 24 hours in ms
-    }
-  }
-}
+<WorkflowEditor nodeTypes={[...defaultNodeTypes, sendEmailNodeType]}>
+  {/* ... */}
+</WorkflowEditor>
 ```
 
-### TriggerOrTimeout Node
+See [Custom Nodes (Editor)](/guide/custom-nodes) for the full guide.
 
-Waits for either an event or a timeout, whichever comes first.
+### useNodeRegistry — bridging to ReactFlow
 
-```typescript
-{
-  type: "TriggerOrTimeout",
-  data: {
-    params: {
-      event: "user.completed_profile",
-      duration: 604800000  // 7 days in ms
-    }
-  }
-}
+The `useNodeRegistry()` hook exposes the registered `NodeTypeDefinition`s and returns `reactFlowNodeTypes` — the `{ [type]: ViewComponent }` map [ReactFlow](https://reactflow.dev/) expects:
+
+```tsx
+const { reactFlowNodeTypes } = useNodeRegistry();
+return <ReactFlow nodeTypes={reactFlowNodeTypes} /* ... */ />;
 ```
 
-### Exit Node
+### Extending Omega Flow
 
-Terminates the workflow.
+Adding a new node type means creating both halves and giving them the same `type` string:
 
-```typescript
-{
-  type: "Exit",
-  data: {}
-}
-```
+| Side | What you create | Where it goes |
+|------|------------------|---------------|
+| Engine | A `NodeModel` subclass | Pass via `nodeModels` to `WorkflowManager` |
+| Editor | A `NodeTypeDefinition` (with View + Detail components) | Pass via `nodeTypes` to `WorkflowEditor` |
 
-## Edges
+The engine half drives execution; the editor half drives the visual representation. Either can be used independently — a server-only setup needs no `NodeTypeDefinition`, and a read-only viewer can render workflows without ever instantiating a `NodeModel` — but a fully editable, runnable node needs both.
 
-Edges connect nodes and define the flow of execution.
+### Built-in node types
 
-```typescript
-{
-  id: "edge-1",
-  source: "trigger-1",      // Source node ID
-  target: "action-1",       // Target node ID
-  sourceHandle: "output",   // Optional: specific output handle
-  targetHandle: "input"     // Optional: specific input handle
-}
-```
+The engine and editor both ship the following types out of the box:
+
+| Type | Purpose |
+|------|---------|
+| `Trigger` | Entry point — accepts events of a specific `event` type. |
+| `Action` | Pass-through step — record an action and continue. |
+| `Condition` | Branches on [json-rules-engine](https://github.com/CacheControl/json-rules-engine) rules. Has `true` / `false` outputs. |
+| `Wait` | Pauses for a fixed duration (ms). |
+| `TriggerOrTimeout` | Continues on a matching event or after a timeout, whichever comes first. |
+| `Exit` | Terminates the workflow. |
+
+Execution semantics are covered in [Custom Nodes (Engine)](/guide/engine-custom-nodes#built-in-node-types-reference). Handle layouts are covered in the next subsection.
 
 ### Handles
 
-Nodes have **handles** — the connection points where edges attach:
+Handles are the connection points on a node where edges attach. Every node declares its own handles:
 
 - **Target handles** — inputs, rendered on the top of the node
 - **Source handles** — outputs, rendered on the bottom of the node
 
-When an edge leaves a specific output (e.g. the `true` branch of a Condition), set `sourceHandle` on the edge. Likewise, set `targetHandle` when the destination node has more than one input. For nodes with a single input/output, the handle id can be omitted on the edge.
+Each handle has an id. Edges reference these ids via `sourceHandle` and `targetHandle` — see [Edges](#edges) below.
 
-#### Handles on built-in nodes
+#### Built-in node handles
 
 | Node | Target handles (inputs) | Source handles (outputs) |
 |------|-------------------------|--------------------------|
@@ -156,14 +143,44 @@ When an edge leaves a specific output (e.g. the `true` branch of a Condition), s
 | `TriggerOrTimeout` | `input` | `output` |
 | `Exit` | `input` | — (terminates) |
 
-A few things to note:
+A few notes on the built-ins:
 
 - **`Trigger`** has no target handle — it is always the starting point of a branch.
 - **`Exit`** has no source handle — it terminates the workflow.
 - **`Condition`** has two source handles. Edges leaving it **must** specify `sourceHandle: "true"` or `sourceHandle: "false"`.
-- **`TriggerOrTimeout`** has a single `output` — the node continues down the same edge regardless of whether the event arrived or the timeout fired. The reason for which one resolved is recorded on the context, not in the graph.
+- **`TriggerOrTimeout`** has a single `output` — the node continues down the same edge whether the event arrived or the timeout fired. Which one resolved is recorded on the context, not in the graph.
 
-Custom node types declare their own handles in the view component — see [Custom Nodes (Editor)](/guide/custom-nodes) for details.
+#### Defining handles on a custom node
+
+Handles are declared in the editor's `ViewComponent`, not on the `NodeModel` or the `NodeTypeDefinition` itself. Pass `sourceHandles` and `targetHandles` to `BaseNodeView`:
+
+```tsx
+<BaseNodeView
+  // ...other props
+  sourceHandles={[{ id: "yes", label: "Yes" }, { id: "no", label: "No" }]}
+  targetHandles={[{ id: "input", label: "In" }]}
+/>
+```
+
+The engine then routes execution to those handles from `nextNode()` — e.g. `this.getTargetNodeFromSourceHandle("yes")`. See [Custom Nodes (Editor) → Step 3](/guide/custom-nodes#step-3-create-the-view-component) for the full pattern.
+
+## Edges
+
+Edges connect nodes and define the flow of execution.
+
+```typescript
+{
+  id: "edge-1",
+  source: "trigger-1",      // Source node ID
+  target: "action-1",       // Target node ID
+  sourceHandle: "output",   // Optional: source handle id on the source node
+  targetHandle: "input"     // Optional: target handle id on the target node
+}
+```
+
+When an edge leaves a specific output (e.g. the `true` branch of a Condition), set `sourceHandle` on the edge. Likewise, set `targetHandle` when the destination node has more than one input. For nodes with a single input/output, the handle id can be omitted on the edge.
+
+Handles themselves — and the layouts of the built-in nodes — are documented in [Nodes → Handles](#handles) above.
 
 ## Events
 
@@ -181,11 +198,50 @@ interface Event {
 ### Event Flow
 
 1. Event arrives at Workflow Manager
-2. Manager finds workflows listening for this event type
-3. Manager loads/creates Context for the Subject
-4. Event is passed to current node's `acceptEvent` method
-5. If accepted, workflow processes and moves to next node
-6. Process repeats until workflow reaches waiting state or completes
+2. Manager runs the **`eventExtractor`** to derive `[domain, subjectId]` from the event
+3. Manager loads workflows for that domain and active contexts for that Subject
+4. For each active instance, the event is passed to the current node's `acceptEvent` method
+5. If a workflow has no active instance for the Subject, the Manager checks `WorkflowOptions.frequency` to decide whether to start a new one
+6. If accepted, the workflow processes and moves to the next node
+7. Process repeats until each workflow reaches a waiting state or completes
+
+### Tenants and Subjects
+
+Routing is entirely driven by the **`eventExtractor`** function you pass to `WorkflowManager`. It maps every incoming event to a `[domain, subjectId]` tuple — there is no implicit notion of "current user" inside the engine.
+
+```typescript
+// Single-tenant: domain is constant, subject is the user
+eventExtractor: (event) => ["default", event.data.userId];
+
+// Multi-tenant: tenant lives on the event payload
+eventExtractor: (event) => [event.data.tenantId, event.data.userId];
+
+// Different subject types per event
+eventExtractor: (event) => event.type.startsWith("order.")
+  ? ["orders", event.data.orderId]
+  : ["users", event.data.userId];
+```
+
+- **Domain** scopes which workflow definitions are loaded (the `WorkflowStore` is queried per domain). Use it for tenant isolation.
+- **Subject** is the entity the workflow runs *for* — a user, an order, a device. Each Subject has its own independent workflow Context, so two users running the same workflow never share state.
+
+See [Workflow Execution → Event Extraction](/guide/engine-execution#event-extraction) for more patterns.
+
+### Starting a new instance vs. resuming
+
+Whether an event resumes an existing instance or starts a fresh one is governed by `WorkflowOptions.frequency`:
+
+| `frequency.type` | New instance is started when… |
+|------------------|------------------------------|
+| `one_time` (default) | The Subject has **never** matched the trigger before — neither active nor completed instances exist. |
+| `every_rematch` | No instance is currently active **and** at least `interval` seconds have passed since the most recent completed instance started. |
+
+Two consequences worth calling out:
+
+- **An active instance always blocks a new one.** Even with `every_rematch`, the Manager will not run two instances of the same workflow for the same Subject in parallel — the in-flight one must complete first.
+- **`one_time` is permanent.** Once a Subject has completed (or even started) the workflow, that workflow is closed for them forever. Use `every_rematch` if you need re-entry.
+
+See [Workflow Options → Frequency](#frequency) below for the full configuration.
 
 ## Context
 
@@ -349,29 +405,6 @@ This workflow:
 
 ## Architecture Overview
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                      Workflow Manager                           │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────────┐ │
-│  │  Workflow   │  │  Workflow   │  │      Workflow           │ │
-│  │   Store     │  │   Memory    │  │      Scheduler          │ │
-│  │ (definitions)│  │ (contexts)  │  │  (future events)        │ │
-│  └─────────────┘  └─────────────┘  └─────────────────────────┘ │
-└─────────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                      Workflow Engine                            │
-│  ┌─────────────────────────────────────────────────────────┐   │
-│  │                    WorkflowModel                         │   │
-│  │  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌─────────┐  │   │
-│  │  │ NodeModel│→ │ NodeModel│→ │ NodeModel│→ │NodeModel│  │   │
-│  │  │ (Trigger)│  │ (Action) │  │(Condition)│  │ (Exit)  │  │   │
-│  │  └──────────┘  └──────────┘  └──────────┘  └─────────┘  │   │
-│  └─────────────────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────────────┘
-```
-
 ### Workflow Manager
 
 - Manages multiple workflows
@@ -386,13 +419,6 @@ This workflow:
 - Processes events through nodes
 - Manages workflow state transitions
 - Validates data using schemas
-
-### Node Models
-
-Each node type has a corresponding model class implementing:
-
-- `acceptEvent(event)` - Check if event should be processed
-- `nextNode(event)` - Determine the next node to execute
 
 ## Next Steps
 
