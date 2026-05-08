@@ -7,6 +7,7 @@ export type { Node, Edge };
 export * from "./workflow";
 export * from "./event";
 export * from "./context";
+export * from "./conditions";
 
 // Utility functions
 export function nodeHasType(node: Node): node is Node & { type: string } {

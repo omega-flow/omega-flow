@@ -65,7 +65,12 @@ describe("WorkflowBuilder", () => {
               data: {
                 label: "Is Premium",
                 conditions: {
-                  all: [{ fact: "plan", operator: "equal", value: "premium" }],
+                  groups: [
+                    {
+                      operator: "all",
+                      conditions: [{ fact: "plan", operator: "equal", value: "premium" }],
+                    },
+                  ],
                 },
               },
               position: { x: 0, y: 100 },
@@ -99,7 +104,14 @@ describe("WorkflowBuilder", () => {
         .addNode("1", "Trigger", { label: "User Created", params: { event: "user.created" } })
         .addNode("2", "Condition", {
           label: "Is Premium",
-          conditions: { all: [{ fact: "plan", operator: "equal", value: "premium" }] },
+          conditions: {
+            groups: [
+              {
+                operator: "all",
+                conditions: [{ fact: "plan", operator: "equal", value: "premium" }],
+              },
+            ],
+          },
         })
         .addNode("3", "Action", { label: "Send Email", params: { action: "send_email" } })
         .addNode("4", "Exit", { label: "End" })
@@ -271,7 +283,12 @@ describe("WorkflowBuilder", () => {
         .addNode("2", "Condition", {
           label: "Is Premium",
           conditions: {
-            all: [{ fact: "plan", operator: "equal", value: "premium" }],
+            groups: [
+              {
+                operator: "all",
+                conditions: [{ fact: "plan", operator: "equal", value: "premium" }],
+              },
+            ],
           },
         })
         .addNode("3", "Action", {

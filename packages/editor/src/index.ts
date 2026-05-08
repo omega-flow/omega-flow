@@ -54,6 +54,9 @@ export {
   DurationField,
   JsonField,
   FieldGroup,
+  ConditionBuilder,
+  ConditionBuilderDialog,
+  defaultOperators,
 } from "./primitives";
 
 // Types - Context
@@ -87,6 +90,12 @@ export type {
   DurationFieldProps,
   JsonFieldProps,
   FieldGroupProps,
+  ConditionProperty,
+  ConditionPropertyGroup,
+  ConditionProperties,
+  OperatorOption,
+  ConditionBuilderProps,
+  ConditionBuilderDialogProps,
 } from "./primitives";
 
 // Theming utilities

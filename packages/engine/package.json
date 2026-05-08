@@ -18,7 +18,6 @@
   "devDependencies": {},
   "dependencies": {
     "@omega-flow/types": "workspace:*",
-    "ajv": "^8.17.1",
-    "json-rules-engine": "^7.3.1"
+    "ajv": "^8.17.1"
   }
 }

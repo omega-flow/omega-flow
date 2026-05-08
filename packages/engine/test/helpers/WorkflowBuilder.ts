@@ -1,5 +1,5 @@
 import type { Edge, Node } from "@xyflow/react";
-import type { Workflow, WorkflowOptions } from "@omega-flow/types";
+import type { Conditions, Workflow, WorkflowOptions } from "@omega-flow/types";
 
 export interface EdgeOptions {
   sourceHandle?: string;
@@ -9,10 +9,7 @@ export interface EdgeOptions {
 export interface NodeData {
   label?: string;
   params?: Record<string, unknown>;
-  conditions?: {
-    all?: Array<{ fact: string; operator: string; value: unknown }>;
-    any?: Array<{ fact: string; operator: string; value: unknown }>;
-  };
+  conditions?: Conditions;
   [key: string]: unknown;
 }
 

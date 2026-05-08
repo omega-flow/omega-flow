@@ -7,3 +7,14 @@ export { TextAreaField, type TextAreaFieldProps } from "./TextAreaField";
 export { DurationField, type DurationFieldProps } from "./DurationField";
 export { JsonField, type JsonFieldProps } from "./JsonField";
 export { FieldGroup, type FieldGroupProps } from "./FieldGroup";
+export {
+  ConditionBuilder,
+  ConditionBuilderDialog,
+  defaultOperators,
+  type ConditionProperty,
+  type ConditionPropertyGroup,
+  type ConditionProperties,
+  type OperatorOption,
+  type ConditionBuilderProps,
+  type ConditionBuilderDialogProps,
+} from "./condition-builder";
