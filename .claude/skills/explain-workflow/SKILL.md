@@ -128,12 +128,17 @@ Workflows have different statuses that represent their current state:
       data: {
         label: "if user is men",
         conditions: {
-          // json-rules-engine conditions
-          all: [
+          // Shared `Conditions` format from @omega-flow/types
+          groups: [
             {
-              fact: "user_id",
-              operator: "equal",
-              value: 1,
+              operator: "all",
+              conditions: [
+                {
+                  fact: "user_id",
+                  operator: "equal",
+                  value: 1,
+                },
+              ],
             },
           ],
         },
