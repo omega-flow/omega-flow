@@ -230,6 +230,7 @@ The sample app demonstrates:
 - Loading and saving workflows
 - Auto-save functionality
 - Integration with a backend API
+- **Adding a custom node end-to-end** — a `StoreTrigger` node is registered without modifying any package. The engine half lives in `apps/sampleServer/src/nodes/StoreTriggerModel.ts` (extends `NodeModel`, wired into `WorkflowManager` via `NodeModelRegistry`), and the editor half in `apps/sampleApp/src/nodes/storeTrigger.tsx` (view, detail with a `SelectField` of sample store actions, merged into `defaultNodeTypes` via `mergeNodeTypes`). Use it as a starting point alongside the [Custom Nodes (Editor)](/guide/custom-nodes) and [Custom Nodes (Engine)](/guide/engine-custom-nodes) guides.
 
 ## Project Structure
 

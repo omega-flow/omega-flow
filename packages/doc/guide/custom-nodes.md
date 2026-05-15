@@ -439,6 +439,10 @@ See the [Primitives API](/api/primitives) for details.
 7. **Collapsible groups** - Group advanced options to reduce clutter
 8. **Use `useTranslation`** - Use the `useTranslation()` hook for all user-facing strings so your nodes support localization. See [Localization](/guide/localization) for details.
 
+## Working Example
+
+`apps/sampleApp/src/nodes/storeTrigger.tsx` shows a complete custom node — a "Store Trigger" with a `SelectField` of store actions in its detail panel — registered alongside the defaults via `mergeNodeTypes`. Pair it with its engine counterpart in `apps/sampleServer/src/nodes/StoreTriggerModel.ts` (see [Custom Nodes (Engine)](/guide/engine-custom-nodes)) for an end-to-end reference.
+
 ## Next Steps
 
 - Create the [engine-side custom node](/guide/engine-custom-nodes) for execution logic

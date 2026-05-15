@@ -543,6 +543,10 @@ The engine includes these node types in `defaultNodeModels` exported from `@omeg
 7. **Return null to end** - return `null` from `nextNode` to complete the workflow
 8. **Test edge cases** - test with invalid data, timeouts, and error conditions
 
+## Working Example
+
+`apps/sampleServer/src/nodes/StoreTriggerModel.ts` shows a complete custom `NodeModel` — a "Store Trigger" that accepts events whose `type` matches a configured store action — registered alongside the defaults via a `NodeModelRegistry` and passed to `WorkflowManager`. Pair it with its editor counterpart in `apps/sampleApp/src/nodes/storeTrigger.tsx` (see [Custom Nodes (Editor)](/guide/custom-nodes)) for an end-to-end reference.
+
 ## Next Steps
 
 - Create the [editor-side custom node](/guide/custom-nodes) for visual representation
