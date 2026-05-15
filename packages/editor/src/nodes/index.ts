@@ -91,6 +91,35 @@ export const defaultNodeTypes: NodeTypeDefinition[] = [
   },
 ];
 
+/**
+ * Merges custom node type definitions into a base list, replacing any
+ * built-in entry that shares the same `type` key.
+ *
+ * Useful for combining {@link defaultNodeTypes} with custom nodes, or for
+ * overriding a built-in node's view/detail components without filtering
+ * the array yourself.
+ *
+ * @example
+ * ```ts
+ * import { defaultNodeTypes, mergeNodeTypes } from "@omega-flow/editor";
+ *
+ * const nodeTypes = mergeNodeTypes(defaultNodeTypes, [
+ *   storeTriggerNodeType,
+ *   { ...customTriggerNodeType, type: "Trigger" }, // overrides default
+ * ]);
+ * ```
+ */
+export function mergeNodeTypes(
+  base: NodeTypeDefinition[],
+  overrides: NodeTypeDefinition[],
+): NodeTypeDefinition[] {
+  const map = new Map(base.map((t) => [t.type, t]));
+  for (const override of overrides) {
+    map.set(override.type, override);
+  }
+  return [...map.values()];
+}
+
 // Re-export types
 export * from "./types";
 

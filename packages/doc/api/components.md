@@ -449,3 +449,22 @@ import { defaultNodeTypes } from "@omega-flow/editor";
 // - TriggerOrTimeout
 // - Exit
 ```
+
+## mergeNodeTypes
+
+Combine the defaults with custom node type definitions, deduping by `type`:
+
+```tsx
+import {
+  defaultNodeTypes,
+  mergeNodeTypes,
+  type NodeTypeDefinition,
+} from "@omega-flow/editor";
+
+const nodeTypes: NodeTypeDefinition[] = mergeNodeTypes(
+  defaultNodeTypes,
+  [sendEmailNodeType],
+);
+```
+
+Entries in the second argument override built-ins that share the same `type` key, so it doubles as a way to swap a default node's view or detail component without filtering the array yourself.

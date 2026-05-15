@@ -1,4 +1,9 @@
-export { WorkflowManager, type WorkflowManagerConfig } from "./WorkflowManager";
+export {
+  WorkflowManager,
+  type WorkflowManagerConfig,
+  type NodeModelClass,
+  type NodeModelRegistry,
+} from "./WorkflowManager";
 export { type WorkflowStore } from "./WorkflowStore";
 export { type WorkflowMemory } from "./WorkflowMemory";
 export { type WorkflowScheduler } from "./WorkflowScheduler";

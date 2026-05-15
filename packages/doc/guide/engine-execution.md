@@ -97,7 +97,7 @@ interface WorkflowManagerConfig {
   workflowScheduler: WorkflowScheduler;
 
   // Map of node type names to their NodeModel classes
-  nodeModels: Record<string, typeof NodeModel>;
+  nodeModels: NodeModelRegistry;
 
   // Function to extract domain and subject ID from events
   eventExtractor: (event: Event) => [domain: string, subjectId: string];

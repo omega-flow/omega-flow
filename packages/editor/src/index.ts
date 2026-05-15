@@ -24,7 +24,7 @@ export {
 } from "./hooks";
 
 // Node system
-export { defaultNodeTypes } from "./nodes";
+export { defaultNodeTypes, mergeNodeTypes } from "./nodes";
 export {
   // Views
   BaseNodeView,

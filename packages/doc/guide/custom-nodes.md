@@ -191,13 +191,16 @@ const sendEmailNodeType: NodeTypeDefinition = {
 
 ### Step 6: Register the Node Type
 
-Pass your custom node types to `WorkflowEditor`:
+Pass your custom node types to `WorkflowEditor`. Use `mergeNodeTypes` to combine the defaults with your own — it dedupes by `type`, so you can also override a built-in by passing a definition that reuses its `type` key:
 
 ```tsx
-import { WorkflowEditor, defaultNodeTypes } from "@omega-flow/editor";
+import {
+  WorkflowEditor,
+  defaultNodeTypes,
+  mergeNodeTypes,
+} from "@omega-flow/editor";
 
-// Combine default nodes with custom nodes
-const allNodeTypes = [...defaultNodeTypes, sendEmailNodeType];
+const allNodeTypes = mergeNodeTypes(defaultNodeTypes, [sendEmailNodeType]);
 
 function App() {
   return (
@@ -207,6 +210,8 @@ function App() {
   );
 }
 ```
+
+A plain spread (`[...defaultNodeTypes, sendEmailNodeType]`) also works for the simple "add only" case.
 
 ## Complete Example
 

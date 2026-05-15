@@ -6,6 +6,18 @@ import WorkflowModel from "../engine/WorkflowModel";
 import type NodeModel from "../engine/NodeModel";
 
 /**
+ * Constructor type for a NodeModel subclass.
+ * Re-exported from `@omega-flow/engine` as `NodeModelClass`.
+ */
+export type NodeModelClass = typeof NodeModel;
+
+/**
+ * Map of node type names to their NodeModel classes.
+ * Re-exported from `@omega-flow/engine` as `NodeModelRegistry`.
+ */
+export type NodeModelRegistry = Record<string, NodeModelClass>;
+
+/**
  * Configuration options for WorkflowManager.
  */
 export interface WorkflowManagerConfig {
@@ -16,7 +28,7 @@ export interface WorkflowManagerConfig {
   /** Scheduler for time-based workflow events */
   workflowScheduler: WorkflowScheduler;
   /** Map of node type names to their NodeModel classes */
-  nodeModels: Record<string, typeof NodeModel>;
+  nodeModels: NodeModelRegistry;
   /**
    * Function to extract domain and subject ID from an event.
    * The domain allows multi-tenant workflow isolation.
@@ -60,7 +72,7 @@ export class WorkflowManager {
   /** Scheduler for time-based workflow events */
   private workflowScheduler: WorkflowScheduler;
   /** Map of node type names to their NodeModel classes */
-  private nodeModels: Record<string, typeof NodeModel>;
+  private nodeModels: NodeModelRegistry;
   /** Function to extract domain and subject ID from events */
   private eventExtractor: (event: Event) => [string, string];
 

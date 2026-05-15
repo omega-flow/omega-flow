@@ -133,9 +133,6 @@ export default class WaitModel extends NodeModel {
    * @returns The next NodeModel, or null if no connection exists
    */
   async nextNode(_event: Event): Promise<NodeModel | null> {
-    const handle = this.getSourceHandles()[0];
-    const targetNode = this.getTargetNodeFromSourceHandle(handle);
-
-    return targetNode;
+    return this.getDefaultNext();
   }
 }

@@ -76,12 +76,16 @@ interface NodeTypeDefinition {
 }
 ```
 
-`@omega-flow/editor` ships definitions for the same six built-in types as `defaultNodeTypes`. You pass them to `WorkflowEditor`, optionally combined with your own:
+`@omega-flow/editor` ships definitions for the same six built-in types as `defaultNodeTypes`. You pass them to `WorkflowEditor`, optionally combined with your own — `mergeNodeTypes` dedupes by `type`, which also lets you override a built-in:
 
 ```tsx
-import { WorkflowEditor, defaultNodeTypes } from "@omega-flow/editor";
+import {
+  WorkflowEditor,
+  defaultNodeTypes,
+  mergeNodeTypes,
+} from "@omega-flow/editor";
 
-<WorkflowEditor nodeTypes={[...defaultNodeTypes, sendEmailNodeType]}>
+<WorkflowEditor nodeTypes={mergeNodeTypes(defaultNodeTypes, [sendEmailNodeType])}>
   {/* ... */}
 </WorkflowEditor>
 ```

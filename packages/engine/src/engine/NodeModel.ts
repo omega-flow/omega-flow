@@ -190,6 +190,22 @@ class NodeModel {
   }
 
   /**
+   * Returns the target node connected to the first source handle, or null
+   * if this node has no outgoing connections.
+   *
+   * Most pass-through nodes (single output) implement `nextNode` as
+   * `return this.getDefaultNext();`. Use it instead of repeating the
+   * `getSourceHandles()[0]` lookup by hand.
+   */
+  getDefaultNext(): NodeModel | null {
+    const handle = this.getSourceHandles()[0];
+    if (!handle) {
+      return null;
+    }
+    return this.getTargetNodeFromSourceHandle(handle);
+  }
+
+  /**
    * Accepts and processes an incoming event.
    *
    * This method must be overridden by subclasses to define how the node

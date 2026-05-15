@@ -19,7 +19,7 @@ new WorkflowManager(config: WorkflowManagerConfig)
 | `workflowStore` | `WorkflowStore` | Storage backend for workflow definitions |
 | `workflowMemory` | `WorkflowMemory` | Storage backend for workflow execution contexts |
 | `workflowScheduler` | `WorkflowScheduler` | Scheduler for time-based events |
-| `nodeModels` | `Record<string, typeof NodeModel>` | Map of node type names to their NodeModel classes |
+| `nodeModels` | `NodeModelRegistry` | Map of node type names to their NodeModel classes (`Record<string, NodeModelClass>`) |
 | `eventExtractor` | `(event: Event) => [string, string]` | Function to extract `[domain, subjectId]` from events |
 
 ### Methods
@@ -80,13 +80,13 @@ Executes a single workflow instance. Manages the lifecycle of workflow execution
 ### Constructor
 
 ```typescript
-new WorkflowModel(workflow: Workflow, nodeModels: Record<string, typeof NodeModel>, services?: NodeServices)
+new WorkflowModel(workflow: Workflow, nodeModels: NodeModelRegistry, services?: NodeServices)
 ```
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
 | `workflow` | `Workflow` | The workflow definition to execute |
-| `nodeModels` | `Record<string, typeof NodeModel>` | Map of node type names to their classes |
+| `nodeModels` | `NodeModelRegistry` | Map of node type names to their classes |
 | `services` | `NodeServices` | Optional services bag injected into all nodes |
 
 ### Properties
@@ -310,6 +310,14 @@ getTargetNodeFromSourceHandle(sourceHandle: string): NodeModel | null
 
 Gets the node connected to a specific output handle.
 
+#### getDefaultNext
+
+```typescript
+getDefaultNext(): NodeModel | null
+```
+
+Shortcut for the single-output case — returns the node connected to the first source handle, or `null` if this node has no outgoing connections. Use it instead of `getTargetNodeFromSourceHandle(getSourceHandles()[0])` in pass-through nodes.
+
 #### acceptEvent (abstract)
 
 ```typescript
@@ -333,7 +341,7 @@ Determines the next node to execute. Must be overridden by subclasses.
 ### Example
 
 ```typescript
-import NodeModel from "@omega-flow/engine/engine/NodeModel";
+import { NodeModel } from "@omega-flow/engine";
 import type { Node, Event } from "@omega-flow/types";
 
 class MyCustomNode extends NodeModel {
@@ -354,11 +362,25 @@ class MyCustomNode extends NodeModel {
   }
 
   async nextNode(event: Event): Promise<NodeModel | null> {
-    const handle = this.getSourceHandles()[0];
-    return this.getTargetNodeFromSourceHandle(handle);
+    return this.getDefaultNext();
   }
 }
 ```
+
+---
+
+## NodeModelClass / NodeModelRegistry
+
+Helper type aliases for typing custom node classes and registries.
+
+```typescript
+import type { NodeModelClass, NodeModelRegistry } from "@omega-flow/engine";
+
+// NodeModelClass = typeof NodeModel
+// NodeModelRegistry = Record<string, NodeModelClass>
+```
+
+`NodeModelRegistry` is the type accepted by `WorkflowManagerConfig.nodeModels` and `WorkflowModel`'s constructor.
 
 ---
 

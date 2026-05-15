@@ -22,7 +22,7 @@ Each node type in the engine is a class that extends `NodeModel` and implements 
 The `NodeModel` class provides the foundation for all node types:
 
 ```typescript
-import NodeModel from "@omega-flow/engine/engine/NodeModel";
+import { NodeModel } from "@omega-flow/engine";
 import type { Node, Event } from "@omega-flow/types";
 
 class MyCustomNode extends NodeModel {
@@ -54,6 +54,7 @@ class MyCustomNode extends NodeModel {
 | `getConnections()` | Returns all outgoing connections |
 | `getSourceHandles()` | Returns all output handle identifiers |
 | `getTargetNodeFromSourceHandle(handle)` | Gets the node connected to a specific output |
+| `getDefaultNext()` | Shortcut for the single-output case — returns the node connected to the first source handle, or null |
 
 ## Creating a Custom Node
 
@@ -62,7 +63,7 @@ Let's create a custom "HttpRequest" node that makes an API call.
 ### Step 1: Define the Node Class
 
 ```typescript
-import NodeModel from "@omega-flow/engine/engine/NodeModel";
+import { NodeModel } from "@omega-flow/engine";
 import type { Node, Event } from "@omega-flow/types";
 
 export default class HttpRequestNode extends NodeModel {
@@ -132,11 +133,12 @@ import {
   InMemoryWorkflowMemory,
   InMemoryWorkflowScheduler,
   defaultNodeModels,
+  type NodeModelRegistry,
 } from "@omega-flow/engine";
 import HttpRequestNode from "./nodes/HttpRequestNode";
 
 // Combine default nodes with custom nodes
-const allNodeTypes = {
+const nodeModels: NodeModelRegistry = {
   ...defaultNodeModels,
   HttpRequest: HttpRequestNode,
 };
@@ -145,7 +147,7 @@ const manager = new WorkflowManager({
   workflowStore: new InMemoryWorkflowStore("default", workflows),
   workflowMemory: new InMemoryWorkflowMemory(),
   workflowScheduler: new InMemoryWorkflowScheduler(),
-  nodeModels: allNodeTypes,  // Use combined node types
+  nodeModels,
   eventExtractor: (event) => ["default", event.data.userId],
 });
 ```
@@ -192,9 +194,7 @@ export default class LoggerNode extends NodeModel {
   }
 
   async nextNode(event: Event): Promise<NodeModel | null> {
-    // Single output - get first connection
-    const handle = this.getSourceHandles()[0];
-    return this.getTargetNodeFromSourceHandle(handle);
+    return this.getDefaultNext();
   }
 }
 ```
@@ -230,8 +230,7 @@ export default class EventFilterNode extends NodeModel {
   }
 
   async nextNode(event: Event): Promise<NodeModel | null> {
-    const handle = this.getSourceHandles()[0];
-    return this.getTargetNodeFromSourceHandle(handle);
+    return this.getDefaultNext();
   }
 }
 ```
@@ -361,7 +360,7 @@ Nodes can access shared services via `this.services`. Services are automatically
 Nodes that need to schedule future events (e.g., timeouts) can use `this.services.scheduler`:
 
 ```typescript
-import NodeModel from "@omega-flow/engine/engine/NodeModel";
+import { NodeModel } from "@omega-flow/engine";
 import type { Node, Event } from "@omega-flow/types";
 
 export default class DelayNode extends NodeModel {
@@ -399,8 +398,7 @@ export default class DelayNode extends NodeModel {
   }
 
   async nextNode(event: Event): Promise<NodeModel | null> {
-    const handle = this.getSourceHandles()[0];
-    return this.getTargetNodeFromSourceHandle(handle);
+    return this.getDefaultNext();
   }
 }
 ```
@@ -475,10 +473,14 @@ Nodes receive the same event that triggered them. Upstream node state can be acc
 
 ```typescript
 import { describe, it, expect } from "vitest";
-import { WorkflowModel, defaultNodeModels } from "@omega-flow/engine";
+import {
+  WorkflowModel,
+  defaultNodeModels,
+  type NodeModelRegistry,
+} from "@omega-flow/engine";
 import HttpRequestNode from "./HttpRequestNode";
 
-const allNodeTypes = {
+const nodeModels: NodeModelRegistry = {
   ...defaultNodeModels,
   HttpRequest: HttpRequestNode,
 };
@@ -502,7 +504,7 @@ describe("HttpRequestNode", () => {
   };
 
   it("should process HTTP request and continue", async () => {
-    const wf = new WorkflowModel(workflow, allNodeTypes);
+    const wf = new WorkflowModel(workflow, nodeModels);
     wf.start();
 
     await wf.acceptEvent({
