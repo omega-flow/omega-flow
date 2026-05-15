@@ -17,8 +17,8 @@ import {
   useNodeRegistry,
   useDragAndDrop,
   useWorkflowEditor,
-  defaultNodeTypes,
 } from "@omega-flow/editor";
+import { nodeTypes } from "../nodes";
 import { useWorkflow } from "../hooks/useWorkflow";
 import { useAutoSave } from "../hooks/useAutoSave";
 import { updateWorkflow } from "../api/workflows";
@@ -158,7 +158,7 @@ export function WorkflowEditorPage() {
 
   return (
     <Flex direction="column" h="calc(100vh - 52px)">
-      <WorkflowEditor workflow={workflow} nodeTypes={defaultNodeTypes}>
+      <WorkflowEditor workflow={workflow} nodeTypes={nodeTypes}>
         <EditorCanvas />
       </WorkflowEditor>
     </Flex>

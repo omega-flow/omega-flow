@@ -1,11 +1,9 @@
 import { Router } from "express";
-import {
-  WorkflowManager,
-  defaultNodeModels,
-} from "@omega-flow/engine";
+import { WorkflowManager } from "@omega-flow/engine";
 import type { FileWorkflowStore } from "../stores/FileWorkflowStore.js";
 import type { FileWorkflowMemory } from "../stores/FileWorkflowMemory.js";
 import type { FileWorkflowScheduler } from "../stores/FileWorkflowScheduler.js";
+import { nodeModels } from "../nodes/index.js";
 
 export function createSchedulerRoutes(
   workflowStore: FileWorkflowStore,
@@ -46,7 +44,7 @@ export function createSchedulerRoutes(
         workflowStore,
         workflowMemory,
         workflowScheduler,
-        nodeModels: defaultNodeModels,
+        nodeModels,
         eventExtractor: (evt) => [domain, evt.data?.subjectId as string],
       });
       workflowScheduler.setWorkflowManager(manager);
