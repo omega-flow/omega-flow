@@ -1,0 +1,24 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "sample-server",
+      "runtimeExecutable": "/bin/sh",
+      "runtimeArgs": [
+        "-c",
+        ". \"$HOME/.nvm/nvm.sh\" && nvm use && exec pnpm --filter=@omega-flow/sample-server run dev"
+      ],
+      "port": 5010
+    },
+    {
+      "name": "sample-app",
+      "runtimeExecutable": "/bin/sh",
+      "runtimeArgs": [
+        "-c",
+        ". \"$HOME/.nvm/nvm.sh\" && nvm use && exec pnpm --filter=@omega-flow/sample-app run dev"
+      ],
+      "port": 5001
+    }
+  ],
+  "autoVerify": false
+}
