@@ -1,0 +1,28 @@
+{
+  "name": "@omega-flow/store-dynamodb",
+  "version": "0.0.0",
+  "description": "DynamoDB-backed storage implementations for Omega Flow",
+  "main": "dist/index.js",
+  "module": "dist/index.esm.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup src/index.ts --format cjs,esm --dts",
+    "dev": "tsup src/index.ts --format cjs,esm --dts --watch",
+    "test": "jest --verbose --passWithNoTests",
+    "test:watch": "jest --watchAll --verbose --passWithNoTests --detectOpenHandles",
+    "test:coverage": "jest --verbose --coverage"
+  },
+  "devDependencies": {
+    "aws-sdk-client-mock": "^4.1.0"
+  },
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.700.0",
+    "@aws-sdk/lib-dynamodb": "^3.700.0",
+    "@omega-flow/engine": "workspace:*",
+    "@omega-flow/types": "workspace:*",
+    "nanoid": "^3.3.7"
+  }
+}
