@@ -1,20 +1,22 @@
 import { Router } from "express";
 import { WorkflowManager } from "@omega-flow/engine";
-import type { FileWorkflowStore } from "../stores/FileWorkflowStore.js";
-import type { FileWorkflowMemory } from "../stores/FileWorkflowMemory.js";
-import type { FileWorkflowScheduler } from "../stores/FileWorkflowScheduler.js";
+import type { SampleWorkflowStore, SampleWorkflowMemory, SampleWorkflowScheduler } from "../stores/types.js";
 import { nodeModels } from "../nodes/index.js";
 
 export function createSchedulerRoutes(
-  workflowStore: FileWorkflowStore,
-  workflowMemory: FileWorkflowMemory,
-  workflowScheduler: FileWorkflowScheduler,
+  workflowStore: SampleWorkflowStore,
+  workflowMemory: SampleWorkflowMemory,
+  workflowScheduler: SampleWorkflowScheduler,
 ): Router {
   const router = Router();
 
   // GET /api/scheduler - List all scheduled events
   router.get("/", async (_req, res) => {
     try {
+      if (!workflowScheduler.getAll) {
+        res.status(501).json({ error: "Listing scheduled events is not supported with the current scheduler backend" });
+        return;
+      }
       const events = await workflowScheduler.getAll();
       res.json(events);
     } catch (error) {
@@ -29,9 +31,13 @@ export function createSchedulerRoutes(
   // POST /api/scheduler/:scheduleId/fire - Fire a scheduled event
   router.post("/:scheduleId/fire", async (req, res) => {
     try {
+      if (!workflowScheduler.remove) {
+        res.status(501).json({ error: "Firing scheduled events is not supported with the current scheduler backend" });
+        return;
+      }
       const { scheduleId } = req.params;
 
-      const entry = await workflowScheduler.remove(scheduleId);
+      const entry = await workflowScheduler.remove(scheduleId) as { event: { id: string; time: number; type: string; data?: unknown } } | null;
       if (!entry) {
         res.status(404).json({ error: "Scheduled event not found" });
         return;
@@ -47,7 +53,7 @@ export function createSchedulerRoutes(
         nodeModels,
         eventExtractor: (evt) => [domain, evt.data?.subjectId as string],
       });
-      workflowScheduler.setWorkflowManager(manager);
+      workflowScheduler.setWorkflowManager?.(manager);
 
       await manager.processEvent(entry.event);
 

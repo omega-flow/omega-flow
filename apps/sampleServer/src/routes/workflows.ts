@@ -1,7 +1,7 @@
 import { Router } from "express";
 import _Ajv from "ajv";
 import { WorkflowSchema, type Workflow } from "@omega-flow/types";
-import type { FileWorkflowStore } from "../stores/FileWorkflowStore.js";
+import type { SampleWorkflowStore } from "../stores/types.js";
 
 const Ajv = _Ajv.default ?? _Ajv;
 const ajv = new Ajv();
@@ -20,7 +20,7 @@ const CreateWorkflowSchema = {
 const validateWorkflow = ajv.compile(WorkflowSchema);
 const validateCreateWorkflow = ajv.compile(CreateWorkflowSchema);
 
-export function createWorkflowRoutes(store: FileWorkflowStore): Router {
+export function createWorkflowRoutes(store: SampleWorkflowStore): Router {
   const router = Router();
 
   // GET /api/workflows/:domain - List all workflows in domain

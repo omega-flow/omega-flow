@@ -12,11 +12,19 @@ import type { Context } from "@omega-flow/types";
 export interface DynamoDBWorkflowMemoryConfig {
   client: DynamoDBClient;
   tableName: string;
+  /**
+   * Name of the GSI with `domain` as partition key and `subjectId` as sort key.
+   * Required for `getAllContexts` and `getAllContextsForSubject`.
+   * Defaults to `domain-subjectId-index`.
+   */
+  gsiName?: string;
 }
 
 interface ContextItem {
-  pk: string;
-  sk: string;
+  contextKey: string;
+  instanceId: string;
+  domain: string;
+  subjectId: string;
   data: Context;
   isCompleted: boolean;
   startedAt: number;
@@ -27,24 +35,31 @@ interface ContextItem {
  * DynamoDB-backed implementation of WorkflowMemory.
  *
  * Table layout (dedicated contexts table):
- *   pk = `${domain}#${workflowId}#${subjectId}`
- *   sk = instanceId
+ *   contextKey (pk) = `${domain}#${workflowId}#${subjectId}`
+ *   instanceId (sk) = workflow instance id
+ *   domain = tenant identifier (denormalised for GSI)
+ *   subjectId = subject identifier (denormalised for GSI)
  *   data = full Context JSON
  *   isCompleted, startedAt = mirrored from Context for filtering/sorting
  *   updatedAt = epoch ms, set on every save
+ *
+ * GSI (domain-subjectId-index):
+ *   domain (pk), subjectId (sk) — enables getAllContexts and getAllContextsForSubject queries.
  *
  * Assumes domain / workflowId / subjectId do not contain '#'.
  */
 export class DynamoDBWorkflowMemory implements WorkflowMemory {
   private docClient: DynamoDBDocumentClient;
   private tableName: string;
+  private gsiName: string;
 
   constructor(config: DynamoDBWorkflowMemoryConfig) {
     this.docClient = DynamoDBDocumentClient.from(config.client);
     this.tableName = config.tableName;
+    this.gsiName = config.gsiName ?? "domain-subjectId-index";
   }
 
-  private buildPk(
+  private buildContextKey(
     domain: string,
     workflowId: string,
     subjectId: string
@@ -57,7 +72,7 @@ export class DynamoDBWorkflowMemory implements WorkflowMemory {
     workflowId: string,
     subjectId: string
   ): Promise<Context[]> {
-    const pk = this.buildPk(domain, workflowId, subjectId);
+    const contextKey = this.buildContextKey(domain, workflowId, subjectId);
     const contexts: Context[] = [];
     let lastKey: Record<string, unknown> | undefined;
 
@@ -65,8 +80,8 @@ export class DynamoDBWorkflowMemory implements WorkflowMemory {
       const result = await this.docClient.send(
         new QueryCommand({
           TableName: this.tableName,
-          KeyConditionExpression: "pk = :pk",
-          ExpressionAttributeValues: { ":pk": pk },
+          KeyConditionExpression: "contextKey = :contextKey",
+          ExpressionAttributeValues: { ":contextKey": contextKey },
           ExclusiveStartKey: lastKey,
         })
       );
@@ -86,8 +101,10 @@ export class DynamoDBWorkflowMemory implements WorkflowMemory {
     context: Context
   ): Promise<void> {
     const item: ContextItem = {
-      pk: this.buildPk(domain, workflowId, subjectId),
-      sk: context.instanceId,
+      contextKey: this.buildContextKey(domain, workflowId, subjectId),
+      instanceId: context.instanceId,
+      domain,
+      subjectId,
       data: context,
       isCompleted: !!context.isCompleted,
       startedAt: context.startedAt,
@@ -112,16 +129,15 @@ export class DynamoDBWorkflowMemory implements WorkflowMemory {
       new DeleteCommand({
         TableName: this.tableName,
         Key: {
-          pk: this.buildPk(domain, workflowId, subjectId),
-          sk: instanceId,
+          contextKey: this.buildContextKey(domain, workflowId, subjectId),
+          instanceId,
         },
       })
     );
   }
 
   /**
-   * Test/admin helper: fetch a single Context by instance id.
-   * Not part of the WorkflowMemory interface.
+   * Fetch a single Context by instance id.
    */
   async getContext(
     domain: string,
@@ -133,8 +149,8 @@ export class DynamoDBWorkflowMemory implements WorkflowMemory {
       new GetCommand({
         TableName: this.tableName,
         Key: {
-          pk: this.buildPk(domain, workflowId, subjectId),
-          sk: instanceId,
+          contextKey: this.buildContextKey(domain, workflowId, subjectId),
+          instanceId,
         },
       })
     );
@@ -142,5 +158,68 @@ export class DynamoDBWorkflowMemory implements WorkflowMemory {
       return null;
     }
     return (result.Item as ContextItem).data;
+  }
+
+  /**
+   * List all contexts for a given subject across all workflows in a domain.
+   * Uses the `domain-subjectId-index` GSI.
+   */
+  async getAllContextsForSubject(
+    domain: string,
+    subjectId: string
+  ): Promise<Context[]> {
+    const contexts: Context[] = [];
+    let lastKey: Record<string, unknown> | undefined;
+
+    do {
+      const result = await this.docClient.send(
+        new QueryCommand({
+          TableName: this.tableName,
+          IndexName: this.gsiName,
+          KeyConditionExpression: "#domain = :domain AND subjectId = :subjectId",
+          ExpressionAttributeNames: { "#domain": "domain" },
+          ExpressionAttributeValues: { ":domain": domain, ":subjectId": subjectId },
+          ExclusiveStartKey: lastKey,
+        })
+      );
+      for (const item of result.Items ?? []) {
+        contexts.push((item as ContextItem).data);
+      }
+      lastKey = result.LastEvaluatedKey;
+    } while (lastKey);
+
+    return contexts;
+  }
+
+  /**
+   * List all contexts across all subjects and workflows in a domain.
+   * Uses the `domain-subjectId-index` GSI.
+   * Returns contexts annotated with `subjectId`.
+   */
+  async getAllContexts(
+    domain: string
+  ): Promise<Array<Context & { subjectId: string }>> {
+    const contexts: Array<Context & { subjectId: string }> = [];
+    let lastKey: Record<string, unknown> | undefined;
+
+    do {
+      const result = await this.docClient.send(
+        new QueryCommand({
+          TableName: this.tableName,
+          IndexName: this.gsiName,
+          KeyConditionExpression: "#domain = :domain",
+          ExpressionAttributeNames: { "#domain": "domain" },
+          ExpressionAttributeValues: { ":domain": domain },
+          ExclusiveStartKey: lastKey,
+        })
+      );
+      for (const item of result.Items ?? []) {
+        const ci = item as ContextItem;
+        contexts.push({ ...ci.data, subjectId: ci.subjectId });
+      }
+      lastKey = result.LastEvaluatedKey;
+    } while (lastKey);
+
+    return contexts;
   }
 }

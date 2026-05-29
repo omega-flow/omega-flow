@@ -21,8 +21,8 @@ export interface DynamoDBWorkflowStoreConfig {
 }
 
 interface WorkflowItem {
-  pk: string;
-  sk: string;
+  domain: string;
+  workflowId: string;
   data: Workflow;
   createdAt: number;
   updatedAt: number;
@@ -32,8 +32,8 @@ interface WorkflowItem {
  * DynamoDB-backed implementation of WorkflowStore.
  *
  * Table layout (dedicated workflows table):
- *   pk = domain
- *   sk = workflowId
+ *   domain (pk) = tenant identifier (e.g. organization id, company id)
+ *   workflowId (sk) = workflow id
  *   data = full Workflow JSON
  *   createdAt, updatedAt = epoch ms
  */
@@ -53,7 +53,7 @@ export class DynamoDBWorkflowStore implements WorkflowStore {
     const result = await this.docClient.send(
       new GetCommand({
         TableName: this.tableName,
-        Key: { pk: domain, sk: workflowId },
+        Key: { domain, workflowId },
       })
     );
     if (!result.Item) {
@@ -70,8 +70,9 @@ export class DynamoDBWorkflowStore implements WorkflowStore {
       const result = await this.docClient.send(
         new QueryCommand({
           TableName: this.tableName,
-          KeyConditionExpression: "pk = :pk",
-          ExpressionAttributeValues: { ":pk": domain },
+          KeyConditionExpression: "#domain = :domain",
+          ExpressionAttributeNames: { "#domain": "domain" },
+          ExpressionAttributeValues: { ":domain": domain },
           ExclusiveStartKey: lastKey,
         })
       );
@@ -89,7 +90,7 @@ export class DynamoDBWorkflowStore implements WorkflowStore {
     await this.docClient.send(
       new UpdateCommand({
         TableName: this.tableName,
-        Key: { pk: domain, sk: workflow.id },
+        Key: { domain, workflowId: workflow.id },
         UpdateExpression:
           "SET #data = :data, createdAt = if_not_exists(createdAt, :now), updatedAt = :now",
         ExpressionAttributeNames: { "#data": "data" },
@@ -106,8 +107,8 @@ export class DynamoDBWorkflowStore implements WorkflowStore {
     const workflow: Workflow = { ...workflowData, id };
     const now = Date.now();
     const item: WorkflowItem = {
-      pk: domain,
-      sk: id,
+      domain,
+      workflowId: id,
       data: workflow,
       createdAt: now,
       updatedAt: now,
@@ -118,7 +119,8 @@ export class DynamoDBWorkflowStore implements WorkflowStore {
         new PutCommand({
           TableName: this.tableName,
           Item: item,
-          ConditionExpression: "attribute_not_exists(pk)",
+          ConditionExpression: "attribute_not_exists(#domain)",
+          ExpressionAttributeNames: { "#domain": "domain" },
         })
       );
     } catch (err) {
@@ -138,7 +140,7 @@ export class DynamoDBWorkflowStore implements WorkflowStore {
     const result = await this.docClient.send(
       new DeleteCommand({
         TableName: this.tableName,
-        Key: { pk: domain, sk: workflowId },
+        Key: { domain, workflowId },
         ReturnValues: "ALL_OLD",
       })
     );

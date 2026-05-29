@@ -34,12 +34,12 @@ describe("DynamoDBWorkflowMemory", () => {
   });
 
   describe("getContexts", () => {
-    it("queries with composite pk and returns contexts", async () => {
+    it("queries with composite contextKey and returns contexts", async () => {
       ddbMock.on(QueryCommand).resolves({
         Items: [
           {
-            pk: "acme#wf-1#user-1",
-            sk: "inst-1",
+            contextKey: "acme#wf-1#user-1",
+            instanceId: "inst-1",
             data: sampleContext,
             isCompleted: false,
             startedAt: 1000,
@@ -55,8 +55,8 @@ describe("DynamoDBWorkflowMemory", () => {
       expect(calls).toHaveLength(1);
       expect(calls[0].args[0].input).toMatchObject({
         TableName: TABLE,
-        KeyConditionExpression: "pk = :pk",
-        ExpressionAttributeValues: { ":pk": "acme#wf-1#user-1" },
+        KeyConditionExpression: "contextKey = :contextKey",
+        ExpressionAttributeValues: { ":contextKey": "acme#wf-1#user-1" },
       });
     });
 
@@ -73,21 +73,21 @@ describe("DynamoDBWorkflowMemory", () => {
         .resolvesOnce({
           Items: [
             {
-              pk: "acme#wf-1#user-1",
-              sk: "inst-1",
+              contextKey: "acme#wf-1#user-1",
+              instanceId: "inst-1",
               data: sampleContext,
               isCompleted: false,
               startedAt: 1000,
               updatedAt: 1000,
             },
           ],
-          LastEvaluatedKey: { pk: "acme#wf-1#user-1", sk: "inst-1" },
+          LastEvaluatedKey: { contextKey: "acme#wf-1#user-1", instanceId: "inst-1" },
         })
         .resolvesOnce({
           Items: [
             {
-              pk: "acme#wf-1#user-1",
-              sk: "inst-2",
+              contextKey: "acme#wf-1#user-1",
+              instanceId: "inst-2",
               data: ctx2,
               isCompleted: false,
               startedAt: 1000,
@@ -114,8 +114,10 @@ describe("DynamoDBWorkflowMemory", () => {
       const input = calls[0].args[0].input;
       expect(input.TableName).toBe(TABLE);
       expect(input.Item).toMatchObject({
-        pk: "acme#wf-1#user-1",
-        sk: "inst-1",
+        contextKey: "acme#wf-1#user-1",
+        instanceId: "inst-1",
+        domain: "acme",
+        subjectId: "user-1",
         data: sampleContext,
         isCompleted: false,
         startedAt: 1000,
@@ -146,7 +148,7 @@ describe("DynamoDBWorkflowMemory", () => {
   });
 
   describe("deleteContext", () => {
-    it("deletes by composite pk and instanceId sk", async () => {
+    it("deletes by contextKey and instanceId", async () => {
       ddbMock.on(DeleteCommand).resolves({});
 
       await memory.deleteContext("acme", "wf-1", "user-1", "inst-1");
@@ -155,7 +157,7 @@ describe("DynamoDBWorkflowMemory", () => {
       expect(calls).toHaveLength(1);
       expect(calls[0].args[0].input).toMatchObject({
         TableName: TABLE,
-        Key: { pk: "acme#wf-1#user-1", sk: "inst-1" },
+        Key: { contextKey: "acme#wf-1#user-1", instanceId: "inst-1" },
       });
     });
 
@@ -171,8 +173,8 @@ describe("DynamoDBWorkflowMemory", () => {
     it("returns the context when it exists", async () => {
       ddbMock.on(GetCommand).resolves({
         Item: {
-          pk: "acme#wf-1#user-1",
-          sk: "inst-1",
+          contextKey: "acme#wf-1#user-1",
+          instanceId: "inst-1",
           data: sampleContext,
           isCompleted: false,
           startedAt: 1000,
@@ -186,7 +188,7 @@ describe("DynamoDBWorkflowMemory", () => {
       const calls = ddbMock.commandCalls(GetCommand);
       expect(calls[0].args[0].input).toEqual({
         TableName: TABLE,
-        Key: { pk: "acme#wf-1#user-1", sk: "inst-1" },
+        Key: { contextKey: "acme#wf-1#user-1", instanceId: "inst-1" },
       });
     });
 
@@ -199,6 +201,93 @@ describe("DynamoDBWorkflowMemory", () => {
         "missing"
       );
       expect(result).toBeNull();
+    });
+  });
+
+  describe("getAllContextsForSubject", () => {
+    it("queries the GSI with domain and subjectId", async () => {
+      ddbMock.on(QueryCommand).resolves({
+        Items: [
+          {
+            contextKey: "acme#wf-1#user-1",
+            instanceId: "inst-1",
+            domain: "acme",
+            subjectId: "user-1",
+            data: sampleContext,
+            isCompleted: false,
+            startedAt: 1000,
+            updatedAt: 1000,
+          },
+        ],
+      });
+
+      const result = await memory.getAllContextsForSubject("acme", "user-1");
+
+      expect(result).toEqual([sampleContext]);
+      const calls = ddbMock.commandCalls(QueryCommand);
+      expect(calls).toHaveLength(1);
+      expect(calls[0].args[0].input).toMatchObject({
+        TableName: TABLE,
+        IndexName: "domain-subjectId-index",
+        KeyConditionExpression: "#domain = :domain AND subjectId = :subjectId",
+        ExpressionAttributeNames: { "#domain": "domain" },
+        ExpressionAttributeValues: { ":domain": "acme", ":subjectId": "user-1" },
+      });
+    });
+
+    it("returns empty array when no items match", async () => {
+      ddbMock.on(QueryCommand).resolves({});
+      const result = await memory.getAllContextsForSubject("acme", "user-1");
+      expect(result).toEqual([]);
+    });
+  });
+
+  describe("getAllContexts", () => {
+    it("queries the GSI with domain only and returns contexts with subjectId", async () => {
+      ddbMock.on(QueryCommand).resolves({
+        Items: [
+          {
+            contextKey: "acme#wf-1#user-1",
+            instanceId: "inst-1",
+            domain: "acme",
+            subjectId: "user-1",
+            data: sampleContext,
+            isCompleted: false,
+            startedAt: 1000,
+            updatedAt: 1000,
+          },
+          {
+            contextKey: "acme#wf-1#user-2",
+            instanceId: "inst-2",
+            domain: "acme",
+            subjectId: "user-2",
+            data: { ...sampleContext, instanceId: "inst-2" },
+            isCompleted: false,
+            startedAt: 2000,
+            updatedAt: 2000,
+          },
+        ],
+      });
+
+      const result = await memory.getAllContexts("acme");
+
+      expect(result).toHaveLength(2);
+      expect(result[0]).toMatchObject({ ...sampleContext, subjectId: "user-1" });
+      expect(result[1]).toMatchObject({ instanceId: "inst-2", subjectId: "user-2" });
+      const calls = ddbMock.commandCalls(QueryCommand);
+      expect(calls[0].args[0].input).toMatchObject({
+        TableName: TABLE,
+        IndexName: "domain-subjectId-index",
+        KeyConditionExpression: "#domain = :domain",
+        ExpressionAttributeNames: { "#domain": "domain" },
+        ExpressionAttributeValues: { ":domain": "acme" },
+      });
+    });
+
+    it("returns empty array when no items match", async () => {
+      ddbMock.on(QueryCommand).resolves({});
+      const result = await memory.getAllContexts("acme");
+      expect(result).toEqual([]);
     });
   });
 });

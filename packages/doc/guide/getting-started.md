@@ -6,11 +6,12 @@ Welcome to Omega Flow - a node-based event-driven workflow engine with a visual 
 
 Omega Flow consists of three main packages:
 
-| Package              | Description                                                                |
-| -------------------- | -------------------------------------------------------------------------- |
-| `@omega-flow/types`  | TypeScript types and JSON schemas for workflows, events, and context       |
-| `@omega-flow/engine` | Workflow engine that executes workflows, manages state, and handles events |
-| `@omega-flow/editor` | React-based visual workflow editor with customizable components            |
+| Package                | Description                                                                |
+| ---------------------- | -------------------------------------------------------------------------- |
+| `@omega-flow/types`    | TypeScript types and JSON schemas for workflows, events, and context       |
+| `@omega-flow/engine`   | Workflow engine that executes workflows, manages state, and handles events |
+| `@omega-flow/editor`   | React-based visual workflow editor with customizable components            |
+| `@omega-flow/store-aws`| AWS implementations (DynamoDB + EventBridge Scheduler) for production use  |
 
 ## Installation
 
@@ -237,9 +238,10 @@ The sample app demonstrates:
 ```
 omega-flow/
 ├── packages/
-│   ├── types/     # TypeScript types & schemas
-│   ├── engine/    # Workflow execution engine
-│   └── editor/    # Visual editor components
+│   ├── types/      # TypeScript types & schemas
+│   ├── engine/     # Workflow execution engine
+│   ├── editor/     # Visual editor components
+│   └── store-aws/  # AWS storage & scheduler implementations
 └── apps/
     ├── sampleApp/    # Sample React application
     └── sampleServer/ # Sample Express API server
@@ -249,7 +251,8 @@ omega-flow/
 
 1. **[Core Concepts](/guide/core-concepts)** - Understand workflows, nodes, events, and context
 2. **[Executing Workflows](/guide/engine-execution)** - Detailed guide for running workflows with the engine
-3. **[Editor Setup](/guide/editor-setup)** - Detailed guide for setting up the visual editor
-4. **[Custom Nodes (Engine)](/guide/engine-custom-nodes)** - Create custom node execution logic
-5. **[Custom Nodes (Editor)](/guide/custom-nodes)** - Create custom node visual components
-6. **[API Reference](/api/components)** - Explore all editor components and hooks
+3. **[AWS Storage & Scheduler](/guide/store-aws)** - Production-ready DynamoDB and EventBridge implementations
+4. **[Editor Setup](/guide/editor-setup)** - Detailed guide for setting up the visual editor
+5. **[Custom Nodes (Engine)](/guide/engine-custom-nodes)** - Create custom node execution logic
+6. **[Custom Nodes (Editor)](/guide/custom-nodes)** - Create custom node visual components
+7. **[API Reference](/api/components)** - Explore all editor components and hooks

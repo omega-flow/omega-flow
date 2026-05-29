@@ -27,6 +27,12 @@ export default defineConfig({
           ]
         },
         {
+          text: 'Adapters',
+          items: [
+            { text: 'AWS (DynamoDB + EventBridge)', link: '/guide/store-aws' }
+          ]
+        },
+        {
           text: 'Workflow Editor',
           items: [
             { text: 'Editor Setup', link: '/guide/editor-setup' },

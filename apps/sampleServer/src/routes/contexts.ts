@@ -1,13 +1,13 @@
 import { Router } from "express";
 import _Ajv from "ajv";
 import { ContextSchema, type Context } from "@omega-flow/types";
-import type { FileWorkflowMemory } from "../stores/FileWorkflowMemory.js";
+import type { SampleWorkflowMemory } from "../stores/types.js";
 
 const Ajv = _Ajv.default ?? _Ajv;
 const ajv = new Ajv();
 const validateContext = ajv.compile(ContextSchema);
 
-export function createContextRoutes(memory: FileWorkflowMemory): Router {
+export function createContextRoutes(memory: SampleWorkflowMemory): Router {
   const router = Router();
 
   // GET /api/contexts/:domain - List ALL contexts in domain (across all subjects)

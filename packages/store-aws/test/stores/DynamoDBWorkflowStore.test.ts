@@ -40,8 +40,8 @@ describe("DynamoDBWorkflowStore", () => {
     it("returns the workflow when it exists", async () => {
       ddbMock.on(GetCommand).resolves({
         Item: {
-          pk: "acme",
-          sk: "wf-1",
+          domain: "acme",
+          workflowId: "wf-1",
           data: sampleWorkflow,
           createdAt: 1,
           updatedAt: 1,
@@ -55,7 +55,7 @@ describe("DynamoDBWorkflowStore", () => {
       expect(calls).toHaveLength(1);
       expect(calls[0].args[0].input).toEqual({
         TableName: TABLE,
-        Key: { pk: "acme", sk: "wf-1" },
+        Key: { domain: "acme", workflowId: "wf-1" },
       });
     });
 
@@ -71,8 +71,8 @@ describe("DynamoDBWorkflowStore", () => {
       ddbMock.on(QueryCommand).resolves({
         Items: [
           {
-            pk: "acme",
-            sk: "wf-1",
+            domain: "acme",
+            workflowId: "wf-1",
             data: sampleWorkflow,
             createdAt: 1,
             updatedAt: 1,
@@ -86,8 +86,9 @@ describe("DynamoDBWorkflowStore", () => {
       const calls = ddbMock.commandCalls(QueryCommand);
       expect(calls[0].args[0].input).toMatchObject({
         TableName: TABLE,
-        KeyConditionExpression: "pk = :pk",
-        ExpressionAttributeValues: { ":pk": "acme" },
+        KeyConditionExpression: "#domain = :domain",
+        ExpressionAttributeNames: { "#domain": "domain" },
+        ExpressionAttributeValues: { ":domain": "acme" },
       });
     });
 
@@ -104,20 +105,20 @@ describe("DynamoDBWorkflowStore", () => {
         .resolvesOnce({
           Items: [
             {
-              pk: "acme",
-              sk: "wf-1",
+              domain: "acme",
+              workflowId: "wf-1",
               data: sampleWorkflow,
               createdAt: 1,
               updatedAt: 1,
             },
           ],
-          LastEvaluatedKey: { pk: "acme", sk: "wf-1" },
+          LastEvaluatedKey: { domain: "acme", workflowId: "wf-1" },
         })
         .resolvesOnce({
           Items: [
             {
-              pk: "acme",
-              sk: "wf-2",
+              domain: "acme",
+              workflowId: "wf-2",
               data: wf2,
               createdAt: 1,
               updatedAt: 1,
@@ -142,7 +143,7 @@ describe("DynamoDBWorkflowStore", () => {
       expect(calls).toHaveLength(1);
       const input = calls[0].args[0].input;
       expect(input.TableName).toBe(TABLE);
-      expect(input.Key).toEqual({ pk: "acme", sk: "wf-1" });
+      expect(input.Key).toEqual({ domain: "acme", workflowId: "wf-1" });
       expect(input.UpdateExpression).toContain("SET #data = :data");
       expect(input.UpdateExpression).toContain(
         "createdAt = if_not_exists(createdAt, :now)"
@@ -173,10 +174,11 @@ describe("DynamoDBWorkflowStore", () => {
       expect(calls).toHaveLength(1);
       const input = calls[0].args[0].input;
       expect(input.TableName).toBe(TABLE);
-      expect(input.ConditionExpression).toBe("attribute_not_exists(pk)");
+      expect(input.ConditionExpression).toBe("attribute_not_exists(#domain)");
+      expect(input.ExpressionAttributeNames).toEqual({ "#domain": "domain" });
       expect(input.Item).toMatchObject({
-        pk: "acme",
-        sk: result.id,
+        domain: "acme",
+        workflowId: result.id,
         data: result,
       });
     });
@@ -202,7 +204,7 @@ describe("DynamoDBWorkflowStore", () => {
   describe("deleteWorkflow", () => {
     it("returns true when the item was deleted", async () => {
       ddbMock.on(DeleteCommand).resolves({
-        Attributes: { pk: "acme", sk: "wf-1" },
+        Attributes: { domain: "acme", workflowId: "wf-1" },
       });
 
       const result = await store.deleteWorkflow("acme", "wf-1");
@@ -211,7 +213,7 @@ describe("DynamoDBWorkflowStore", () => {
       const calls = ddbMock.commandCalls(DeleteCommand);
       expect(calls[0].args[0].input).toMatchObject({
         TableName: TABLE,
-        Key: { pk: "acme", sk: "wf-1" },
+        Key: { domain: "acme", workflowId: "wf-1" },
         ReturnValues: "ALL_OLD",
       });
     });

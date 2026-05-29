@@ -427,6 +427,7 @@ This workflow:
 ## Next Steps
 
 - Learn how to [execute workflows](/guide/engine-execution) with the engine
+- Deploy with [AWS Storage & Scheduler](/guide/store-aws) (DynamoDB + EventBridge)
 - Learn how to [set up the editor](/guide/editor-setup)
 - Create custom nodes for the [engine](/guide/engine-custom-nodes) and [editor](/guide/custom-nodes)
 - Explore the [API reference](/api/components)

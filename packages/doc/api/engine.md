@@ -490,6 +490,18 @@ In-memory implementation of WorkflowScheduler using setTimeout.
 new InMemoryWorkflowScheduler()
 ```
 
+### AWS Implementations
+
+The `@omega-flow/store-aws` package provides production-ready implementations backed by DynamoDB and EventBridge Scheduler:
+
+| Class | Implements | Backed by |
+|-------|-----------|-----------|
+| `DynamoDBWorkflowStore` | `WorkflowStore` | DynamoDB |
+| `DynamoDBWorkflowMemory` | `WorkflowMemory` | DynamoDB |
+| `EventBusWorkflowScheduler` | `WorkflowScheduler` | EventBridge Scheduler |
+
+See the [AWS Storage & Scheduler guide](/guide/store-aws) for configuration, table schemas, and IAM setup.
+
 ---
 
 ## Built-in Node Types
