@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm build
+
+      - run: pnpm test
+
+      - run: pnpm lint
+
+      - run: pnpm audit --audit-level=high
+
+      - name: publint
+        run: |
+          pnpm exec publint packages/types
+          pnpm exec publint packages/engine
+          pnpm exec publint packages/editor
+          pnpm exec publint packages/store-aws
+
+      - name: attw
+        run: |
+          pnpm exec attw --pack packages/types
+          pnpm exec attw --pack packages/engine
+          pnpm exec attw --pack packages/editor
+          pnpm exec attw --pack packages/store-aws
