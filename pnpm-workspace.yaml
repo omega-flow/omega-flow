@@ -4,4 +4,4 @@ packages:
   - tools/*
 
 catalog:
-  '@xyflow/react': ^12.10.0
+  '@xyflow/react': ^12.11.0
