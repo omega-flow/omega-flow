@@ -43,7 +43,7 @@ importers:
         version: 6.1.2
       ts-jest:
         specifier: ^29.4.6
-        version: 29.4.6(@babel/core@7.29.0)(@jest/transform@30.2.0)(@jest/types@30.2.0)(babel-jest@30.2.0(@babel/core@7.29.0))(esbuild@0.27.3)(jest-util@30.2.0)(jest@30.2.0(@types/node@25.2.1)(babel-plugin-macros@3.1.0))(typescript@5.9.3)
+        version: 29.4.6(@babel/core@7.29.0)(@jest/transform@30.2.0)(@jest/types@30.2.0)(babel-jest@30.2.0(@babel/core@7.29.0))(jest-util@30.2.0)(jest@30.2.0(@types/node@25.2.1)(babel-plugin-macros@3.1.0))(typescript@5.9.3)
       tsup:
         specifier: ^8.5.1
         version: 8.5.1(postcss@8.5.6)(tsx@4.21.0)(typescript@5.9.3)
@@ -55,10 +55,10 @@ importers:
     dependencies:
       '@chakra-ui/react':
         specifier: ^3.33.0
-        version: 3.33.0(@emotion/react@11.14.0(@types/react@19.2.13)(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+        version: 3.33.0(@emotion/react@11.14.0(@types/react@19.2.17)(react@19.2.7))(react-dom@19.2.4(react@19.2.7))(react@19.2.7)
       '@emotion/react':
         specifier: ^11.14.0
-        version: 11.14.0(@types/react@19.2.13)(react@19.2.4)
+        version: 11.14.0(@types/react@19.2.17)(react@19.2.7)
       '@omega-flow/editor':
         specifier: workspace:*
         version: link:../../packages/editor
@@ -67,16 +67,16 @@ importers:
         version: link:../../packages/types
       '@xyflow/react':
         specifier: 'catalog:'
-        version: 12.10.0(@types/react@19.2.13)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+        version: 12.10.0(@types/react@19.2.17)(react-dom@19.2.4(react@19.2.7))(react@19.2.7)
       react:
-        specifier: ^19.2.4
-        version: 19.2.4
+        specifier: ^19.2.7
+        version: 19.2.7
       react-dom:
         specifier: ^19.2.4
-        version: 19.2.4(react@19.2.4)
+        version: 19.2.4(react@19.2.7)
       react-router-dom:
         specifier: ^7.13.0
-        version: 7.13.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+        version: 7.13.0(react-dom@19.2.4(react@19.2.7))(react@19.2.7)
     devDependencies:
       '@eslint/js':
         specifier: ^9.39.2
@@ -85,11 +85,11 @@ importers:
         specifier: ^25.2.1
         version: 25.2.1
       '@types/react':
-        specifier: ^19.2.13
-        version: 19.2.13
+        specifier: ^19.2.17
+        version: 19.2.17
       '@types/react-dom':
         specifier: ^19.2.3
-        version: 19.2.3(@types/react@19.2.13)
+        version: 19.2.3(@types/react@19.2.17)
       '@vitejs/plugin-react':
         specifier: ^5.1.3
         version: 5.1.3(vite@7.3.1(@types/node@25.2.1)(tsx@4.21.0))
@@ -174,20 +174,20 @@ importers:
         version: link:../types
     devDependencies:
       '@types/react':
-        specifier: ^19.2.13
-        version: 19.2.13
+        specifier: ^19.2.17
+        version: 19.2.17
       '@types/react-dom':
         specifier: ^19.2.3
-        version: 19.2.3(@types/react@19.2.13)
+        version: 19.2.3(@types/react@19.2.17)
       '@xyflow/react':
         specifier: 'catalog:'
-        version: 12.10.0(@types/react@19.2.13)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+        version: 12.10.0(@types/react@19.2.17)(react-dom@19.2.4(react@19.2.7))(react@19.2.7)
       react:
-        specifier: ^19.2.4
-        version: 19.2.4
+        specifier: ^19.2.7
+        version: 19.2.7
       react-dom:
         specifier: ^19.2.4
-        version: 19.2.4(react@19.2.4)
+        version: 19.2.4(react@19.2.7)
       tsup:
         specifier: ^8.5.1
         version: 8.5.1(postcss@8.5.6)(tsx@4.21.0)(typescript@5.9.3)
@@ -233,7 +233,7 @@ importers:
     dependencies:
       '@xyflow/react':
         specifier: 'catalog:'
-        version: 12.10.0(@types/react@19.2.13)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+        version: 12.10.0(@types/react@19.2.17)(react-dom@19.2.4(react@19.2.7))(react@19.2.7)
 
 packages:
 
@@ -1807,8 +1807,8 @@ packages:
     peerDependencies:
       '@types/react': ^19.2.0
 
-  '@types/react@19.2.13':
-    resolution: {integrity: sha512-KkiJeU6VbYbUOp5ITMIc7kBfqlYkKA5KhEHVrGMmUUMt7NeaZg65ojdPk+FtNrBAOXNVM5QM72jnADjM+XVRAQ==}
+  '@types/react@19.2.17':
+    resolution: {integrity: sha512-MXfmqaVPEVgkBT/aY0aGCkRWWtByiYQXo3xdQ8r5RzuFrPiRn8Gar2tQdXSUQ2GKV3bkXckek89V8wQBY2Q/Aw==}
 
   '@types/send@1.2.1':
     resolution: {integrity: sha512-arsCikDvlU99zl1g69TcAB3mzZPpxgw0UQnaHeC1Nwb015xp8bknZv5rIfri9xTOcMuaVgvabfIRA7PSZVuZIQ==}
@@ -1898,6 +1898,7 @@ packages:
 
   '@ungap/structured-clone@1.3.0':
     resolution: {integrity: sha512-WmoN8qaIAo7WTYWbAZuG8PYEhn5fkz7dZrqTBZ7dtt//lL2Gwms1IcnQ5yHqjDfX8Ft5j4YzDM23f87zBfDe9g==}
+    deprecated: Potential CWE-502 - Update to 1.3.1 or higher
 
   '@unrs/resolver-binding-android-arm-eabi@1.11.1':
     resolution: {integrity: sha512-ppLRUgHVaGRWUx0R0Ut06Mjo9gBaBkg3v/8AxusGLhsIotbBLuRk51rAzqLC8gq6NyyAojEXglNjzf6R948DNw==}
@@ -3945,8 +3946,8 @@ packages:
       react-dom:
         optional: true
 
-  react@19.2.4:
-    resolution: {integrity: sha512-9nfp2hYpCwOjAN+8TZFGhtWEwgvWHXqESH8qT89AT/lWklpLON22Lc8pEtnpsZz7VmawabSU0gCjnj8aC0euHQ==}
+  react@19.2.7:
+    resolution: {integrity: sha512-HNe9WslTbXmFK8o8cmwgAeJFSBvt1bPdHCVKtaaV+WlAN36mpT4hcRpwbf3fY56ar2oIXzsBpOAiIRHAdY0OlQ==}
     engines: {node: '>=0.10.0'}
 
   read-yaml-file@1.1.0:
@@ -4780,7 +4781,7 @@ snapshots:
       typescript: 5.6.1-rc
       validate-npm-package-name: 5.0.1
 
-  '@ark-ui/react@5.31.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)':
+  '@ark-ui/react@5.31.0(react-dom@19.2.4(react@19.2.7))(react@19.2.7)':
     dependencies:
       '@internationalized/date': 3.10.0
       '@zag-js/accordion': 1.33.1
@@ -4827,7 +4828,7 @@ snapshots:
       '@zag-js/qr-code': 1.33.1
       '@zag-js/radio-group': 1.33.1
       '@zag-js/rating-group': 1.33.1
-      '@zag-js/react': 1.33.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      '@zag-js/react': 1.33.1(react-dom@19.2.4(react@19.2.7))(react@19.2.7)
       '@zag-js/scroll-area': 1.33.1
       '@zag-js/select': 1.33.1
       '@zag-js/signature-pad': 1.33.1
@@ -4846,8 +4847,8 @@ snapshots:
       '@zag-js/tree-view': 1.33.1
       '@zag-js/types': 1.33.1
       '@zag-js/utils': 1.33.1
-      react: 19.2.4
-      react-dom: 19.2.4(react@19.2.4)
+      react: 19.2.7
+      react-dom: 19.2.4(react@19.2.7)
 
   '@aws-crypto/sha256-browser@5.2.0':
     dependencies:
@@ -5495,18 +5496,18 @@ snapshots:
 
   '@braidai/lang@1.1.2': {}
 
-  '@chakra-ui/react@3.33.0(@emotion/react@11.14.0(@types/react@19.2.13)(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)':
+  '@chakra-ui/react@3.33.0(@emotion/react@11.14.0(@types/react@19.2.17)(react@19.2.7))(react-dom@19.2.4(react@19.2.7))(react@19.2.7)':
     dependencies:
-      '@ark-ui/react': 5.31.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      '@ark-ui/react': 5.31.0(react-dom@19.2.4(react@19.2.7))(react@19.2.7)
       '@emotion/is-prop-valid': 1.4.0
-      '@emotion/react': 11.14.0(@types/react@19.2.13)(react@19.2.4)
+      '@emotion/react': 11.14.0(@types/react@19.2.17)(react@19.2.7)
       '@emotion/serialize': 1.3.3
-      '@emotion/use-insertion-effect-with-fallbacks': 1.2.0(react@19.2.4)
+      '@emotion/use-insertion-effect-with-fallbacks': 1.2.0(react@19.2.7)
       '@emotion/utils': 1.4.2
       '@pandacss/is-valid-prop': 1.8.2
       csstype: 3.2.3
-      react: 19.2.4
-      react-dom: 19.2.4(react@19.2.4)
+      react: 19.2.7
+      react-dom: 19.2.4(react@19.2.7)
 
   '@changesets/apply-release-plan@7.0.14':
     dependencies:
@@ -5742,19 +5743,19 @@ snapshots:
 
   '@emotion/memoize@0.9.0': {}
 
-  '@emotion/react@11.14.0(@types/react@19.2.13)(react@19.2.4)':
+  '@emotion/react@11.14.0(@types/react@19.2.17)(react@19.2.7)':
     dependencies:
       '@babel/runtime': 7.28.6
       '@emotion/babel-plugin': 11.13.5
       '@emotion/cache': 11.14.0
       '@emotion/serialize': 1.3.3
-      '@emotion/use-insertion-effect-with-fallbacks': 1.2.0(react@19.2.4)
+      '@emotion/use-insertion-effect-with-fallbacks': 1.2.0(react@19.2.7)
       '@emotion/utils': 1.4.2
       '@emotion/weak-memoize': 0.4.0
       hoist-non-react-statics: 3.3.2
-      react: 19.2.4
+      react: 19.2.7
     optionalDependencies:
-      '@types/react': 19.2.13
+      '@types/react': 19.2.17
     transitivePeerDependencies:
       - supports-color
 
@@ -5770,9 +5771,9 @@ snapshots:
 
   '@emotion/unitless@0.10.0': {}
 
-  '@emotion/use-insertion-effect-with-fallbacks@1.2.0(react@19.2.4)':
+  '@emotion/use-insertion-effect-with-fallbacks@1.2.0(react@19.2.7)':
     dependencies:
-      react: 19.2.4
+      react: 19.2.7
 
   '@emotion/utils@1.4.2': {}
 
@@ -6831,11 +6832,11 @@ snapshots:
 
   '@types/range-parser@1.2.7': {}
 
-  '@types/react-dom@19.2.3(@types/react@19.2.13)':
+  '@types/react-dom@19.2.3(@types/react@19.2.17)':
     dependencies:
-      '@types/react': 19.2.13
+      '@types/react': 19.2.17
 
-  '@types/react@19.2.13':
+  '@types/react@19.2.17':
     dependencies:
       csstype: 3.2.3
 
@@ -7134,13 +7135,13 @@ snapshots:
     transitivePeerDependencies:
       - typescript
 
-  '@xyflow/react@12.10.0(@types/react@19.2.13)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)':
+  '@xyflow/react@12.10.0(@types/react@19.2.17)(react-dom@19.2.4(react@19.2.7))(react@19.2.7)':
     dependencies:
       '@xyflow/system': 0.0.74
       classcat: 5.0.5
-      react: 19.2.4
-      react-dom: 19.2.4(react@19.2.4)
-      zustand: 4.5.7(@types/react@19.2.13)(react@19.2.4)
+      react: 19.2.7
+      react-dom: 19.2.4(react@19.2.7)
+      zustand: 4.5.7(@types/react@19.2.17)(react@19.2.7)
     transitivePeerDependencies:
       - '@types/react'
       - immer
@@ -7524,14 +7525,14 @@ snapshots:
       '@zag-js/types': 1.33.1
       '@zag-js/utils': 1.33.1
 
-  '@zag-js/react@1.33.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4)':
+  '@zag-js/react@1.33.1(react-dom@19.2.4(react@19.2.7))(react@19.2.7)':
     dependencies:
       '@zag-js/core': 1.33.1
       '@zag-js/store': 1.33.1
       '@zag-js/types': 1.33.1
       '@zag-js/utils': 1.33.1
-      react: 19.2.4
-      react-dom: 19.2.4(react@19.2.4)
+      react: 19.2.7
+      react-dom: 19.2.4(react@19.2.7)
 
   '@zag-js/rect-utils@1.33.1': {}
 
@@ -9482,9 +9483,9 @@ snapshots:
       iconv-lite: 0.7.2
       unpipe: 1.0.0
 
-  react-dom@19.2.4(react@19.2.4):
+  react-dom@19.2.4(react@19.2.7):
     dependencies:
-      react: 19.2.4
+      react: 19.2.7
       scheduler: 0.27.0
 
   react-is@16.13.1: {}
@@ -9493,21 +9494,21 @@ snapshots:
 
   react-refresh@0.18.0: {}
 
-  react-router-dom@7.13.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4):
+  react-router-dom@7.13.0(react-dom@19.2.4(react@19.2.7))(react@19.2.7):
     dependencies:
-      react: 19.2.4
-      react-dom: 19.2.4(react@19.2.4)
-      react-router: 7.13.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      react: 19.2.7
+      react-dom: 19.2.4(react@19.2.7)
+      react-router: 7.13.0(react-dom@19.2.4(react@19.2.7))(react@19.2.7)
 
-  react-router@7.13.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4):
+  react-router@7.13.0(react-dom@19.2.4(react@19.2.7))(react@19.2.7):
     dependencies:
       cookie: 1.1.1
-      react: 19.2.4
+      react: 19.2.7
       set-cookie-parser: 2.7.2
     optionalDependencies:
-      react-dom: 19.2.4(react@19.2.4)
+      react-dom: 19.2.4(react@19.2.7)
 
-  react@19.2.4: {}
+  react@19.2.7: {}
 
   read-yaml-file@1.1.0:
     dependencies:
@@ -9859,7 +9860,7 @@ snapshots:
 
   ts-interface-checker@0.1.13: {}
 
-  ts-jest@29.4.6(@babel/core@7.29.0)(@jest/transform@30.2.0)(@jest/types@30.2.0)(babel-jest@30.2.0(@babel/core@7.29.0))(esbuild@0.27.3)(jest-util@30.2.0)(jest@30.2.0(@types/node@25.2.1)(babel-plugin-macros@3.1.0))(typescript@5.9.3):
+  ts-jest@29.4.6(@babel/core@7.29.0)(@jest/transform@30.2.0)(@jest/types@30.2.0)(babel-jest@30.2.0(@babel/core@7.29.0))(jest-util@30.2.0)(jest@30.2.0(@types/node@25.2.1)(babel-plugin-macros@3.1.0))(typescript@5.9.3):
     dependencies:
       bs-logger: 0.2.6
       fast-json-stable-stringify: 2.1.0
@@ -9877,7 +9878,6 @@ snapshots:
       '@jest/transform': 30.2.0
       '@jest/types': 30.2.0
       babel-jest: 30.2.0(@babel/core@7.29.0)
-      esbuild: 0.27.3
       jest-util: 30.2.0
 
   tsconfck@3.1.6(typescript@5.9.3):
@@ -10026,9 +10026,9 @@ snapshots:
     dependencies:
       punycode: 2.3.1
 
-  use-sync-external-store@1.6.0(react@19.2.4):
+  use-sync-external-store@1.6.0(react@19.2.7):
     dependencies:
-      react: 19.2.4
+      react: 19.2.7
 
   v8-to-istanbul@9.3.0:
     dependencies:
@@ -10219,11 +10219,11 @@ snapshots:
 
   zod@4.3.6: {}
 
-  zustand@4.5.7(@types/react@19.2.13)(react@19.2.4):
+  zustand@4.5.7(@types/react@19.2.17)(react@19.2.7):
     dependencies:
-      use-sync-external-store: 1.6.0(react@19.2.4)
+      use-sync-external-store: 1.6.0(react@19.2.7)
     optionalDependencies:
-      '@types/react': 19.2.13
-      react: 19.2.4
+      '@types/react': 19.2.17
+      react: 19.2.7
 
   zwitch@2.0.4: {}
