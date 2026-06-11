@@ -95,10 +95,6 @@ You never run `npm publish` manually in steady state.
   - `major` (0.2.0 → 1.0.0) — breaking API changes
 - When in doubt, use `minor` during 0.x development (breaking changes are expected)
 
-## Commit Timestamps
-
-All commits are automatically normalized to 20:00 local time via a `post-commit` hook. This is handled by Husky — no action needed on your part.
-
 ## CI Checks
 
 Every push and PR runs:
@@ -125,8 +121,7 @@ omega-flow/
 │   ├── sampleApp/   # React demo app (not published)
 │   └── sampleServer/# Express dev server (not published)
 ├── .changeset/      # Changesets config and pending changesets
-├── .github/         # CI, release, docs, and Dependabot workflows
-└── .husky/          # Git hooks
+└── .github/         # CI, release, docs, and Dependabot workflows
 ```
 
 ## Useful Links
