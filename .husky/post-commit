@@ -1,0 +1,7 @@
+COMMIT_TIME=$(git log -1 --format=%ai | cut -d' ' -f2 | cut -d':' -f1-2)
+if [ "$COMMIT_TIME" = "20:00" ]; then
+  exit 0
+fi
+CURRENT_DATE=$(git log -1 --format=%ai | cut -d' ' -f1)
+NOON="${CURRENT_DATE}T20:00:00"
+GIT_COMMITTER_DATE="$NOON" git commit --amend --no-edit --date="$NOON"
