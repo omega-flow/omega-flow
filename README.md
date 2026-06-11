@@ -1,5 +1,9 @@
 # Omega Flow
 
+[![CI](https://github.com/omega-flow/omega-flow/actions/workflows/ci.yml/badge.svg)](https://github.com/omega-flow/omega-flow/actions/workflows/ci.yml)
+[![npm](https://img.shields.io/npm/v/@omega-flow/engine)](https://www.npmjs.com/package/@omega-flow/engine)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
 A TypeScript workflow engine and visual editor for building and executing event-driven workflows. Define workflows as directed graphs, process events per subject, and plug in your own storage.
 
 > **Note:** Omega Flow is under active development. APIs and behavior may change as we work through our first production deployments. Feedback and contributions are welcome, but expect breaking changes until we reach a stable release.
@@ -135,8 +139,8 @@ pnpm dev:doc
 
 ## Documentation
 
-Full documentation is available in [`packages/doc`](packages/doc). Run `pnpm dev:doc` to browse it locally.
+Full documentation is available at [omega-flow.github.io/omega-flow](https://omega-flow.github.io/omega-flow/) or locally via `pnpm dev:doc`.
 
 ## License
 
-ISC
+MIT
