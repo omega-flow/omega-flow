@@ -35,6 +35,6 @@
     "@aws-sdk/lib-dynamodb": "^3.700.0",
     "@omega-flow/engine": "workspace:*",
     "@omega-flow/types": "workspace:*",
-    "nanoid": "^3.3.7"
+    "nanoid": "^5.1.11"
   }
 }
