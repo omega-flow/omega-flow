@@ -2,6 +2,8 @@
 
 A TypeScript workflow engine and visual editor for building and executing event-driven workflows. Define workflows as directed graphs, process events per subject, and plug in your own storage.
 
+> **Note:** Omega Flow is under active development. APIs and behavior may change as we work through our first production deployments. Feedback and contributions are welcome, but expect breaking changes until we reach a stable release.
+
 ## Features
 
 - **Node-based workflow engine** — Workflows are directed graphs of nodes and edges, executed by an event-driven engine
