@@ -14,7 +14,7 @@
     "@omega-flow/engine": "workspace:*",
     "@omega-flow/store-aws": "workspace:*",
     "@omega-flow/types": "workspace:*",
-    "ajv": "^8.17.1",
+    "ajv": "^8.20.0",
     "cors": "^2.8.6",
     "express": "^5.2.1",
     "nanoid": "^5.1.6"
