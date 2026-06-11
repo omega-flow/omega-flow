@@ -3,7 +3,7 @@ import { defineConfig } from 'vitepress'
 export default defineConfig({
   title: 'Omega Flow',
   description: 'Documentation for Omega Flow workflow engine and editor',
-  base: '/',
+  base: '/omega-flow/',
   themeConfig: {
     nav: [
       { text: 'Home', link: '/' },
@@ -90,7 +90,7 @@ export default defineConfig({
       ]
     },
     socialLinks: [
-      { icon: 'github', link: 'https://github.com/your-org/omega-flow' }
+      { icon: 'github', link: 'https://github.com/omega-flow/omega-flow' }
     ],
     outline: {
       level: [2, 3]
