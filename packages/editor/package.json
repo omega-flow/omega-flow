@@ -4,12 +4,12 @@
   "description": "Workflow editor components for Omega Flow",
   "type": "module",
   "main": "dist/index.cjs",
-  "module": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.mts",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs",
       "require": "./dist/index.cjs"
     },
     "./styles.css": "./dist/styles.css",
@@ -31,9 +31,9 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsup src/index.ts --format cjs,esm --dts --external react --external react-dom --external @xyflow/react && pnpm build:css",
+    "build": "tsdown src/index.ts --format cjs,esm --dts --external react --external react-dom --external @xyflow/react && pnpm build:css",
     "build:css": "mkdir -p dist/themes && cp src/styles/variables.css dist/styles.css && cp src/styles/themes/*.css dist/themes/",
-    "dev": "tsup src/index.ts --format cjs,esm --dts --watch --external react --external react-dom --external @xyflow/react",
+    "dev": "tsdown src/index.ts --format cjs,esm --dts --watch --external react --external react-dom --external @xyflow/react",
     "test": "jest --passWithNoTests",
     "test:coverage": "jest --coverage --passWithNoTests"
   },
@@ -51,7 +51,7 @@
     "@xyflow/react": "catalog:",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
-    "tsup": "^8.5.1",
-    "typescript": "^5.9.3"
+    "tsdown": "^0.22.2",
+    "typescript": "^6.0.3"
   }
 }

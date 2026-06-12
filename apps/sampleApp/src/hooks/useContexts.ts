@@ -6,7 +6,7 @@ export function useContexts() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
-  const refetch = useCallback(async () => {
+  const fetchData = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
@@ -20,8 +20,21 @@ export function useContexts() {
   }, []);
 
   useEffect(() => {
-    refetch();
-  }, [refetch]);
+    let cancelled = false;
+    (async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const data = await listAllContexts();
+        if (!cancelled) setContexts(data);
+      } catch (err) {
+        if (!cancelled) setError(err instanceof Error ? err : new Error("Failed to fetch contexts"));
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
-  return { contexts, isLoading, error, refetch };
+  return { contexts, isLoading, error, refetch: fetchData };
 }

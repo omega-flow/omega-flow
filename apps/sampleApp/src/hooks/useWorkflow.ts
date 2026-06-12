@@ -30,8 +30,22 @@ export function useWorkflow(id: string): UseWorkflowResult {
   }, [id]);
 
   useEffect(() => {
-    fetchWorkflow();
-  }, [fetchWorkflow]);
+    if (!id) return;
+    let cancelled = false;
+    (async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const data = await getWorkflow(id);
+        if (!cancelled) setWorkflow(data);
+      } catch (e) {
+        if (!cancelled) setError(e instanceof Error ? e : new Error("Failed to fetch workflow"));
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [id]);
 
   return {
     workflow,
