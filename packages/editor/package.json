@@ -3,14 +3,20 @@
   "version": "0.1.0",
   "description": "Workflow editor components for Omega Flow",
   "type": "module",
+  "sideEffects": false,
   "main": "dist/index.cjs",
   "module": "dist/index.mjs",
   "types": "dist/index.d.mts",
   "exports": {
     ".": {
-      "types": "./dist/index.d.mts",
-      "import": "./dist/index.mjs",
-      "require": "./dist/index.cjs"
+      "import": {
+        "types": "./dist/index.d.mts",
+        "default": "./dist/index.mjs"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
     },
     "./styles.css": "./dist/styles.css",
     "./themes/light.css": "./dist/themes/light.css",
@@ -19,13 +25,16 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/omega-flow/omega-flow.git",
+    "url": "git+https://github.com/omega-flow/omega-flow.git",
     "directory": "packages/editor"
   },
   "homepage": "https://omega-flow.github.io/omega-flow/",
   "bugs": "https://github.com/omega-flow/omega-flow/issues",
   "publishConfig": {
     "access": "public"
+  },
+  "engines": {
+    "node": ">=18"
   },
   "files": [
     "dist"
