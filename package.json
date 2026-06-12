@@ -34,8 +34,7 @@
     "release": "pnpm build && pnpm changeset publish",
     "outdated": "pnpm outdated -r",
     "update:check": "pnpm outdated -r",
-    "update:interactive": "pnpm update -r -i",
-    "prepare": "husky"
+    "update:interactive": "pnpm update -r -i"
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.3",
