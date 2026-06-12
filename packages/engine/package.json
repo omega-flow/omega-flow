@@ -2,9 +2,16 @@
   "name": "@omega-flow/engine",
   "version": "0.1.0",
   "description": "Workflow engine for Omega Flow",
-  "main": "dist/index.js",
-  "module": "dist/index.esm.js",
-  "types": "dist/index.d.ts",
+  "main": "dist/index.cjs",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.mts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs"
+    }
+  },
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -20,8 +27,8 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsup src/index.ts --format cjs,esm --dts",
-    "dev": "tsup src/index.ts --format cjs,esm --dts --watch",
+    "build": "tsdown src/index.ts --format cjs,esm --dts",
+    "dev": "tsdown src/index.ts --format cjs,esm --dts --watch",
     "test": "jest --verbose --passWithNoTests",
     "test:watch": "jest --watchAll --verbose --passWithNoTests --detectOpenHandles",
     "test:coverage": "jest --verbose --coverage"
