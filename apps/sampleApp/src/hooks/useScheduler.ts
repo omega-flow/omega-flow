@@ -6,7 +6,7 @@ export function useScheduler() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
-  const refetch = useCallback(async () => {
+  const fetchData = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
@@ -20,8 +20,21 @@ export function useScheduler() {
   }, []);
 
   useEffect(() => {
-    refetch();
-  }, [refetch]);
+    let cancelled = false;
+    (async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const data = await listScheduledEvents();
+        if (!cancelled) setScheduledEvents(data);
+      } catch (err) {
+        if (!cancelled) setError(err instanceof Error ? err : new Error("Failed to fetch scheduled events"));
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
-  return { scheduledEvents, isLoading, error, refetch };
+  return { scheduledEvents, isLoading, error, refetch: fetchData };
 }

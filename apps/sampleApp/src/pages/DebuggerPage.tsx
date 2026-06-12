@@ -42,8 +42,14 @@ export function DebuggerPage() {
   const [expandedContext, setExpandedContext] = useState<string | null>(null);
   const [firingId, setFiringId] = useState<string | null>(null);
   const [autoFire, setAutoFire] = useState(false);
+  const [now, setNow] = useState(() => Date.now());
   const autoFireRef = useRef(false);
   const autoFiringRef = useRef(false);
+
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   // Keep ref in sync with state so the interval callback sees the latest value
   useEffect(() => {
@@ -153,8 +159,7 @@ export function DebuggerPage() {
     }
   };
 
-  const formatTimeToFire = (fireAt: number) => {
-    const now = Date.now();
+  const formatTimeToFire = useCallback((fireAt: number) => {
     const diff = fireAt - now;
     const absDiff = Math.abs(diff);
     const seconds = Math.floor(absDiff / 1000);
@@ -167,7 +172,7 @@ export function DebuggerPage() {
     else label = `${seconds}s`;
 
     return diff <= 0 ? `${label} ago` : `in ${label}`;
-  };
+  }, [now]);
 
   return (
     <Container maxW="7xl" p="6">
@@ -270,7 +275,7 @@ export function DebuggerPage() {
           ) : (
             <Box>
               {scheduledEvents.map((entry) => {
-                const isPast = entry.fireAt <= Date.now();
+                const isPast = entry.fireAt <= now;
                 return (
                   <Flex
                     key={entry.scheduleId}

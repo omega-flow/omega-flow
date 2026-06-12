@@ -28,8 +28,21 @@ export function useWorkflows(): UseWorkflowsResult {
   }, []);
 
   useEffect(() => {
-    fetchWorkflows();
-  }, [fetchWorkflows]);
+    let cancelled = false;
+    (async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const data = await listWorkflows();
+        if (!cancelled) setWorkflows(data);
+      } catch (e) {
+        if (!cancelled) setError(e instanceof Error ? e : new Error("Failed to fetch workflows"));
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
   return {
     workflows,
