@@ -40,5 +40,5 @@ jobs:
         run: |
           pnpm exec attw --pack packages/types
           pnpm exec attw --pack packages/engine
-          pnpm exec attw --pack packages/editor
+          pnpm exec attw --pack packages/editor --entrypoints .
           pnpm exec attw --pack packages/store-aws
