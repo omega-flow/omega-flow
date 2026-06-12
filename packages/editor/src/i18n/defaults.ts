@@ -95,11 +95,7 @@ export const defaultTranslations: TranslationDictionary = {
   "nodeDetails.triggerOrTimeout.durationHint": "Max time to wait before timing out",
 
   "nodeDetails.exit.group": "Exit Node",
-  "nodeDetails.exit.title": "Workflow ends here",
-  "nodeDetails.exit.description":
-    "This is an exit node. When the workflow reaches this point, the instance is marked as completed and stops processing any further events.",
-  "nodeDetails.exit.noConfigTitle": "No configuration needed",
-  "nodeDetails.exit.noConfigHint": "Exit nodes have no properties to configure.",
+  "nodeDetails.exit.message": "This is where the workflow ends.",
 
   // ── Default node type definitions (labels & descriptions) ──
   "nodeTypes.trigger.label": "Trigger",
