@@ -2,6 +2,8 @@
   "name": "@omega-flow/store-aws",
   "version": "0.1.0",
   "description": "AWS-backed storage and scheduler implementations for Omega Flow",
+  "type": "commonjs",
+  "sideEffects": false,
   "main": "dist/index.cjs",
   "module": "dist/index.mjs",
   "types": "dist/index.d.mts",
@@ -20,13 +22,16 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/omega-flow/omega-flow.git",
+    "url": "git+https://github.com/omega-flow/omega-flow.git",
     "directory": "packages/store-aws"
   },
   "homepage": "https://omega-flow.github.io/omega-flow/",
   "bugs": "https://github.com/omega-flow/omega-flow/issues",
   "publishConfig": {
     "access": "public"
+  },
+  "engines": {
+    "node": ">=18"
   },
   "files": [
     "dist"
