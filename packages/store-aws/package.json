@@ -1,6 +1,6 @@
 {
   "name": "@omega-flow/store-aws",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "AWS-backed storage and scheduler implementations for Omega Flow",
   "main": "dist/index.js",
   "module": "dist/index.esm.js",

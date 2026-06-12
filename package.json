@@ -22,7 +22,7 @@
     "build": "pnpm --filter=@omega-flow/* run build",
     "test": "pnpm --filter=@omega-flow/* run test",
     "test:coverage": "pnpm --filter=@omega-flow/* run test:coverage",
-    "lint": "pnpm --filter@omega-flow/* run lint",
+    "lint": "pnpm --filter=@omega-flow/* run lint",
     "clean": "rimraf 'packages/*/{dist,node_modules}' && rimraf node_modules",
     "dev:app": "pnpm --filter=@omega-flow/sample-app run dev",
     "dev:server": "pnpm --filter=@omega-flow/sample-server run dev",

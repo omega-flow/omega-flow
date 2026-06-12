@@ -28,6 +28,13 @@ features:
     details: Form field components (TextField, NumberField, JsonField, etc.) for building custom node configuration panels.
 ---
 
+## Installation
+
+```bash
+pnpm add @omega-flow/engine @omega-flow/types
+pnpm add @omega-flow/editor    # for the visual editor
+```
+
 ## Quick Example
 
 ```tsx
