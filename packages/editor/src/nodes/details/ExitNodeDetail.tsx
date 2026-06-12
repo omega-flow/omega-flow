@@ -18,7 +18,7 @@ const descriptionStyle: React.CSSProperties = {
 export function ExitNodeDetail(_props: NodeDetailProps) {
   const t = useTranslation();
   return (
-    <FieldGroup label={t("nodeDetails.exit.group")}>
+    <FieldGroup>
       <p style={descriptionStyle}>{t("nodeDetails.exit.message")}</p>
     </FieldGroup>
   );

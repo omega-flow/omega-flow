@@ -94,7 +94,6 @@ export const defaultTranslations: TranslationDictionary = {
   "nodeDetails.triggerOrTimeout.durationLabel": "Timeout Duration",
   "nodeDetails.triggerOrTimeout.durationHint": "Max time to wait before timing out",
 
-  "nodeDetails.exit.group": "Exit Node",
   "nodeDetails.exit.message": "This is where the workflow ends.",
 
   // ── Default node type definitions (labels & descriptions) ──
