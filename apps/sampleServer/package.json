@@ -10,7 +10,7 @@
     "start": "node dist/index.js"
   },
   "dependencies": {
-    "@aws-sdk/client-dynamodb": "^3.1066.0",
+    "@aws-sdk/client-dynamodb": "^3.1071.0",
     "@omega-flow/engine": "workspace:*",
     "@omega-flow/store-aws": "workspace:*",
     "@omega-flow/types": "workspace:*",
