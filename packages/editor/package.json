@@ -40,9 +40,9 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsdown src/index.ts --format cjs,esm --dts --external react --external react-dom --external @xyflow/react && pnpm build:css",
+    "build": "tsdown && pnpm build:css",
     "build:css": "mkdir -p dist/themes && cp src/styles/variables.css dist/styles.css && cp src/styles/themes/*.css dist/themes/",
-    "dev": "tsdown src/index.ts --format cjs,esm --dts --watch --external react --external react-dom --external @xyflow/react",
+    "dev": "tsdown --watch",
     "test": "jest --passWithNoTests",
     "test:coverage": "jest --coverage --passWithNoTests"
   },
