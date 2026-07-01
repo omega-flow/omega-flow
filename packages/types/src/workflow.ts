@@ -7,6 +7,12 @@ export interface WorkflowFrequency {
 
 export interface WorkflowOptions {
   frequency?: WorkflowFrequency;
+  /**
+   * Whether the workflow is active. Backward-compatible: `undefined` is treated
+   * as enabled (existing workflows keep running); only `enabled === false`
+   * disables it. The engine skips disabled workflows in `processEvent`.
+   */
+  enabled?: boolean;
   [key: string]: any;
 }
 
@@ -48,6 +54,11 @@ export const WorkflowSchema = {
         },
       },
     },
-    options: { type: "object" },
+    options: {
+      type: "object",
+      properties: {
+        enabled: { type: "boolean" },
+      },
+    },
   },
 };

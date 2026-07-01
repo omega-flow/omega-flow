@@ -10,4 +10,8 @@ export {
   EventBusWorkflowScheduler,
   type EventBusWorkflowSchedulerConfig,
 } from "./schedulers/EventBusWorkflowScheduler";
-export { WorkflowAlreadyExistsError } from "./errors";
+export {
+  SqsFifoWorkflowScheduler,
+  type SqsFifoWorkflowSchedulerConfig,
+} from "./schedulers/SqsFifoWorkflowScheduler";
+export { WorkflowAlreadyExistsError, OptimisticLockError } from "./errors";
