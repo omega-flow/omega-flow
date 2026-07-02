@@ -38,7 +38,9 @@ export const defaultNodeTypes: NodeTypeDefinition[] = [
   {
     type: "Trigger",
     label: "Trigger",
+    labelKey: "nodeTypes.trigger.label",
     description: "Starts the workflow when a specific event occurs",
+    descriptionKey: "nodeTypes.trigger.description",
     Icon: TriggerIcon,
     defaultData: { params: { event: "" } },
     ViewComponent: TriggerNodeView,
@@ -47,7 +49,9 @@ export const defaultNodeTypes: NodeTypeDefinition[] = [
   {
     type: "Action",
     label: "Action",
+    labelKey: "nodeTypes.action.label",
     description: "Performs an action and continues to the next node",
+    descriptionKey: "nodeTypes.action.description",
     Icon: ActionIcon,
     defaultData: { action: "", params: {} },
     ViewComponent: ActionNodeView,
@@ -56,7 +60,9 @@ export const defaultNodeTypes: NodeTypeDefinition[] = [
   {
     type: "Condition",
     label: "Condition",
+    labelKey: "nodeTypes.condition.label",
     description: "Branches the workflow based on conditions",
+    descriptionKey: "nodeTypes.condition.description",
     Icon: ConditionIcon,
     defaultData: { conditions: { all: [] } },
     ViewComponent: ConditionNodeView,
@@ -65,7 +71,9 @@ export const defaultNodeTypes: NodeTypeDefinition[] = [
   {
     type: "Wait",
     label: "Wait",
+    labelKey: "nodeTypes.wait.label",
     description: "Pauses the workflow for a specified duration",
+    descriptionKey: "nodeTypes.wait.description",
     Icon: WaitIcon,
     defaultData: { params: { duration: 60000 } },
     ViewComponent: WaitNodeView,
@@ -74,7 +82,9 @@ export const defaultNodeTypes: NodeTypeDefinition[] = [
   {
     type: "TriggerOrTimeout",
     label: "Trigger or Timeout",
+    labelKey: "nodeTypes.triggerOrTimeout.label",
     description: "Waits for an event or times out after a duration",
+    descriptionKey: "nodeTypes.triggerOrTimeout.description",
     Icon: TriggerOrTimeoutIcon,
     defaultData: { params: { event: "", duration: 60000 } },
     ViewComponent: TriggerOrTimeoutNodeView,
@@ -83,7 +93,9 @@ export const defaultNodeTypes: NodeTypeDefinition[] = [
   {
     type: "Exit",
     label: "Exit",
+    labelKey: "nodeTypes.exit.label",
     description: "Ends the workflow",
+    descriptionKey: "nodeTypes.exit.description",
     Icon: ExitIcon,
     defaultData: {},
     ViewComponent: ExitNodeView,
