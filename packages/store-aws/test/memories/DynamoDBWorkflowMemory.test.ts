@@ -1,4 +1,7 @@
-import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
+import {
+  ConditionalCheckFailedException,
+  DynamoDBClient,
+} from "@aws-sdk/client-dynamodb";
 import {
   DeleteCommand,
   DynamoDBDocumentClient,
@@ -9,6 +12,7 @@ import {
 import type { Context } from "@omega-flow/types";
 import { mockClient } from "aws-sdk-client-mock";
 import { DynamoDBWorkflowMemory } from "../../src/memories/DynamoDBWorkflowMemory";
+import { OptimisticLockError } from "../../src/errors";
 
 const ddbMock = mockClient(DynamoDBDocumentClient);
 const TABLE = "test-contexts";
@@ -144,6 +148,52 @@ describe("DynamoDBWorkflowMemory", () => {
 
       const calls = ddbMock.commandCalls(PutCommand);
       expect(calls[0].args[0].input.Item?.isCompleted).toBe(false);
+    });
+  });
+
+  describe("saveContext optimistic locking", () => {
+    it("writes version=1 and guards a brand-new instance (expected version 0)", async () => {
+      ddbMock.on(PutCommand).resolves({});
+
+      await memory.saveContext("acme", "wf-1", "user-1", sampleContext);
+
+      const input = ddbMock.commandCalls(PutCommand)[0].args[0].input;
+      expect(input.Item?.version).toBe(1);
+      expect((input.Item?.data as Context).version).toBe(1);
+      expect(input.ConditionExpression).toBe(
+        "attribute_not_exists(#version) OR #version = :expected"
+      );
+      expect(input.ExpressionAttributeNames).toMatchObject({
+        "#version": "version",
+      });
+      expect(input.ExpressionAttributeValues).toMatchObject({ ":expected": 0 });
+    });
+
+    it("guards on the read version and increments it", async () => {
+      ddbMock.on(PutCommand).resolves({});
+
+      await memory.saveContext("acme", "wf-1", "user-1", {
+        ...sampleContext,
+        version: 3,
+      });
+
+      const input = ddbMock.commandCalls(PutCommand)[0].args[0].input;
+      expect(input.ExpressionAttributeValues).toMatchObject({ ":expected": 3 });
+      expect(input.Item?.version).toBe(4);
+      expect((input.Item?.data as Context).version).toBe(4);
+    });
+
+    it("throws OptimisticLockError on a conditional-check failure", async () => {
+      ddbMock.on(PutCommand).rejects(
+        new ConditionalCheckFailedException({
+          $metadata: {},
+          message: "The conditional request failed",
+        })
+      );
+
+      await expect(
+        memory.saveContext("acme", "wf-1", "user-1", sampleContext)
+      ).rejects.toBeInstanceOf(OptimisticLockError);
     });
   });
 

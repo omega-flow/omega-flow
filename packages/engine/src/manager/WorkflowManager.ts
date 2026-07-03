@@ -101,6 +101,15 @@ export class WorkflowManager {
 
     // Process each workflow that should handle this event
     for (const workflowDef of workflows) {
+      // Skip disabled workflows. Backward-compatible: only an explicit
+      // `enabled === false` disables; `undefined` keeps existing workflows
+      // running. This is a hard off — neither new instances are started nor
+      // active ones resumed; their contexts are preserved and resume if the
+      // workflow is re-enabled.
+      if (workflowDef.options.enabled === false) {
+        continue;
+      }
+
       try {
         await this.processWorkflowForEvent(
           workflowDef,

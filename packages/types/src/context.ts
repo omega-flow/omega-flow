@@ -17,6 +17,13 @@ export interface Context {
   history: WorkflowHistoryItem[];
   isCompleted?: boolean;
   startedAt: number;
+  /**
+   * Optimistic-lock version, managed by persistent WorkflowMemory backends
+   * (e.g. DynamoDBWorkflowMemory). Round-tripped through the engine so a
+   * conditional write can detect concurrent modification. Absent / `undefined`
+   * for in-memory usage and for never-yet-persisted instances.
+   */
+  version?: number;
 }
 
 // Context schema definition
@@ -50,5 +57,6 @@ export const ContextSchema = {
     },
     isCompleted: { type: "boolean" },
     startedAt: { type: "number" },
+    version: { type: "number" },
   },
 };

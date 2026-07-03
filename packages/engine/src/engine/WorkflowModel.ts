@@ -68,6 +68,13 @@ class WorkflowModel {
   startedAt: number = 0;
 
   /**
+   * Optimistic-lock version, round-tripped through persistence. Restored in
+   * setContext and emitted from getContext so persistent memory backends can
+   * detect concurrent modification. Stays 0/undefined for in-memory usage.
+   */
+  version?: number;
+
+  /**
    * Creates a new WorkflowModel instance from a workflow definition.
    * @param workflow - The workflow definition to execute
    * @param nodeModels - Map of node type names to their NodeModel classes
@@ -181,6 +188,8 @@ class WorkflowModel {
     // Restore instanceId and startedAt from context
     this.instanceId = context.instanceId;
     this.startedAt = context.startedAt;
+    // Restore optimistic-lock version so getContext can emit it back unchanged
+    this.version = context.version;
 
     if (context.isCompleted) {
       this.status = WorkflowStatus.Completed;
@@ -206,6 +215,7 @@ class WorkflowModel {
       history: this.history,
       isCompleted: this.status === WorkflowStatus.Completed,
       startedAt: this.startedAt,
+      version: this.version,
     };
   }
 
