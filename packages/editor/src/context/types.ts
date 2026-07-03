@@ -31,10 +31,22 @@ export interface NodeDetailProps {
 export interface NodeTypeDefinition {
   /** Node type identifier (e.g., "Trigger", "Action") */
   type: string;
-  /** Display name shown in UI */
+  /** Display name shown in UI. Used as a fallback when {@link labelKey} is unset or has no registered translation. */
   label: string;
-  /** Description/tooltip text */
+  /**
+   * Optional translation key for the display name. When set, the `NodesPanel`
+   * resolves the label through the editor's translation function, falling back
+   * to {@link label} when no translation is registered for the key.
+   */
+  labelKey?: string;
+  /** Description/tooltip text. Used as a fallback when {@link descriptionKey} is unset or has no registered translation. */
   description?: string;
+  /**
+   * Optional translation key for the description. When set, the `NodesPanel`
+   * resolves the description through the editor's translation function, falling
+   * back to {@link description} when no translation is registered for the key.
+   */
+  descriptionKey?: string;
   /** Icon component to display in NodesPanel */
   Icon?: ComponentType<{ size?: number }>;
   /** Initial data when node is created */

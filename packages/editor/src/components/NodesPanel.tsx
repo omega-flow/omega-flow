@@ -68,7 +68,19 @@ function NodeItem({
   onDragStart: (e: React.DragEvent, type: string) => void;
   showDescription?: boolean;
 }) {
+  const t = useTranslation();
   const IconComponent = nodeType.Icon;
+
+  // Resolve a translation key when present, falling back to the raw string when
+  // the key is unset or has no registered translation (custom nodes may not
+  // provide `labelKey`/`descriptionKey`, and `t` returns the key when unmatched).
+  const resolve = (key: string | undefined, fallback: string | undefined) => {
+    if (!key) return fallback;
+    const translated = t(key);
+    return translated === key ? fallback : translated;
+  };
+  const label = resolve(nodeType.labelKey, nodeType.label);
+  const description = resolve(nodeType.descriptionKey, nodeType.description);
 
   return (
     <div
@@ -92,9 +104,9 @@ function NodeItem({
         {IconComponent ? <IconComponent size={24} /> : null}
       </div>
       <div style={itemTextStyle}>
-        <div style={itemLabelStyle}>{nodeType.label}</div>
-        {showDescription && nodeType.description && (
-          <div style={itemDescStyle}>{nodeType.description}</div>
+        <div style={itemLabelStyle}>{label}</div>
+        {showDescription && description && (
+          <div style={itemDescStyle}>{description}</div>
         )}
       </div>
     </div>
