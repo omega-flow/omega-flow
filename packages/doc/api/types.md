@@ -149,6 +149,28 @@ An event that can trigger or progress a workflow.
 
 ---
 
+### EventDelivery
+
+```typescript
+interface EventDelivery {
+  workflowId: string;
+  instanceId: string;
+  nodeId: string;
+  sourceSubjectId: string;
+}
+```
+
+Delivery metadata carried in `event.data.delivery` on events relayed to a subscriber via an [event subscription](/guide/event-subscriptions). A delivery event is a copy of the original event, retargeted at one specific workflow instance — consumers must resume it via `WorkflowManager.deliverEvent`, never `processEvent`.
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `workflowId` | `string` | Workflow the subscribing instance belongs to |
+| `instanceId` | `string` | Instance that registered the subscription |
+| `nodeId` | `string` | The parked node that declared the subscription |
+| `sourceSubjectId` | `string` | Subject id the original event was routed to (e.g. `product:456`) |
+
+---
+
 ### Context
 
 ```typescript
@@ -160,6 +182,9 @@ interface Context {
   history: WorkflowHistoryItem[];
   isCompleted?: boolean;
   startedAt: number;
+  version?: number;
+  triggerEvent?: Event;
+  subscriptions?: ContextSubscription[];
 }
 ```
 
@@ -174,6 +199,29 @@ Execution state for a workflow instance.
 | `history` | `WorkflowHistoryItem[]` | Execution history |
 | `isCompleted` | `boolean` | Whether workflow finished |
 | `startedAt` | `number` | Start timestamp (Unix ms) |
+| `version` | `number` | Optimistic-lock version, managed by persistent memory backends |
+| `triggerEvent` | `Event` | The event that started this instance — captured when the start node fires, used e.g. to resolve subscription match templates |
+| `subscriptions` | `ContextSubscription[]` | Active [event subscriptions](/guide/event-subscriptions) held by this instance; managed by the `WorkflowManager` |
+
+---
+
+### ContextSubscription
+
+```typescript
+interface ContextSubscription {
+  eventType: string;
+  matchValue: string;
+  nodeId: string;
+}
+```
+
+An active event subscription recorded on the Context. The Context is the source of truth for which subscriptions an instance holds in the `SubscriptionStore` — when the instance advances past the node that declared one, the `WorkflowManager` deletes exactly these entries.
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `eventType` | `string` | Event type the instance is waiting for |
+| `matchValue` | `string` | Subject id of the source event, or `"*"` for wildcard |
+| `nodeId` | `string` | Parked node that declared the subscription |
 
 ---
 

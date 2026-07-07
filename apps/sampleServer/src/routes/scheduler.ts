@@ -1,12 +1,14 @@
 import { Router } from "express";
 import { WorkflowManager } from "@omega-flow/engine";
-import type { SampleWorkflowStore, SampleWorkflowMemory, SampleWorkflowScheduler } from "../stores/types.js";
+import type { SampleWorkflowStore, SampleWorkflowMemory, SampleWorkflowScheduler, SampleSubscriptionStore } from "../stores/types.js";
 import { nodeModels } from "../nodes/index.js";
+import { deliverToSubscribers } from "../subscriptionDelivery.js";
 
 export function createSchedulerRoutes(
   workflowStore: SampleWorkflowStore,
   workflowMemory: SampleWorkflowMemory,
   workflowScheduler: SampleWorkflowScheduler,
+  subscriptionStore: SampleSubscriptionStore,
 ): Router {
   const router = Router();
 
@@ -50,12 +52,15 @@ export function createSchedulerRoutes(
         workflowStore,
         workflowMemory,
         workflowScheduler,
+        subscriptionStore,
         nodeModels,
         eventExtractor: (evt) => [domain, evt.data?.subjectId as string],
       });
       workflowScheduler.setWorkflowManager?.(manager);
 
       await manager.processEvent(entry.event);
+
+      const deliveries = await deliverToSubscribers(manager, domain, entry.event);
 
       res.json({
         success: true,
@@ -64,6 +69,7 @@ export function createSchedulerRoutes(
           time: entry.event.time,
           type: entry.event.type,
         },
+        deliveries,
       });
     } catch (error) {
       console.error("Error firing scheduled event:", error);

@@ -1,4 +1,10 @@
-import type { WorkflowStore, WorkflowMemory, WorkflowScheduler } from "@omega-flow/engine";
+import type {
+  WorkflowStore,
+  WorkflowMemory,
+  WorkflowScheduler,
+  Subscription,
+  SubscriptionStore,
+} from "@omega-flow/engine";
 import type { Context, Workflow } from "@omega-flow/types";
 
 /**
@@ -29,4 +35,13 @@ export interface SampleWorkflowScheduler extends WorkflowScheduler {
   getAll?(): Promise<unknown[]>;
   remove?(scheduleId: string): Promise<unknown | null>;
   setWorkflowManager?(manager: { processEvent(event: unknown): Promise<void> }): void;
+}
+
+/**
+ * Extended SubscriptionStore with inspection/management methods used by the
+ * subscriptions API routes. Only FileSubscriptionStore implements these.
+ */
+export interface SampleSubscriptionStore extends SubscriptionStore {
+  getAll?(): Promise<Subscription[]>;
+  removeById?(id: string): Promise<Subscription | null>;
 }

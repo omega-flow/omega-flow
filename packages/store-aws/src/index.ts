@@ -7,6 +7,10 @@ export {
   type DynamoDBWorkflowMemoryConfig,
 } from "./memories/DynamoDBWorkflowMemory";
 export {
+  DynamoDBSubscriptionStore,
+  type DynamoDBSubscriptionStoreConfig,
+} from "./subscriptions/DynamoDBSubscriptionStore";
+export {
   EventBusWorkflowScheduler,
   type EventBusWorkflowSchedulerConfig,
 } from "./schedulers/EventBusWorkflowScheduler";

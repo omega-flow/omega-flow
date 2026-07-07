@@ -28,6 +28,8 @@ Server runs at `http://localhost:5010` by default.
 db/
  - workflows/{domain}/{workflowId}.json
  - contexts/{domain}/{subjectId}/{workflowId}/{instanceId}.json
+ - scheduler.json
+ - subscriptions.json
 ```
 
 ## API Endpoints
@@ -81,6 +83,20 @@ db/
 - `data.subjectId` (required): Identifies the subject for the workflow
 - Event `id` and `time` are auto-generated
 
+The response includes a `deliveries` array describing cross-subject
+subscription deliveries triggered by the event (empty when no parked
+instance subscribed to it).
+
+### Subscriptions API
+
+Active cross-subject event subscriptions, registered automatically when a
+workflow instance parks on a trigger node with a `params.match` section.
+
+| Method | Endpoint                 | Description                                     |
+| ------ | ------------------------ | ----------------------------------------------- |
+| GET    | `/api/subscriptions`     | List active subscriptions (filter: `?domain=`)  |
+| DELETE | `/api/subscriptions/:id` | Remove a subscription (`id` from the list, URL-encoded) |
+
 ## Postman Collection
 
 Import `postman-collection.json` into Postman for ready-to-use API requests.
@@ -91,6 +107,8 @@ This server provides file-based implementations of the engine's storage interfac
 
 - **FileWorkflowStore** - Implements `WorkflowStore` interface
 - **FileWorkflowMemory** - Implements `WorkflowMemory` interface
+- **FileWorkflowScheduler** - Implements `WorkflowScheduler` interface
+- **FileSubscriptionStore** - Implements `SubscriptionStore` interface
 
 These can be used as reference for implementing other storage backends (PostgreSQL, MongoDB, etc.).
 

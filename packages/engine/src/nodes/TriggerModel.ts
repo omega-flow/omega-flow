@@ -1,6 +1,7 @@
-import { type Node, type Event } from "@omega-flow/types";
+import { type Node, type Event, type Context } from "@omega-flow/types";
 
-import NodeModel from "../engine/NodeModel";
+import NodeModel, { type SubscriptionRequest } from "../engine/NodeModel";
+import { resolveSubscriptionFromParams } from "./subscriptionMatch";
 
 /**
  * Node that waits for a specific event type before proceeding.
@@ -53,6 +54,22 @@ export default class TriggerModel extends NodeModel {
     const nodeData = this.getData();
     // Accept only if event type matches node trigger
     return event.type === nodeData.params.event;
+  }
+
+  /**
+   * Declares a cross-subject subscription when the node has a
+   * `params.match` section (see {@link resolveSubscriptionFromParams}).
+   * Without `match`, the trigger only reacts to events arriving in the
+   * instance's own subject space, as before.
+   * @param context - The instance's context, used to resolve the match value
+   * @returns The subscription to register, or null for none
+   */
+  getSubscription(context: Context): SubscriptionRequest | null {
+    return resolveSubscriptionFromParams(
+      this.getData().params,
+      context,
+      this.getId()
+    );
   }
 
   /**

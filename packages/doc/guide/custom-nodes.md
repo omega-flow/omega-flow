@@ -8,6 +8,11 @@ A complete custom node implementation requires both:
 2. **Engine-side**: NodeModel class (see [Custom Nodes for Engine](/guide/engine-custom-nodes)) - handles execution logic
 
 Both parts use the same `type` identifier to connect them.
+
+Runtime behaviors such as waiting for events from another subject space
+(`getSubscription`, see [Event Subscriptions](/guide/event-subscriptions))
+live entirely on the engine side — the editor side only collects the params
+(e.g. a `match` value) that the engine node reads.
 :::
 
 ## Overview

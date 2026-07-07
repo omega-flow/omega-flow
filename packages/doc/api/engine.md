@@ -20,6 +20,7 @@ new WorkflowManager(config: WorkflowManagerConfig)
 | `workflowMemory` | `WorkflowMemory` | Storage backend for workflow execution contexts |
 | `workflowScheduler` | `WorkflowScheduler` | Scheduler for time-based events |
 | `nodeModels` | `NodeModelRegistry` | Map of node type names to their NodeModel classes (`Record<string, NodeModelClass>`) |
+| `subscriptionStore` | `SubscriptionStore` *(optional)* | Storage backend for cross-subject [event subscriptions](/guide/event-subscriptions). Absent → subscriptions disabled, zero behavior change |
 | `eventExtractor` | `(event: Event) => [string, string]` | Function to extract `[domain, subjectId]` from events |
 
 ### Methods
@@ -36,6 +37,51 @@ Process an event by routing it to appropriate workflow instances. This method:
 - Resumes active workflow instances with the event
 - Starts new instances if allowed by frequency rules
 
+#### deliverEvent
+
+```typescript
+deliverEvent(
+  domain: string,
+  workflowId: string,
+  subjectId: string,
+  instanceId: string,
+  event: Event
+): Promise<boolean>
+```
+
+Deliver an event to **one specific workflow instance** (targeted resume) —
+the delivery half of [event subscriptions](/guide/event-subscriptions).
+Unlike `processEvent` it never starts new instances and never touches any
+other instance. The delivery is dropped with a log (returning `false`) when
+the workflow or instance is gone, the instance already completed, or it is no
+longer parked on the node recorded in `event.data.delivery.nodeId` — this
+makes redelivery idempotent.
+
+**Returns:** `true` if the instance was resumed, `false` if the delivery was dropped.
+
+#### matchSubscriptions
+
+```typescript
+matchSubscriptions(event: Event): Promise<Subscription[]>
+```
+
+Find subscriptions matching an event: subscriptions in the event's domain,
+for the event's type, whose `matchValue` equals the event's own subject id
+(per `eventExtractor`) — plus wildcard subscriptions. Returns `[]` when no
+`subscriptionStore` is configured and for delivery events (a delivered copy
+never fans out again).
+
+#### createDeliveryEvent
+
+```typescript
+createDeliveryEvent(event: Event, subscription: Subscription): Event
+```
+
+Build the delivery copy of an event for one matched subscription: the event
+retargeted at the subscriber (`data.subjectId` set to the subscriber's
+subject) carrying `data.delivery` metadata (`EventDelivery` — workflowId,
+instanceId, nodeId, sourceSubjectId).
+
 #### getScheduler
 
 ```typescript
@@ -43,6 +89,14 @@ getScheduler(): WorkflowScheduler
 ```
 
 Returns the workflow scheduler instance.
+
+#### getSubscriptionStore
+
+```typescript
+getSubscriptionStore(): SubscriptionStore | undefined
+```
+
+Returns the subscription store, or `undefined` when subscriptions are disabled.
 
 ### Example
 
@@ -338,6 +392,30 @@ Determines the next node to execute. Must be overridden by subclasses.
 
 **Returns:** The next NodeModel, or `null` to end the workflow.
 
+#### getSubscription
+
+```typescript
+getSubscription(context: Context): SubscriptionRequest | null
+```
+
+Declares the cross-subject [event subscription](/guide/event-subscriptions)
+this node wants while the workflow is parked on it. Called by the
+`WorkflowManager` after each run that leaves the workflow waiting on this
+node (only when a `SubscriptionStore` is configured); the manager registers
+and cleans up the subscription — nodes only declare interest.
+
+The base implementation returns `null` (no subscription). Built-in `Trigger`
+and `TriggerOrTimeout` implement it from their `params.match` section; custom
+nodes can override it freely.
+
+```typescript
+interface SubscriptionRequest {
+  eventType: string;    // event type to subscribe to
+  matchValue: string;   // source subject id, or "*" for wildcard
+  ttlSeconds?: number;  // optional safety-net TTL hint
+}
+```
+
 ### Example
 
 ```typescript
@@ -462,6 +540,50 @@ interface WorkflowScheduler {
 | `schedule` | Schedule an event to be delivered after a delay |
 | `cancel` | Cancel a scheduled event |
 
+### SubscriptionStore
+
+Interface for cross-subject [event subscription](/guide/event-subscriptions) storage. Optional — configure it via `WorkflowManagerConfig.subscriptionStore` to enable the feature.
+
+```typescript
+interface SubscriptionStore {
+  put(subscription: Subscription): Promise<void>;
+  match(domain: string, eventType: string, matchValue: string): Promise<Subscription[]>;
+  delete(subscriptions: SubscriptionRef[]): Promise<void>;
+}
+```
+
+| Method | Description |
+|--------|-------------|
+| `put` | Register a subscription (same key + target overwrites) |
+| `match` | Find subscriptions for `(domain, eventType, matchValue)` **plus** wildcard (`"*"`) subscriptions; expired (`ttl`) entries excluded |
+| `delete` | Delete the given subscriptions; missing entries are ignored |
+
+```typescript
+interface Subscription {
+  domain: string;       // tenant
+  eventType: string;    // e.g. "product.update"
+  matchValue: string;   // source subject id (e.g. "product:456"), "*" = wildcard
+  workflowId: string;   // subscribing instance's workflow
+  subjectId: string;    // subscribing instance's own subject (e.g. "client:5")
+  instanceId: string;   // subscribing instance
+  nodeId: string;       // parked node that declared the subscription
+  createdAt: number;    // epoch ms
+  ttl?: number;         // epoch seconds — orphan-cleanup safety net
+}
+
+// Identifying fields only (no createdAt/ttl)
+type SubscriptionRef = Omit<Subscription, "createdAt" | "ttl">;
+```
+
+Helpers exported alongside the interface:
+
+| Export | Description |
+|--------|-------------|
+| `SUBSCRIPTION_WILDCARD` | The `"*"` wildcard match value |
+| `subscriptionKey(sub)` | `` `${domain}#${eventType}#${matchValue}` `` — partition key |
+| `subscriptionTarget(sub)` | `` `${workflowId}#${subjectId}#${instanceId}#${nodeId}` `` — sort key |
+| `createDeliveryEvent(event, sub, sourceSubjectId)` | Standalone version of `WorkflowManager.createDeliveryEvent` |
+
 ---
 
 ## Built-in Implementations
@@ -490,6 +612,14 @@ In-memory implementation of WorkflowScheduler using setTimeout.
 new InMemoryWorkflowScheduler()
 ```
 
+### InMemorySubscriptionStore
+
+In-memory implementation of SubscriptionStore for development and testing. Also exposes `getAll()` and `clear()` for inspection in tests.
+
+```typescript
+new InMemorySubscriptionStore()
+```
+
 ### AWS Implementations
 
 The `@omega-flow/store-aws` package provides production-ready implementations backed by DynamoDB and EventBridge Scheduler:
@@ -498,6 +628,7 @@ The `@omega-flow/store-aws` package provides production-ready implementations ba
 |-------|-----------|-----------|
 | `DynamoDBWorkflowStore` | `WorkflowStore` | DynamoDB |
 | `DynamoDBWorkflowMemory` | `WorkflowMemory` | DynamoDB |
+| `DynamoDBSubscriptionStore` | `SubscriptionStore` | DynamoDB |
 | `EventBusWorkflowScheduler` | `WorkflowScheduler` | EventBridge Scheduler |
 
 See the [AWS Storage & Scheduler guide](/guide/store-aws) for configuration, table schemas, and IAM setup.
@@ -520,10 +651,13 @@ Waits for a specific event type.
 | Config | Type | Description |
 |--------|------|-------------|
 | `data.params.event` | `string` | Event type to listen for |
+| `data.params.match` | `{ value?: string }` *(optional)* | Cross-subject wait: subscribe to events from another subject space. `value` is a template (double-curly-brace placeholders) resolved against the instance context at park time; omit for wildcard. See [Event Subscriptions](/guide/event-subscriptions) |
 
 **acceptEvent:** Returns `true` if `event.type === params.event`
 
 **nextNode:** Returns first connected node
+
+**getSubscription:** Built from `params.match` (null without it)
 
 ### Action
 
@@ -570,10 +704,13 @@ Waits for event or timeout, whichever comes first.
 |--------|------|-------------|
 | `data.params.event` | `string` | Event type to listen for |
 | `data.params.duration` | `number` | Timeout duration in milliseconds |
+| `data.params.match` | `{ value?: string }` *(optional)* | Cross-subject wait — same contract as on `Trigger`; the subscription's TTL safety net is derived from `duration`. See [Event Subscriptions](/guide/event-subscriptions) |
 
 **acceptEvent:** Returns `true` on matching event or timeout, recording which one resolved in state
 
 **nextNode:** Returns node from `"trigger"` or `"timeout"` handle based on which path resolved
+
+**getSubscription:** Built from `params.match` (null without it)
 
 ### Exit
 
@@ -617,8 +754,10 @@ See [Types Reference](/api/types) for complete type definitions including:
 - `WorkflowOptions`
 - `WorkflowFrequency`
 - `Context`
+- `ContextSubscription`
 - `NodeState`
 - `Event`
+- `EventDelivery`
 - `Node`
 - `Edge`
 - `WorkflowHistoryItem`

@@ -9,6 +9,14 @@ export { defaultNodeModels };
 // Engine types
 export type { Connection } from "./engine/Connection";
 export type { NodeServices } from "./engine/NodeServices";
+export type { SubscriptionRequest } from "./engine/NodeModel";
+
+// Node helpers
+export { resolveTemplate } from "./nodes/templateResolver";
+export {
+  resolveSubscriptionFromParams,
+  type MatchParams,
+} from "./nodes/subscriptionMatch";
 
 // Export manager components
 export {
@@ -19,7 +27,15 @@ export {
   type WorkflowStore,
   type WorkflowMemory,
   type WorkflowScheduler,
+  type Subscription,
+  type SubscriptionRef,
+  type SubscriptionStore,
+  SUBSCRIPTION_WILDCARD,
+  subscriptionKey,
+  subscriptionTarget,
+  createDeliveryEvent,
   InMemoryWorkflowStore,
   InMemoryWorkflowMemory,
   InMemoryWorkflowScheduler,
+  InMemorySubscriptionStore,
 } from "./manager";

@@ -2,8 +2,14 @@ import { Router } from "express";
 import { nanoid } from "nanoid";
 import { WorkflowManager } from "@omega-flow/engine";
 import type { Event } from "@omega-flow/types";
-import type { SampleWorkflowStore, SampleWorkflowMemory, SampleWorkflowScheduler } from "../stores/types.js";
+import type {
+  SampleWorkflowStore,
+  SampleWorkflowMemory,
+  SampleWorkflowScheduler,
+  SampleSubscriptionStore,
+} from "../stores/types.js";
 import { nodeModels } from "../nodes/index.js";
+import { deliverToSubscribers } from "../subscriptionDelivery.js";
 
 interface ExecuteRequestBody {
   type: string;
@@ -17,6 +23,7 @@ export function createExecuteRoutes(
   workflowStore: SampleWorkflowStore,
   workflowMemory: SampleWorkflowMemory,
   workflowScheduler: SampleWorkflowScheduler,
+  subscriptionStore: SampleSubscriptionStore,
 ): Router {
   const router = Router();
 
@@ -49,6 +56,7 @@ export function createExecuteRoutes(
         workflowStore,
         workflowMemory,
         workflowScheduler,
+        subscriptionStore,
         nodeModels,
         eventExtractor: (evt) => [domain, evt.data?.subjectId as string],
       });
@@ -57,6 +65,10 @@ export function createExecuteRoutes(
       // Process the event
       await manager.processEvent(event);
 
+      // Deliver the event to cross-subject subscribers (synchronously —
+      // the sample server needs no queue relay)
+      const deliveries = await deliverToSubscribers(manager, domain, event);
+
       res.json({
         success: true,
         event: {
@@ -64,6 +76,7 @@ export function createExecuteRoutes(
           time: event.time,
           type: event.type,
         },
+        deliveries,
       });
     } catch (error) {
       console.error("Error executing event:", error);

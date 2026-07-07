@@ -229,6 +229,10 @@ eventExtractor: (event) => event.type.startsWith("order.")
 - **Domain** scopes which workflow definitions are loaded (the `WorkflowStore` is queried per domain). Use it for tenant isolation.
 - **Subject** is the entity the workflow runs *for* — a user, an order, a device. Each Subject has its own independent workflow Context, so two users running the same workflow never share state.
 
+A useful convention is to make subject ids **typed entity references** (`client:5`, `product:456`, `order:78`): each entity type gets its own subject space, and events about different entities never collide.
+
+By default this means a flow can only be driven by events that resolve to its own subject — a flow living under `client:5` never sees an event routed to `product:456`. When one flow needs events from two subject spaces ("when the customer orders product X, wait for product X to be updated"), use **[Event Subscriptions](/guide/event-subscriptions)**: the parked instance registers interest in the foreign subject and the event is delivered back to it, without changing how routing works for everything else.
+
 See [Workflow Execution → Event Extraction](/guide/engine-execution#event-extraction) for more patterns.
 
 ### Starting a new instance vs. resuming
@@ -260,6 +264,8 @@ interface Context {
   history: WorkflowHistoryItem[]; // Execution log
   isCompleted?: boolean;        // Completion flag
   startedAt: number;            // Start timestamp
+  triggerEvent?: Event;         // Event that started the instance
+  subscriptions?: ContextSubscription[]; // Active event subscriptions
 }
 ```
 

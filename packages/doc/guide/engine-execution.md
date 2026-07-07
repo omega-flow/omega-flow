@@ -99,6 +99,10 @@ interface WorkflowManagerConfig {
   // Map of node type names to their NodeModel classes
   nodeModels: NodeModelRegistry;
 
+  // Optional storage for cross-subject event subscriptions.
+  // Absent -> subscriptions disabled, zero behavior change.
+  subscriptionStore?: SubscriptionStore;
+
   // Function to extract domain and subject ID from events
   eventExtractor: (event: Event) => [domain: string, subjectId: string];
 }
@@ -148,6 +152,50 @@ When `processEvent` is called:
    - Resume all active instances with the event
    - Check if a new instance should start
    - Start new instance if trigger accepts the event
+
+### Delivering Events (targeted resume)
+
+Next to `processEvent`, the manager exposes `deliverEvent` — the delivery
+half of [event subscriptions](/guide/event-subscriptions):
+
+```typescript
+deliverEvent(
+  domain: string,
+  workflowId: string,
+  subjectId: string,
+  instanceId: string,
+  event: Event
+): Promise<boolean>
+```
+
+Where `processEvent` routes an event to *every* workflow in the domain (and
+may start new instances), `deliverEvent` is a **targeted resume — it never
+starts instances**: it loads exactly the addressed context, lets the parked
+node accept the event, and persists the result. The delivery is dropped with
+a log (returning `false`) when the instance is gone, already completed, or no
+longer parked on the node recorded in `event.data.delivery.nodeId`, which
+makes redelivery idempotent.
+
+A consumer typically pairs it with `matchSubscriptions` /
+`createDeliveryEvent`:
+
+```typescript
+await manager.processEvent(event);
+
+for (const subscription of await manager.matchSubscriptions(event)) {
+  const deliveryEvent = manager.createDeliveryEvent(event, subscription);
+  await manager.deliverEvent(
+    domain,
+    subscription.workflowId,
+    subscription.subjectId,
+    subscription.instanceId,
+    deliveryEvent
+  );
+}
+```
+
+See the [Event Subscriptions guide](/guide/event-subscriptions) for the full
+event flow and failure modes.
 
 ## Using WorkflowModel Directly
 
@@ -201,7 +249,7 @@ await workflow.acceptEvent(nextEvent);
 
 ## Storage Interfaces
 
-The engine uses three interfaces for pluggable storage:
+The engine uses four interfaces for pluggable storage:
 
 ### WorkflowStore
 
@@ -236,6 +284,19 @@ interface WorkflowScheduler {
 }
 ```
 
+### SubscriptionStore (optional)
+
+Stores cross-subject event subscriptions (see
+[Event Subscriptions](/guide/event-subscriptions)):
+
+```typescript
+interface SubscriptionStore {
+  put(subscription: Subscription): Promise<void>;
+  match(domain: string, eventType: string, matchValue: string): Promise<Subscription[]>;
+  delete(subscriptions: SubscriptionRef[]): Promise<void>;
+}
+```
+
 ### Built-in Implementations
 
 The engine includes in-memory implementations for development and testing:
@@ -243,6 +304,7 @@ The engine includes in-memory implementations for development and testing:
 - `InMemoryWorkflowStore` - Stores workflows in memory
 - `InMemoryWorkflowMemory` - Stores contexts in memory
 - `InMemoryWorkflowScheduler` - Basic scheduler implementation
+- `InMemorySubscriptionStore` - Stores event subscriptions in memory
 
 For production, implement these interfaces with your preferred storage (database, Redis, etc.).
 

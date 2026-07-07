@@ -3,9 +3,11 @@ import { Link as RouterLink } from "react-router-dom";
 import { useContexts } from "../hooks/useContexts";
 import { useWorkflows } from "../hooks/useWorkflows";
 import { useScheduler } from "../hooks/useScheduler";
-import { executeEvent } from "../api/execute";
+import { useSubscriptions } from "../hooks/useSubscriptions";
+import { executeEvent, type DeliveryResult } from "../api/execute";
 import { deleteContext } from "../api/contexts";
 import { fireScheduledEvent } from "../api/scheduler";
+import { deleteSubscription } from "../api/subscriptions";
 import { toaster } from "../components/Toaster";
 import {
   Badge,
@@ -32,12 +34,21 @@ export function DebuggerPage() {
     isLoading: schedulerLoading,
     refetch: refetchScheduler,
   } = useScheduler();
+  const {
+    subscriptions,
+    isLoading: subscriptionsLoading,
+    refetch: refetchSubscriptions,
+  } = useSubscriptions();
 
   const [subjectId, setSubjectId] = useState("");
   const [eventType, setEventType] = useState("");
   const [eventData, setEventData] = useState("{}");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitResult, setSubmitResult] = useState<{ id: string; time: number } | null>(null);
+  const [submitResult, setSubmitResult] = useState<{
+    id: string;
+    time: number;
+    deliveries: DeliveryResult[];
+  } | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [expandedContext, setExpandedContext] = useState<string | null>(null);
   const [firingId, setFiringId] = useState<string | null>(null);
@@ -76,6 +87,7 @@ export function DebuggerPage() {
       }
       refetchScheduler();
       refetch();
+      refetchSubscriptions();
     } catch (err) {
       toaster.create({
         title: "Auto-fire failed",
@@ -86,7 +98,7 @@ export function DebuggerPage() {
     } finally {
       autoFiringRef.current = false;
     }
-  }, [scheduledEvents, refetchScheduler, refetch]);
+  }, [scheduledEvents, refetchScheduler, refetch, refetchSubscriptions]);
 
   // Poll and auto-fire every 2 seconds
   useEffect(() => {
@@ -117,9 +129,14 @@ export function DebuggerPage() {
       }
 
       const result = await executeEvent(eventType, subjectId, parsedData);
-      setSubmitResult({ id: result.event.id, time: result.event.time });
+      setSubmitResult({
+        id: result.event.id,
+        time: result.event.time,
+        deliveries: result.deliveries ?? [],
+      });
       refetch();
       refetchScheduler();
+      refetchSubscriptions();
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : "Failed to execute event");
     } finally {
@@ -152,10 +169,22 @@ export function DebuggerPage() {
       await fireScheduledEvent(scheduleId);
       refetchScheduler();
       refetch();
+      refetchSubscriptions();
     } catch (err) {
       alert(err instanceof Error ? err.message : "Failed to fire event");
     } finally {
       setFiringId(null);
+    }
+  };
+
+  const handleDeleteSubscription = async (id: string) => {
+    if (!confirm("Remove this subscription?")) return;
+
+    try {
+      await deleteSubscription(id);
+      refetchSubscriptions();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to remove subscription");
     }
   };
 
@@ -233,6 +262,23 @@ export function DebuggerPage() {
           {submitResult && (
             <Box bg="green.100" color="green.800" p="3" borderRadius="md" mt="4" fontSize="sm" fontFamily="mono" whiteSpace="pre-wrap">
               Event sent successfully!{"\n"}ID: {submitResult.id}{"\n"}Time: {new Date(submitResult.time).toISOString()}
+              {submitResult.deliveries.length > 0 && (
+                <Box mt="2" pt="2" borderTop="1px solid" borderColor="green.300">
+                  Subscription deliveries:
+                  {submitResult.deliveries.map((delivery, index) => (
+                    <Text key={index} fontSize="xs" mt="1">
+                      → {delivery.subjectId} / {delivery.workflowId} @ {delivery.nodeId}{" "}
+                      <Badge
+                        colorPalette={delivery.resumed ? "green" : "orange"}
+                        variant="solid"
+                        size="xs"
+                      >
+                        {delivery.resumed ? "resumed" : "dropped"}
+                      </Badge>
+                    </Text>
+                  ))}
+                </Box>
+              )}
             </Box>
           )}
 
@@ -307,6 +353,66 @@ export function DebuggerPage() {
                   </Flex>
                 );
               })}
+            </Box>
+          )}
+        </Box>
+
+        {/* Subscriptions */}
+        <Box bg="white" border="1px solid" borderColor="gray.200" borderRadius="lg" p="5" mt="6">
+          <Flex justify="space-between" align="center" mb="4">
+            <Heading size="md">Subscriptions</Heading>
+            <Button variant="solid" colorPalette="gray" size="sm" onClick={refetchSubscriptions}>
+              Refresh
+            </Button>
+          </Flex>
+
+          {subscriptionsLoading ? (
+            <Text textAlign="center" py="4" color="gray.500" fontSize="sm">
+              Loading...
+            </Text>
+          ) : subscriptions.length === 0 ? (
+            <Text textAlign="center" py="4" color="gray.500" fontSize="sm">
+              No active subscriptions. An instance parked on a trigger with a
+              match section registers one.
+            </Text>
+          ) : (
+            <Box>
+              {subscriptions.map((sub) => (
+                <Flex
+                  key={sub.id}
+                  justify="space-between"
+                  align="center"
+                  p="3"
+                  borderBottom="1px solid"
+                  borderColor="gray.100"
+                >
+                  <Box>
+                    <Text fontSize="sm" fontWeight="500">
+                      {sub.eventType}{" "}
+                      <Badge
+                        colorPalette={sub.matchValue === "*" ? "orange" : "purple"}
+                        variant="subtle"
+                      >
+                        {sub.matchValue === "*" ? "any subject" : sub.matchValue}
+                      </Badge>
+                    </Text>
+                    <Text fontSize="xs" color="gray.500">
+                      → {sub.subjectId} / {sub.workflowId} @ {sub.nodeId}
+                    </Text>
+                    <Text fontSize="xs" color="gray.500">
+                      since {new Date(sub.createdAt).toLocaleString()}
+                    </Text>
+                  </Box>
+                  <Button
+                    size="xs"
+                    variant="subtle"
+                    colorPalette="red"
+                    onClick={() => handleDeleteSubscription(sub.id)}
+                  >
+                    Remove
+                  </Button>
+                </Flex>
+              ))}
             </Box>
           )}
         </Box>
@@ -385,6 +491,19 @@ export function DebuggerPage() {
                           >
                             {ctx.isCompleted ? "Completed" : "Active"}
                           </Badge>
+                          {!ctx.isCompleted &&
+                            (ctx.subscriptions?.length ?? 0) > 0 && (
+                              <Badge
+                                colorPalette="purple"
+                                variant="subtle"
+                                ml="1"
+                                title={ctx.subscriptions
+                                  ?.map((s) => `${s.eventType} ← ${s.matchValue}`)
+                                  .join(", ")}
+                              >
+                                Subscribed
+                              </Badge>
+                            )}
                         </Table.Cell>
                       </Table.Row>
                       {isExpanded && (

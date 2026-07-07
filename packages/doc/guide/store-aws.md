@@ -1,11 +1,12 @@
 # AWS Storage & Scheduler
 
-The `@omega-flow/store-aws` package provides production-ready AWS implementations of the engine's three pluggable interfaces:
+The `@omega-flow/store-aws` package provides production-ready AWS implementations of the engine's pluggable interfaces:
 
 | Class | Implements | Backed by |
 |-------|-----------|-----------|
 | `DynamoDBWorkflowStore` | `WorkflowStore` | DynamoDB |
 | `DynamoDBWorkflowMemory` | `WorkflowMemory` | DynamoDB |
+| `DynamoDBSubscriptionStore` | `SubscriptionStore` | DynamoDB |
 | `EventBusWorkflowScheduler` | `WorkflowScheduler` | EventBridge Scheduler |
 
 These are drop-in replacements for the `InMemory*` implementations used in development.
@@ -53,7 +54,7 @@ const manager = new WorkflowManager({
 
 ## Required DynamoDB Tables
 
-You need to create **two DynamoDB tables** in your AWS account — one for workflow definitions and one for execution contexts. Both use on-demand billing and a composite primary key (partition key + sort key). The exact table names are up to you — pass them via the `tableName` config option.
+You need to create **two DynamoDB tables** in your AWS account — one for workflow definitions and one for execution contexts (plus an optional third one for [event subscriptions](/guide/event-subscriptions)). All use on-demand billing and a composite primary key (partition key + sort key). The exact table names are up to you — pass them via the `tableName` config option.
 
 ### Workflows Table
 
@@ -83,8 +84,19 @@ The contexts table requires one **Global Secondary Index**:
 
 This GSI enables listing all contexts for a domain (`getAllContexts`) and for a specific subject (`getAllContextsForSubject`).
 
+### Subscriptions Table (optional)
+
+Stores cross-subject [event subscriptions](/guide/event-subscriptions). Only needed when you enable the feature by passing a `subscriptionStore` to the `WorkflowManager`.
+
+| Attribute | Type | Key |
+|-----------|------|-----|
+| `subscriptionKey` | String (S) | Partition key |
+| `target` | String (S) | Sort key |
+
+Enable **DynamoDB TTL** on the `ttl` attribute — it garbage-collects orphaned subscriptions (crash between registration and context save). No GSI is needed: cleanup by instance uses the subscription keys recorded on the `Context`.
+
 ::: tip
-Both tables use PAY_PER_REQUEST billing mode — you only pay for what you use. The GSI index name is configurable via the `gsiName` config option (defaults to `domain-subjectId-index`).
+All tables use PAY_PER_REQUEST billing mode — you only pay for what you use. The GSI index name is configurable via the `gsiName` config option (defaults to `domain-subjectId-index`).
 :::
 
 ## DynamoDBWorkflowStore
@@ -168,6 +180,55 @@ The store implements the full `WorkflowMemory` interface (`getContexts`, `saveCo
 | `getContext(domain, workflowId, subjectId, instanceId)` | Fetch a single context by instance ID. |
 | `getAllContextsForSubject(domain, subjectId)` | List all contexts for a subject across all workflows. Uses the GSI. |
 | `getAllContexts(domain)` | List all contexts in a domain across all subjects. Returns contexts annotated with `subjectId`. Uses the GSI. |
+
+## DynamoDBSubscriptionStore
+
+Stores cross-subject [event subscriptions](/guide/event-subscriptions) in DynamoDB. Pass it as `subscriptionStore` in the `WorkflowManagerConfig` to enable the feature.
+
+### Config
+
+```typescript
+interface DynamoDBSubscriptionStoreConfig {
+  client: DynamoDBClient;
+  tableName: string;
+}
+```
+
+### Table Schema
+
+| Attribute | Key | Description |
+|-----------|-----|-------------|
+| `subscriptionKey` | Partition key (S) | Composite key: `{domain}#{eventType}#{matchValue}` (`matchValue` is `*` for wildcard subscriptions) |
+| `target` | Sort key (S) | Composite key: `{workflowId}#{subjectId}#{instanceId}#{nodeId}` |
+| `domain`, `eventType`, `matchValue`, `workflowId`, `subjectId`, `instanceId`, `nodeId` | — | Denormalised subscription fields |
+| `createdAt` | — | Epoch ms, set on registration |
+| `ttl` | — | Epoch seconds; enable DynamoDB TTL on this attribute (orphan-cleanup safety net) |
+
+Matching an event is two cheap exact-key Queries — one for the event's own subject id and one for wildcard subscriptions — both usually empty. Expired items are additionally filtered out of query results, since DynamoDB TTL deletion can lag.
+
+::: warning
+`domain` and `eventType` must not contain the `#` character, as it is used as the delimiter in the partition key.
+:::
+
+### Methods
+
+The store implements the `SubscriptionStore` interface: `put(subscription)`, `match(domain, eventType, matchValue)` (includes wildcard matches), and `delete(subscriptions)`.
+
+### IAM Permissions
+
+The caller needs:
+
+```json
+{
+  "Effect": "Allow",
+  "Action": [
+    "dynamodb:PutItem",
+    "dynamodb:Query",
+    "dynamodb:DeleteItem"
+  ],
+  "Resource": "arn:aws:dynamodb:*:*:table/<subscriptionsTable>"
+}
+```
 
 ## EventBusWorkflowScheduler
 
