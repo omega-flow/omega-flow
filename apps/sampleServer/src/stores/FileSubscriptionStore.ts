@@ -42,7 +42,7 @@ export class FileSubscriptionStore implements SampleSubscriptionStore {
   async match(
     domain: string,
     eventType: string,
-    matchValue: string
+    matchSubjectId: string
   ): Promise<Subscription[]> {
     const entries = await this.readEntries();
     const nowSeconds = Math.floor(Date.now() / 1000);
@@ -59,8 +59,8 @@ export class FileSubscriptionStore implements SampleSubscriptionStore {
       (entry) =>
         entry.domain === domain &&
         entry.eventType === eventType &&
-        (entry.matchValue === matchValue ||
-          entry.matchValue === SUBSCRIPTION_WILDCARD)
+        (entry.matchSubjectId === matchSubjectId ||
+          entry.matchSubjectId === SUBSCRIPTION_WILDCARD)
     );
   }
 

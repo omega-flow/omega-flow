@@ -15,7 +15,7 @@ const TABLE = "test-subscriptions";
 const sampleSubscription: Subscription = {
   domain: "acme",
   eventType: "product.update",
-  matchValue: "product:456",
+  matchSubjectId: "product:456",
   workflowId: "wf-1",
   subjectId: "client:5",
   instanceId: "inst-1",
@@ -29,7 +29,7 @@ const sampleItem = {
   target: "wf-1#client:5#inst-1#node-7",
   domain: "acme",
   eventType: "product.update",
-  matchValue: "product:456",
+  matchSubjectId: "product:456",
   workflowId: "wf-1",
   subjectId: "client:5",
   instanceId: "inst-1",
@@ -106,7 +106,7 @@ describe("DynamoDBSubscriptionStore", () => {
       expect(typeof now).toBe("number");
     });
 
-    it("does not query the same key twice for wildcard match values", async () => {
+    it("does not query the same key twice for wildcard match subject ids", async () => {
       ddbMock.on(QueryCommand).resolves({ Items: [] });
 
       await store.match("acme", "product.update", "*");

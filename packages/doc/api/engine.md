@@ -66,7 +66,7 @@ matchSubscriptions(event: Event): Promise<Subscription[]>
 ```
 
 Find subscriptions matching an event: subscriptions in the event's domain,
-for the event's type, whose `matchValue` equals the event's own subject id
+for the event's type, whose `matchSubjectId` equals the event's own subject id
 (per `eventExtractor`) — plus wildcard subscriptions. Returns `[]` when no
 `subscriptionStore` is configured and for delivery events (a delivered copy
 never fans out again).
@@ -411,7 +411,7 @@ nodes can override it freely.
 ```typescript
 interface SubscriptionRequest {
   eventType: string;    // event type to subscribe to
-  matchValue: string;   // source subject id, or "*" for wildcard
+  matchSubjectId: string;   // source subject id, or "*" for wildcard
   ttlSeconds?: number;  // optional safety-net TTL hint
 }
 ```
@@ -547,7 +547,7 @@ Interface for cross-subject [event subscription](/guide/event-subscriptions) sto
 ```typescript
 interface SubscriptionStore {
   put(subscription: Subscription): Promise<void>;
-  match(domain: string, eventType: string, matchValue: string): Promise<Subscription[]>;
+  match(domain: string, eventType: string, matchSubjectId: string): Promise<Subscription[]>;
   delete(subscriptions: SubscriptionRef[]): Promise<void>;
 }
 ```
@@ -555,14 +555,14 @@ interface SubscriptionStore {
 | Method | Description |
 |--------|-------------|
 | `put` | Register a subscription (same key + target overwrites) |
-| `match` | Find subscriptions for `(domain, eventType, matchValue)` **plus** wildcard (`"*"`) subscriptions; expired (`ttl`) entries excluded |
+| `match` | Find subscriptions for `(domain, eventType, matchSubjectId)` **plus** wildcard (`"*"`) subscriptions; expired (`ttl`) entries excluded |
 | `delete` | Delete the given subscriptions; missing entries are ignored |
 
 ```typescript
 interface Subscription {
   domain: string;       // tenant
   eventType: string;    // e.g. "product.update"
-  matchValue: string;   // source subject id (e.g. "product:456"), "*" = wildcard
+  matchSubjectId: string;   // source subject id (e.g. "product:456"), "*" = wildcard
   workflowId: string;   // subscribing instance's workflow
   subjectId: string;    // subscribing instance's own subject (e.g. "client:5")
   instanceId: string;   // subscribing instance
@@ -579,8 +579,8 @@ Helpers exported alongside the interface:
 
 | Export | Description |
 |--------|-------------|
-| `SUBSCRIPTION_WILDCARD` | The `"*"` wildcard match value |
-| `subscriptionKey(sub)` | `` `${domain}#${eventType}#${matchValue}` `` — partition key |
+| `SUBSCRIPTION_WILDCARD` | The `"*"` wildcard match subject id |
+| `subscriptionKey(sub)` | `` `${domain}#${eventType}#${matchSubjectId}` `` — partition key |
 | `subscriptionTarget(sub)` | `` `${workflowId}#${subjectId}#${instanceId}#${nodeId}` `` — sort key |
 | `createDeliveryEvent(event, sub, sourceSubjectId)` | Standalone version of `WorkflowManager.createDeliveryEvent` |
 
@@ -651,7 +651,7 @@ Waits for a specific event type.
 | Config | Type | Description |
 |--------|------|-------------|
 | `data.params.event` | `string` | Event type to listen for |
-| `data.params.match` | `{ value?: string }` *(optional)* | Cross-subject wait: subscribe to events from another subject space. `value` is a template (double-curly-brace placeholders) resolved against the instance context at park time; omit for wildcard. See [Event Subscriptions](/guide/event-subscriptions) |
+| `data.params.match` | `{ subjectId?: string }` *(optional)* | Cross-subject wait: subscribe to events from another subject space. `subjectId` is a template (double-curly-brace placeholders) resolved against the instance context at park time; omit for wildcard. See [Event Subscriptions](/guide/event-subscriptions) |
 
 **acceptEvent:** Returns `true` if `event.type === params.event`
 
@@ -704,7 +704,7 @@ Waits for event or timeout, whichever comes first.
 |--------|------|-------------|
 | `data.params.event` | `string` | Event type to listen for |
 | `data.params.duration` | `number` | Timeout duration in milliseconds |
-| `data.params.match` | `{ value?: string }` *(optional)* | Cross-subject wait — same contract as on `Trigger`; the subscription's TTL safety net is derived from `duration`. See [Event Subscriptions](/guide/event-subscriptions) |
+| `data.params.match` | `{ subjectId?: string }` *(optional)* | Cross-subject wait — same contract as on `Trigger`; the subscription's TTL safety net is derived from `duration`. See [Event Subscriptions](/guide/event-subscriptions) |
 
 **acceptEvent:** Returns `true` on matching event or timeout, recording which one resolved in state
 

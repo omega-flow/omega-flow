@@ -11,7 +11,7 @@ import {
  * In-memory implementation of SubscriptionStore.
  *
  * Stores subscriptions in a nested Map keyed by subscription key
- * (`domain#eventType#matchValue`) and target
+ * (`domain#eventType#matchSubjectId`) and target
  * (`workflowId#subjectId#instanceId#nodeId`).
  * Useful for testing, development, and single-instance deployments.
  */
@@ -40,16 +40,16 @@ export class InMemorySubscriptionStore implements SubscriptionStore {
   }
 
   /**
-   * Find subscriptions matching (domain, eventType, matchValue), including
+   * Find subscriptions matching (domain, eventType, matchSubjectId), including
    * wildcard subscriptions. Expired entries are pruned and never returned.
    */
   async match(
     domain: string,
     eventType: string,
-    matchValue: string
+    matchSubjectId: string
   ): Promise<Subscription[]> {
     const keys = new Set([
-      `${domain}#${eventType}#${matchValue}`,
+      `${domain}#${eventType}#${matchSubjectId}`,
       `${domain}#${eventType}#${SUBSCRIPTION_WILDCARD}`,
     ]);
     const nowSeconds = Math.floor(Date.now() / 1000);

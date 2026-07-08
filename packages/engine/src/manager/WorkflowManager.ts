@@ -370,7 +370,7 @@ export class WorkflowManager {
       if (request) {
         desired.push({
           eventType: request.eventType,
-          matchValue: request.matchValue,
+          matchSubjectId: request.matchSubjectId,
           nodeId: context.currentNodeId,
         });
         ttlSeconds = request.ttlSeconds;
@@ -379,7 +379,7 @@ export class WorkflowManager {
 
     const sameSubscription = (a: ContextSubscription, b: ContextSubscription) =>
       a.eventType === b.eventType &&
-      a.matchValue === b.matchValue &&
+      a.matchSubjectId === b.matchSubjectId &&
       a.nodeId === b.nodeId;
 
     const toAdd = desired.filter(
@@ -393,7 +393,7 @@ export class WorkflowManager {
       await this.subscriptionStore.put({
         domain,
         eventType: sub.eventType,
-        matchValue: sub.matchValue,
+        matchSubjectId: sub.matchSubjectId,
         workflowId,
         subjectId,
         instanceId: context.instanceId,
@@ -418,7 +418,7 @@ export class WorkflowManager {
         toRemove.map((sub) => ({
           domain,
           eventType: sub.eventType,
-          matchValue: sub.matchValue,
+          matchSubjectId: sub.matchSubjectId,
           workflowId,
           subjectId,
           instanceId: context.instanceId,
@@ -430,7 +430,7 @@ export class WorkflowManager {
 
   /**
    * Find subscriptions matching an event: subscriptions in this event's
-   * domain, for this event's type, whose matchValue equals the event's own
+   * domain, for this event's type, whose matchSubjectId equals the event's own
    * subject id — plus wildcard subscriptions for the same event type.
    *
    * Call this after `processEvent` and relay a delivery copy of the event

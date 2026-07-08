@@ -61,7 +61,7 @@ export default class TriggerModel extends NodeModel {
    * `params.match` section (see {@link resolveSubscriptionFromParams}).
    * Without `match`, the trigger only reacts to events arriving in the
    * instance's own subject space, as before.
-   * @param context - The instance's context, used to resolve the match value
+   * @param context - The instance's context, used to resolve the match subject id
    * @returns The subscription to register, or null for none
    */
   getSubscription(context: Context): SubscriptionRequest | null {

@@ -20,7 +20,7 @@ export interface ContextSubscription {
    * (e.g. `product:456`), or `"*"` for a wildcard subscription that matches
    * any subject in the event type's space.
    */
-  matchValue: string;
+  matchSubjectId: string;
   /** Id of the parked node that declared the subscription */
   nodeId: string;
 }
@@ -50,7 +50,7 @@ export interface Context {
   /**
    * The event that started this workflow instance. Captured when the start
    * node fires, so later nodes can resolve values from it (e.g. a
-   * cross-subject subscription's `match.value` template like
+   * cross-subject subscription's `match.subjectId` template like
    * `product:{{trigger.payload.products[0].product_id}}`).
    */
   triggerEvent?: Event;
@@ -108,10 +108,10 @@ export const ContextSchema = {
       type: "array",
       items: {
         type: "object",
-        required: ["eventType", "matchValue", "nodeId"],
+        required: ["eventType", "matchSubjectId", "nodeId"],
         properties: {
           eventType: { type: "string" },
-          matchValue: { type: "string" },
+          matchSubjectId: { type: "string" },
           nodeId: { type: "string" },
         },
       },

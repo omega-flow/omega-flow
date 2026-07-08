@@ -210,7 +210,7 @@ Execution state for a workflow instance.
 ```typescript
 interface ContextSubscription {
   eventType: string;
-  matchValue: string;
+  matchSubjectId: string;
   nodeId: string;
 }
 ```
@@ -220,7 +220,7 @@ An active event subscription recorded on the Context. The Context is the source 
 | Property | Type | Description |
 |----------|------|-------------|
 | `eventType` | `string` | Event type the instance is waiting for |
-| `matchValue` | `string` | Subject id of the source event, or `"*"` for wildcard |
+| `matchSubjectId` | `string` | Subject id of the source event, or `"*"` for wildcard |
 | `nodeId` | `string` | Parked node that declared the subscription |
 
 ---

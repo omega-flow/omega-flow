@@ -9,7 +9,7 @@ export interface DeliveryResult {
   subjectId: string;
   instanceId: string;
   nodeId: string;
-  matchValue: string;
+  matchSubjectId: string;
   /** True when the target instance was actually resumed, false when dropped */
   resumed: boolean;
 }
@@ -46,7 +46,7 @@ export async function deliverToSubscribers(
       subjectId: subscription.subjectId,
       instanceId: subscription.instanceId,
       nodeId: subscription.nodeId,
-      matchValue: subscription.matchValue,
+      matchSubjectId: subscription.matchSubjectId,
       resumed,
     });
   }

@@ -9,7 +9,7 @@ export interface SubscriptionEntry {
   id: string;
   domain: string;
   eventType: string;
-  matchValue: string;
+  matchSubjectId: string;
   workflowId: string;
   subjectId: string;
   instanceId: string;

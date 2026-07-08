@@ -80,5 +80,30 @@ export function createSchedulerRoutes(
     }
   });
 
+  // DELETE /api/scheduler/:scheduleId - Delete a scheduled event without firing it
+  router.delete("/:scheduleId", async (req, res) => {
+    try {
+      if (!workflowScheduler.remove) {
+        res.status(501).json({ error: "Deleting scheduled events is not supported with the current scheduler backend" });
+        return;
+      }
+      const { scheduleId } = req.params;
+
+      const removed = await workflowScheduler.remove(scheduleId);
+      if (!removed) {
+        res.status(404).json({ error: "Scheduled event not found" });
+        return;
+      }
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting scheduled event:", error);
+      res.status(500).json({
+        error: "Failed to delete scheduled event",
+        details: error instanceof Error ? error.message : "Unknown error",
+      });
+    }
+  });
+
   return router;
 }

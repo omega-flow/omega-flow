@@ -437,7 +437,7 @@ export default class WaitForExternalSystemNode extends NodeModel {
     }
     return {
       eventType: "external.sync.finished",
-      matchValue: `sync:${externalId}`,
+      matchSubjectId: `sync:${externalId}`,
       ttlSeconds: 7 * 24 * 60 * 60, // safety-net TTL: give up after a week
     };
   }
@@ -471,7 +471,7 @@ How the pieces fit together:
 - **Delivery is symmetric.** The delivered event is handed to the parked node
   via the ordinary `acceptEvent(event)`; return `false` to reject it and keep
   waiting.
-- `matchValue` must equal the subject id the source event is routed to by
+- `matchSubjectId` must equal the subject id the source event is routed to by
   your `eventExtractor`; use `"*"` (`SUBSCRIPTION_WILDCARD`) to match any
   subject of that event type.
 

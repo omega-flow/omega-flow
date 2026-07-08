@@ -46,7 +46,7 @@ Key properties:
 - **One subscription per parked node.** The subscription is registered when
   the instance parks and deleted as soon as it advances (event delivered,
   timeout fired, or instance completed).
-- **Explicit wildcard.** A subscription without a match value ("ANY
+- **Explicit wildcard.** A subscription without a match subject id ("ANY
   `product.update` in the domain") uses the same mechanism — allowed, but the
   cost is opt-in and per-instance.
 
@@ -94,7 +94,7 @@ in their params. Its presence makes the node a cross-subject wait:
       "match": {
         // Subject id of the source event to wait for. Resolved from THIS
         // instance's context at park time; omit for a wildcard subscription.
-        "value": "product:{{trigger.payload.products[0].product_id}}"
+        "subjectId": "product:{{trigger.payload.products[0].product_id}}"
       }
     }
   }
@@ -106,11 +106,11 @@ Semantics:
 - **`match` absent** — today's behavior: the event must arrive in the
   instance's own subject space. Nothing changes for existing flows.
 - **`match` present** — when the instance parks on this node, the engine
-  registers a subscription for `(domain, event, resolvedValue)`.
-- **`match.value` omitted** — wildcard subscription: any event of that type
-  in the domain resumes the instance.
+  registers a subscription for `(domain, event, resolvedSubjectId)`.
+- **`match.subjectId` omitted** — wildcard subscription: any event of that
+  type in the domain resumes the instance.
 
-The `value` is a template resolved **once, at park time**, against the
+The `subjectId` is a template resolved **once, at park time**, against the
 instance context. Double-curly-brace placeholders are looked up in a scope where
 `trigger` is the data of the event that started the instance (captured on
 `context.triggerEvent`). Paths support dot notation and array indices. The
@@ -132,11 +132,11 @@ subject space (e.g. one instance per product).
 ## End-to-end event flow
 
 Back-in-stock example: an instance under `client:5` parks on
-`TriggerOrTimeout(event=product.update, match.value=product:456)`.
+`TriggerOrTimeout(event=product.update, match.subjectId=product:456)`.
 
 ```
 1. PARK      client:5 event processed; the workflow stops on the node.
-             The engine resolves the match value and registers
+             The engine resolves the match subject id and registers
              (domain, product.update, product:456) -> instance, and records
              the subscription on the instance's context.
 
@@ -206,7 +206,7 @@ the delivery into the subscriber's own group buys back serialization.
 | Crash between subscription registration and context save | The engine registers subscriptions **before** saving the context. Worst case is an orphan subscription — harmless (dropped on delivery) and TTL-cleaned — never a parked instance nobody can resume. |
 | Duplicate delivery (at-least-once transports) | Deduplicate on `event.id + instanceId` in your transport; beyond that, `deliverEvent` is idempotent because the node has advanced. |
 | Wildcard subscription during a bulk import | Real cost, but bounded: one delivery per (event × wildcard subscriber). Consider capping active wildcard subscriptions per domain if it becomes a problem. |
-| Match value resolves to the instance's own subject | Pointless but harmless — same-space events already reach the instance through normal routing, so omit `match` in that case. |
+| Match subject id resolves to the instance's own subject | Pointless but harmless — same-space events already reach the instance through normal routing, so omit `match` in that case. |
 
 ## Subscription lifetime (TTL)
 

@@ -88,7 +88,7 @@ export default class TriggerOrTimeoutModel extends WaitModel {
    * `params.match` section (see {@link resolveSubscriptionFromParams}).
    * The subscription's TTL safety net is derived from `params.duration`,
    * since the timeout bounds how long the wait can be pending.
-   * @param context - The instance's context, used to resolve the match value
+   * @param context - The instance's context, used to resolve the match subject id
    * @returns The subscription to register, or null for none
    */
   getSubscription(context: Context): SubscriptionRequest | null {

@@ -15,7 +15,7 @@ export interface SubscriptionRequest {
    * Subject id of the source event to match (e.g. `product:456`),
    * or `"*"` for a wildcard subscription.
    */
-  matchValue: string;
+  matchSubjectId: string;
   /**
    * Optional lifetime hint for the subscription's TTL safety net, in seconds.
    * Nodes with a bounded wait (e.g. TriggerOrTimeout) should set this to

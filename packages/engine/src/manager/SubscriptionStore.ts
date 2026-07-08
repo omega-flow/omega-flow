@@ -1,7 +1,7 @@
 import type { Event, EventDelivery } from "@omega-flow/types";
 
 /**
- * Match value of a wildcard subscription — matches any subject in the
+ * Match subject id of a wildcard subscription — matches any subject in the
  * subscribed event type's space.
  */
 export const SUBSCRIPTION_WILDCARD = "*";
@@ -9,7 +9,7 @@ export const SUBSCRIPTION_WILDCARD = "*";
 /**
  * A registered event subscription: "instance I (domain, workflow, subject)
  * wants events of type `eventType` whose source subject id equals
- * `matchValue`" (or any subject, for wildcard subscriptions).
+ * `matchSubjectId`" (or any subject, for wildcard subscriptions).
  *
  * Subscriptions are the cross-subject resume mechanism: they let an instance
  * parked in one subject space (e.g. `client:5`) be resumed by an event that
@@ -24,7 +24,7 @@ export interface Subscription {
    * Subject id of the source event (e.g. `product:456`), or `"*"` for a
    * wildcard subscription.
    */
-  matchValue: string;
+  matchSubjectId: string;
   /** Workflow the subscribing instance belongs to */
   workflowId: string;
   /** Subject the subscribing instance lives under (e.g. `client:5`) */
@@ -49,10 +49,10 @@ export type SubscriptionRef = Omit<Subscription, "createdAt" | "ttl">;
 
 /**
  * Primary key of a subscription: all instances waiting for the same
- * (domain, eventType, matchValue) share one key.
+ * (domain, eventType, matchSubjectId) share one key.
  */
 export function subscriptionKey(sub: SubscriptionRef): string {
-  return `${sub.domain}#${sub.eventType}#${sub.matchValue}`;
+  return `${sub.domain}#${sub.eventType}#${sub.matchSubjectId}`;
 }
 
 /**
@@ -78,15 +78,15 @@ export interface SubscriptionStore {
   put(subscription: Subscription): Promise<void>;
 
   /**
-   * Find subscriptions for (domain, eventType) whose matchValue equals the
+   * Find subscriptions for (domain, eventType) whose matchSubjectId equals the
    * given value, plus wildcard (`"*"`) subscriptions for the same event type.
    * Expired entries (ttl in the past) must not be returned.
-   * @param matchValue - Subject id of the incoming event (e.g. `product:456`)
+   * @param matchSubjectId - Subject id of the incoming event (e.g. `product:456`)
    */
   match(
     domain: string,
     eventType: string,
-    matchValue: string
+    matchSubjectId: string
   ): Promise<Subscription[]>;
 
   /**

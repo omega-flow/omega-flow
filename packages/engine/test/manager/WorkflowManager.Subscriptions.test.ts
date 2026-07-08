@@ -21,13 +21,14 @@ const DURATION_MS = 60_000;
  *          -- trigger --> Action -> Exit
  *          -- timeout --> Exit
  */
-function buildCrossSubjectWorkflow(matchValue?: string | null): Workflow {
+function buildCrossSubjectWorkflow(matchSubjectId?: string | null): Workflow {
   const params: Record<string, unknown> = {
     event: "product.update",
     duration: DURATION_MS,
   };
-  if (matchValue !== null) {
-    params.match = matchValue === undefined ? {} : { value: matchValue };
+  if (matchSubjectId !== null) {
+    params.match =
+      matchSubjectId === undefined ? {} : { subjectId: matchSubjectId };
   }
 
   return WorkflowBuilder.create("back-in-stock", "Back in stock")
@@ -106,7 +107,7 @@ describe("WorkflowManager - Event subscriptions", () => {
       expect(subs[0]).toMatchObject({
         domain: testDomain,
         eventType: "product.update",
-        matchValue: "product:456",
+        matchSubjectId: "product:456",
         workflowId: "back-in-stock",
         subjectId: "client:5",
         nodeId: "wait-product",
@@ -128,7 +129,7 @@ describe("WorkflowManager - Event subscriptions", () => {
       expect(contexts[0].subscriptions).toEqual([
         {
           eventType: "product.update",
-          matchValue: "product:456",
+          matchSubjectId: "product:456",
           nodeId: "wait-product",
         },
       ]);
@@ -136,14 +137,14 @@ describe("WorkflowManager - Event subscriptions", () => {
       expect(subs[0].instanceId).toBe(contexts[0].instanceId);
     });
 
-    it("registers a wildcard subscription when match.value is omitted", async () => {
+    it("registers a wildcard subscription when match.subjectId is omitted", async () => {
       const manager = createManager(buildCrossSubjectWorkflow(undefined));
 
       await manager.processEvent(orderCreateEvent);
 
       const subs = subscriptionStore.getAll();
       expect(subs).toHaveLength(1);
-      expect(subs[0].matchValue).toBe("*");
+      expect(subs[0].matchSubjectId).toBe("*");
     });
 
     it("registers nothing when the node has no match section", async () => {
@@ -160,7 +161,7 @@ describe("WorkflowManager - Event subscriptions", () => {
       expect(contexts[0].subscriptions).toBeUndefined();
     });
 
-    it("registers nothing when the match value cannot be resolved", async () => {
+    it("registers nothing when the match subject id cannot be resolved", async () => {
       const warn = jest.spyOn(console, "warn").mockImplementation(() => {});
       const manager = createManager(
         buildCrossSubjectWorkflow("product:{{trigger.payload.missing.field}}")

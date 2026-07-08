@@ -24,7 +24,7 @@ interface SubscriptionItem {
   target: string;
   domain: string;
   eventType: string;
-  matchValue: string;
+  matchSubjectId: string;
   workflowId: string;
   subjectId: string;
   instanceId: string;
@@ -37,9 +37,9 @@ interface SubscriptionItem {
  * DynamoDB-backed implementation of SubscriptionStore.
  *
  * Table layout (dedicated subscriptions table):
- *   subscriptionKey (pk) = `${domain}#${eventType}#${matchValue}`
+ *   subscriptionKey (pk) = `${domain}#${eventType}#${matchSubjectId}`
  *   target (sk)          = `${workflowId}#${subjectId}#${instanceId}#${nodeId}`
- *   domain, eventType, matchValue, workflowId, subjectId, instanceId, nodeId
+ *   domain, eventType, matchSubjectId, workflowId, subjectId, instanceId, nodeId
  *                        = denormalised subscription fields
  *   createdAt            = epoch ms, set on registration
  *   ttl                  = epoch seconds; enable DynamoDB TTL on this
@@ -67,7 +67,7 @@ export class DynamoDBSubscriptionStore implements SubscriptionStore {
       target: subscriptionTarget(subscription),
       domain: subscription.domain,
       eventType: subscription.eventType,
-      matchValue: subscription.matchValue,
+      matchSubjectId: subscription.matchSubjectId,
       workflowId: subscription.workflowId,
       subjectId: subscription.subjectId,
       instanceId: subscription.instanceId,
@@ -87,10 +87,10 @@ export class DynamoDBSubscriptionStore implements SubscriptionStore {
   async match(
     domain: string,
     eventType: string,
-    matchValue: string
+    matchSubjectId: string
   ): Promise<Subscription[]> {
     const keys = new Set([
-      `${domain}#${eventType}#${matchValue}`,
+      `${domain}#${eventType}#${matchSubjectId}`,
       `${domain}#${eventType}#${SUBSCRIPTION_WILDCARD}`,
     ]);
 
@@ -120,7 +120,7 @@ export class DynamoDBSubscriptionStore implements SubscriptionStore {
           subscriptions.push({
             domain: sub.domain,
             eventType: sub.eventType,
-            matchValue: sub.matchValue,
+            matchSubjectId: sub.matchSubjectId,
             workflowId: sub.workflowId,
             subjectId: sub.subjectId,
             instanceId: sub.instanceId,

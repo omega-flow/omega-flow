@@ -198,9 +198,9 @@ interface DynamoDBSubscriptionStoreConfig {
 
 | Attribute | Key | Description |
 |-----------|-----|-------------|
-| `subscriptionKey` | Partition key (S) | Composite key: `{domain}#{eventType}#{matchValue}` (`matchValue` is `*` for wildcard subscriptions) |
+| `subscriptionKey` | Partition key (S) | Composite key: `{domain}#{eventType}#{matchSubjectId}` (`matchSubjectId` is `*` for wildcard subscriptions) |
 | `target` | Sort key (S) | Composite key: `{workflowId}#{subjectId}#{instanceId}#{nodeId}` |
-| `domain`, `eventType`, `matchValue`, `workflowId`, `subjectId`, `instanceId`, `nodeId` | — | Denormalised subscription fields |
+| `domain`, `eventType`, `matchSubjectId`, `workflowId`, `subjectId`, `instanceId`, `nodeId` | — | Denormalised subscription fields |
 | `createdAt` | — | Epoch ms, set on registration |
 | `ttl` | — | Epoch seconds; enable DynamoDB TTL on this attribute (orphan-cleanup safety net) |
 
@@ -212,7 +212,7 @@ Matching an event is two cheap exact-key Queries — one for the event's own sub
 
 ### Methods
 
-The store implements the `SubscriptionStore` interface: `put(subscription)`, `match(domain, eventType, matchValue)` (includes wildcard matches), and `delete(subscriptions)`.
+The store implements the `SubscriptionStore` interface: `put(subscription)`, `match(domain, eventType, matchSubjectId)` (includes wildcard matches), and `delete(subscriptions)`.
 
 ### IAM Permissions
 

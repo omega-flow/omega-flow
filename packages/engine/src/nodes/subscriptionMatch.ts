@@ -23,7 +23,7 @@ export interface MatchParams {
    * data of the event that started the instance). Omit for a wildcard
    * subscription (any event of that type in the domain).
    */
-  value?: string;
+  subjectId?: string;
 }
 
 /**
@@ -31,8 +31,8 @@ export interface MatchParams {
  * (`{ event, duration?, match? }`).
  *
  * Returns null when there is no `match` section (the node waits in its own
- * subject space — today's behavior) or when the match value template cannot
- * be resolved from the context; in the latter case a warning is logged and
+ * subject space — today's behavior) or when the match subject-id template
+ * cannot be resolved from the context; in the latter case a warning is logged and
  * no subscription is registered, so the instance can only resume via its
  * own subject's events (e.g. the node's timeout).
  */
@@ -47,19 +47,19 @@ export function resolveSubscriptionFromParams(
     return null;
   }
 
-  let matchValue: string = SUBSCRIPTION_WILDCARD;
-  if (match.value != null && match.value !== "") {
-    const resolved = resolveTemplate(String(match.value), {
+  let matchSubjectId: string = SUBSCRIPTION_WILDCARD;
+  if (match.subjectId != null && match.subjectId !== "") {
+    const resolved = resolveTemplate(String(match.subjectId), {
       trigger: context.triggerEvent?.data ?? {},
     });
     if (resolved === undefined || resolved === "") {
       console.warn(
-        `Node ${nodeId}: could not resolve subscription match value ` +
-          `"${match.value}" from the instance context — no subscription registered`
+        `Node ${nodeId}: could not resolve subscription match subject id ` +
+          `"${match.subjectId}" from the instance context — no subscription registered`
       );
       return null;
     }
-    matchValue = resolved;
+    matchSubjectId = resolved;
   }
 
   const duration =
@@ -69,5 +69,5 @@ export function resolveSubscriptionFromParams(
       ? Math.ceil(duration / 1000) + TTL_MARGIN_SECONDS
       : DEFAULT_TTL_SECONDS;
 
-  return { eventType, matchValue, ttlSeconds };
+  return { eventType, matchSubjectId, ttlSeconds };
 }

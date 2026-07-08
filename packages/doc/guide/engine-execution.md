@@ -292,7 +292,7 @@ Stores cross-subject event subscriptions (see
 ```typescript
 interface SubscriptionStore {
   put(subscription: Subscription): Promise<void>;
-  match(domain: string, eventType: string, matchValue: string): Promise<Subscription[]>;
+  match(domain: string, eventType: string, matchSubjectId: string): Promise<Subscription[]>;
   delete(subscriptions: SubscriptionRef[]): Promise<void>;
 }
 ```
