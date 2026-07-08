@@ -6,7 +6,7 @@ import { useScheduler } from "../hooks/useScheduler";
 import { useSubscriptions } from "../hooks/useSubscriptions";
 import { executeEvent, type DeliveryResult } from "../api/execute";
 import { deleteContext } from "../api/contexts";
-import { fireScheduledEvent } from "../api/scheduler";
+import { fireScheduledEvent, deleteScheduledEvent } from "../api/scheduler";
 import { deleteSubscription } from "../api/subscriptions";
 import { toaster } from "../components/Toaster";
 import {
@@ -52,6 +52,7 @@ export function DebuggerPage() {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [expandedContext, setExpandedContext] = useState<string | null>(null);
   const [firingId, setFiringId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [autoFire, setAutoFire] = useState(false);
   const [now, setNow] = useState(() => Date.now());
   const autoFireRef = useRef(false);
@@ -66,6 +67,21 @@ export function DebuggerPage() {
   useEffect(() => {
     autoFireRef.current = autoFire;
   }, [autoFire]);
+
+  // subjectId is injected from the Subject ID field, so it must not be set in the JSON
+  const eventDataHasSubjectId = (() => {
+    if (!eventData.trim()) return false;
+    try {
+      const parsed = JSON.parse(eventData);
+      return (
+        parsed !== null &&
+        typeof parsed === "object" &&
+        Object.prototype.hasOwnProperty.call(parsed, "subjectId")
+      );
+    } catch {
+      return false;
+    }
+  })();
 
   const autoFireDueEvents = useCallback(async () => {
     if (!autoFireRef.current || autoFiringRef.current) return;
@@ -119,13 +135,23 @@ export function DebuggerPage() {
     setSubmitError(null);
 
     try {
-      let parsedData = {};
+      let parsedData: Record<string, unknown> = {};
       if (eventData.trim()) {
         try {
           parsedData = JSON.parse(eventData);
         } catch {
           throw new Error("Invalid JSON in event data");
         }
+      }
+
+      if (
+        parsedData !== null &&
+        typeof parsedData === "object" &&
+        Object.prototype.hasOwnProperty.call(parsedData, "subjectId")
+      ) {
+        throw new Error(
+          'Remove "subjectId" from Event Data — it is injected from the Subject ID field above.'
+        );
       }
 
       const result = await executeEvent(eventType, subjectId, parsedData);
@@ -174,6 +200,20 @@ export function DebuggerPage() {
       alert(err instanceof Error ? err.message : "Failed to fire event");
     } finally {
       setFiringId(null);
+    }
+  };
+
+  const handleDeleteScheduledEvent = async (scheduleId: string) => {
+    if (!confirm("Delete this scheduled event?")) return;
+
+    setDeletingId(scheduleId);
+    try {
+      await deleteScheduledEvent(scheduleId);
+      refetchScheduler();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to delete event");
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -248,12 +288,18 @@ export function DebuggerPage() {
                 minH="120px"
                 fontFamily="mono"
                 resize="vertical"
+                borderColor={eventDataHasSubjectId ? "red.400" : undefined}
               />
+              {eventDataHasSubjectId && (
+                <Text fontSize="xs" color="red.500" mt="1">
+                  Remove "subjectId" from the event data — it is injected from the Subject ID field above.
+                </Text>
+              )}
             </Field.Root>
             <Button
               type="submit"
               colorPalette="blue"
-              disabled={isSubmitting}
+              disabled={isSubmitting || eventDataHasSubjectId}
             >
               {isSubmitting ? "Sending..." : "Send Event"}
             </Button>
@@ -342,14 +388,25 @@ export function DebuggerPage() {
                         {formatTimeToFire(entry.fireAt)}
                       </Text>
                     </Box>
-                    <Button
-                      size="xs"
-                      colorPalette={isPast ? "blue" : "gray"}
-                      disabled={!isPast || firingId === entry.scheduleId}
-                      onClick={() => handleFire(entry.scheduleId)}
-                    >
-                      {firingId === entry.scheduleId ? "Firing..." : "Fire"}
-                    </Button>
+                    <Flex align="center" gap="2">
+                      <Button
+                        size="xs"
+                        colorPalette={isPast ? "blue" : "gray"}
+                        disabled={!isPast || firingId === entry.scheduleId}
+                        onClick={() => handleFire(entry.scheduleId)}
+                      >
+                        {firingId === entry.scheduleId ? "Firing..." : "Fire"}
+                      </Button>
+                      <Button
+                        size="xs"
+                        variant="subtle"
+                        colorPalette="red"
+                        disabled={deletingId === entry.scheduleId}
+                        onClick={() => handleDeleteScheduledEvent(entry.scheduleId)}
+                      >
+                        {deletingId === entry.scheduleId ? "Deleting..." : "Delete"}
+                      </Button>
+                    </Flex>
                   </Flex>
                 );
               })}
@@ -390,10 +447,10 @@ export function DebuggerPage() {
                     <Text fontSize="sm" fontWeight="500">
                       {sub.eventType}{" "}
                       <Badge
-                        colorPalette={sub.matchValue === "*" ? "orange" : "purple"}
+                        colorPalette={sub.matchSubjectId === "*" ? "orange" : "purple"}
                         variant="subtle"
                       >
-                        {sub.matchValue === "*" ? "any subject" : sub.matchValue}
+                        {sub.matchSubjectId === "*" ? "any subject" : sub.matchSubjectId}
                       </Badge>
                     </Text>
                     <Text fontSize="xs" color="gray.500">
@@ -498,7 +555,7 @@ export function DebuggerPage() {
                                 variant="subtle"
                                 ml="1"
                                 title={ctx.subscriptions
-                                  ?.map((s) => `${s.eventType} ← ${s.matchValue}`)
+                                  ?.map((s) => `${s.eventType} ← ${s.matchSubjectId}`)
                                   .join(", ")}
                               >
                                 Subscribed
