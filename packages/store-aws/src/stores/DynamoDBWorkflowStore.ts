@@ -42,7 +42,11 @@ export class DynamoDBWorkflowStore implements WorkflowStore {
   private tableName: string;
 
   constructor(config: DynamoDBWorkflowStoreConfig) {
-    this.docClient = DynamoDBDocumentClient.from(config.client);
+    this.docClient = DynamoDBDocumentClient.from(config.client, {
+      // Contexts/items may carry optional fields set to undefined (e.g. a
+      // cleared context.subscriptions); drop them instead of throwing.
+      marshallOptions: { removeUndefinedValues: true },
+    });
     this.tableName = config.tableName;
   }
 

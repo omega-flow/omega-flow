@@ -531,7 +531,13 @@ export class WorkflowManager {
       });
     }
 
-    context.subscriptions = desired.length > 0 ? desired : undefined;
+    // Remove the key entirely when empty: assigning `undefined` breaks
+    // storage backends that reject undefined values (e.g. DynamoDB marshalling).
+    if (desired.length > 0) {
+      context.subscriptions = desired;
+    } else {
+      delete context.subscriptions;
+    }
     await this.workflowMemory.saveContext(
       domain,
       workflowId,

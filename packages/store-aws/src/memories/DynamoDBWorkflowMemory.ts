@@ -63,7 +63,11 @@ export class DynamoDBWorkflowMemory implements WorkflowMemory {
   private gsiName: string;
 
   constructor(config: DynamoDBWorkflowMemoryConfig) {
-    this.docClient = DynamoDBDocumentClient.from(config.client);
+    this.docClient = DynamoDBDocumentClient.from(config.client, {
+      // Contexts/items may carry optional fields set to undefined (e.g. a
+      // cleared context.subscriptions); drop them instead of throwing.
+      marshallOptions: { removeUndefinedValues: true },
+    });
     this.tableName = config.tableName;
     this.gsiName = config.gsiName ?? "domain-subjectId-index";
   }
