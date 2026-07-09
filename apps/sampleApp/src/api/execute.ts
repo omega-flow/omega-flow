@@ -2,15 +2,18 @@ import { apiRequest } from "./client";
 
 const DOMAIN = "default";
 
-/** One cross-subject subscription delivery reported by the execute endpoint. */
+/**
+ * One cross-subject subscription delivery scheduled by the execute endpoint.
+ * The delivery travels through the workflow scheduler — fire it (or use
+ * auto-fire) to resume the subscribed instance.
+ */
 export interface DeliveryResult {
+  scheduleId: string;
   workflowId: string;
   subjectId: string;
   instanceId: string;
   nodeId: string;
   matchSubjectId: string;
-  /** True when the target instance was actually resumed, false when dropped */
-  resumed: boolean;
 }
 
 export interface ExecuteResponse {

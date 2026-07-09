@@ -277,19 +277,26 @@ describe("WorkflowManager - Event subscriptions", () => {
       );
 
       expect(deliveryEvent.type).toBe("product.update");
+      // Explicit envelope routing: the copy is self-routing regardless of
+      // how the host's eventExtractor derives routing
+      expect(deliveryEvent.domain).toBe(testDomain);
+      expect(deliveryEvent.subjectId).toBe("client:5");
       expect(deliveryEvent.data.subjectId).toBe("client:5");
       expect(deliveryEvent.data.payload).toEqual(
         productUpdateEvent.data.payload
       );
-      expect(deliveryEvent.data.delivery).toEqual({
+      // Delivery metadata lives on the envelope, not in host data
+      expect(deliveryEvent.delivery).toEqual({
         workflowId: "back-in-stock",
         instanceId: match.instanceId,
         nodeId: "wait-product",
         sourceSubjectId: "product:456",
       });
+      expect(deliveryEvent.data.delivery).toBeUndefined();
       // Original event is not mutated
-      expect(productUpdateEvent.data.delivery).toBeUndefined();
+      expect(productUpdateEvent.delivery).toBeUndefined();
       expect(productUpdateEvent.data.subjectId).toBe("product:456");
+      expect(productUpdateEvent.subjectId).toBeUndefined();
     });
   });
 
@@ -402,7 +409,7 @@ describe("WorkflowManager - Event subscriptions", () => {
         productUpdateEvent,
         match
       );
-      deliveryEvent.data.delivery.nodeId = "some-other-node";
+      deliveryEvent.delivery.nodeId = "some-other-node";
 
       const resumed = await manager.deliverEvent(
         testDomain,
@@ -422,6 +429,201 @@ describe("WorkflowManager - Event subscriptions", () => {
       expect(contexts[0].currentNodeId).toBe("wait-product");
       expect(subscriptionStore.getAll()).toHaveLength(1);
       warn.mockRestore();
+    });
+  });
+
+  describe("processEvent pipeline (scheduler-routed delivery)", () => {
+    it("schedules one delivery per match and reports it in the result", async () => {
+      const manager = createManager(
+        buildCrossSubjectWorkflow(
+          "product:{{trigger.payload.products[0].product_id}}"
+        )
+      );
+      await manager.processEvent(orderCreateEvent);
+      // Parking on TriggerOrTimeout schedules its own timeout event
+      const schedulesAfterPark = scheduler.getScheduleCount();
+
+      const result = await manager.processEvent(productUpdateEvent);
+
+      expect(result.deliveries).toHaveLength(1);
+      expect(result.deliveries[0]).toMatchObject({
+        workflowId: "back-in-stock",
+        subjectId: "client:5",
+        nodeId: "wait-product",
+        matchSubjectId: "product:456",
+      });
+      expect(result.deliveries[0].scheduleId).toBeDefined();
+      // The delivery copy is parked in the scheduler, not resumed inline
+      expect(scheduler.getScheduleCount()).toBe(schedulesAfterPark + 1);
+      expect(subscriptionStore.getAll()).toHaveLength(1);
+
+      // Don't let the delay-0 delivery fire into a torn-down test
+      await scheduler.cancel(result.deliveries[0].scheduleId);
+    });
+
+    it("resumes the subscriber end-to-end when the scheduled delivery fires", async () => {
+      const manager = createManager(
+        buildCrossSubjectWorkflow(
+          "product:{{trigger.payload.products[0].product_id}}"
+        )
+      );
+      await manager.processEvent(orderCreateEvent);
+      const schedulesAfterPark = scheduler.getScheduleCount();
+      await manager.processEvent(productUpdateEvent);
+
+      // The in-memory scheduler fires the delay-0 delivery on the next tick
+      await new Promise((resolve) => setTimeout(resolve, 20));
+
+      const contexts = await memory.getContexts(
+        testDomain,
+        "back-in-stock",
+        "client:5"
+      );
+      expect(contexts[0].isCompleted).toBe(true);
+      expect(contexts[0].nodeState["wait-product"].resolvedBy).toBe("trigger");
+      expect(subscriptionStore.getAll()).toHaveLength(0);
+      // The delivery schedule is consumed (only the node's timeout remains)
+      expect(scheduler.getScheduleCount()).toBe(schedulesAfterPark);
+    });
+
+    it("handles a delivery copy through processEvent (targeted resume, no fan-out)", async () => {
+      const manager = createManager(
+        buildCrossSubjectWorkflow(
+          "product:{{trigger.payload.products[0].product_id}}"
+        )
+      );
+      await manager.processEvent(orderCreateEvent);
+      const [match] = await manager.matchSubscriptions(productUpdateEvent);
+      const deliveryEvent = manager.createDeliveryEvent(
+        productUpdateEvent,
+        match
+      );
+
+      const result = await manager.processEvent(deliveryEvent);
+
+      expect(result.delivered).toBe(true);
+      expect(result.deliveries).toEqual([]);
+      const contexts = await memory.getContexts(
+        testDomain,
+        "back-in-stock",
+        "client:5"
+      );
+      expect(contexts[0].isCompleted).toBe(true);
+      expect(subscriptionStore.getAll()).toHaveLength(0);
+    });
+
+    it("reports delivered=false for a redelivered copy (idempotent)", async () => {
+      const warn = jest.spyOn(console, "warn").mockImplementation(() => {});
+      const manager = createManager(
+        buildCrossSubjectWorkflow(
+          "product:{{trigger.payload.products[0].product_id}}"
+        )
+      );
+      await manager.processEvent(orderCreateEvent);
+      const [match] = await manager.matchSubscriptions(productUpdateEvent);
+      const deliveryEvent = manager.createDeliveryEvent(
+        productUpdateEvent,
+        match
+      );
+
+      await manager.processEvent(deliveryEvent);
+      const second = await manager.processEvent(deliveryEvent);
+
+      expect(second.delivered).toBe(false);
+      expect(second.deliveries).toEqual([]);
+      warn.mockRestore();
+    });
+
+    it("schedules nothing when no subscriptionStore is configured", async () => {
+      const manager = createManager(
+        buildCrossSubjectWorkflow(
+          "product:{{trigger.payload.products[0].product_id}}"
+        ),
+        false
+      );
+      await manager.processEvent(orderCreateEvent);
+      const schedulesAfterPark = scheduler.getScheduleCount();
+
+      const result = await manager.processEvent(productUpdateEvent);
+
+      expect(result.deliveries).toEqual([]);
+      expect(scheduler.getScheduleCount()).toBe(schedulesAfterPark);
+    });
+  });
+
+  describe("envelope routing (explicit domain/subjectId)", () => {
+    it("routes by top-level fields without any eventExtractor", async () => {
+      const workflow = buildCrossSubjectWorkflow(
+        "product:{{trigger.payload.products[0].product_id}}"
+      );
+      store = new InMemoryWorkflowStore([{ domain: testDomain, workflow }]);
+      memory = new InMemoryWorkflowMemory();
+      scheduler = new InMemoryWorkflowScheduler();
+      subscriptionStore = new InMemorySubscriptionStore();
+      const manager = new WorkflowManager({
+        workflowStore: store,
+        workflowMemory: memory,
+        workflowScheduler: scheduler,
+        nodeModels: nodeTypes,
+        subscriptionStore,
+        // no eventExtractor
+      });
+      scheduler.setWorkflowManager(manager);
+
+      await manager.processEvent({
+        ...orderCreateEvent,
+        domain: testDomain,
+        subjectId: "client:5",
+      });
+
+      const contexts = await memory.getContexts(
+        testDomain,
+        "back-in-stock",
+        "client:5"
+      );
+      expect(contexts).toHaveLength(1);
+      expect(subscriptionStore.getAll()).toHaveLength(1);
+    });
+
+    it("explicit envelope fields win over the eventExtractor", async () => {
+      const manager = createManager(
+        buildCrossSubjectWorkflow(
+          "product:{{trigger.payload.products[0].product_id}}"
+        )
+      );
+
+      // The extractor would derive client:5 from data.subjectId; the
+      // envelope says client:99 — the envelope must win.
+      await manager.processEvent({
+        ...orderCreateEvent,
+        domain: testDomain,
+        subjectId: "client:99",
+      });
+
+      expect(
+        await memory.getContexts(testDomain, "back-in-stock", "client:99")
+      ).toHaveLength(1);
+      expect(
+        await memory.getContexts(testDomain, "back-in-stock", "client:5")
+      ).toHaveLength(0);
+    });
+
+    it("throws when an event has neither envelope routing nor an eventExtractor", async () => {
+      const workflow = buildCrossSubjectWorkflow(null);
+      store = new InMemoryWorkflowStore([{ domain: testDomain, workflow }]);
+      memory = new InMemoryWorkflowMemory();
+      scheduler = new InMemoryWorkflowScheduler();
+      const manager = new WorkflowManager({
+        workflowStore: store,
+        workflowMemory: memory,
+        workflowScheduler: scheduler,
+        nodeModels: nodeTypes,
+        // no eventExtractor
+      });
+
+      await expect(manager.processEvent(orderCreateEvent)).rejects.toThrow(
+        /Cannot route event/
+      );
     });
   });
 

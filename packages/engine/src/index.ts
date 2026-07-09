@@ -24,6 +24,8 @@ export {
   type WorkflowManagerConfig,
   type NodeModelClass,
   type NodeModelRegistry,
+  type ProcessEventResult,
+  type ScheduledDelivery,
   type WorkflowStore,
   type WorkflowMemory,
   type WorkflowScheduler,

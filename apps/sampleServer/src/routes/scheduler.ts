@@ -1,8 +1,8 @@
 import { Router } from "express";
 import { WorkflowManager } from "@omega-flow/engine";
+import type { Event } from "@omega-flow/types";
 import type { SampleWorkflowStore, SampleWorkflowMemory, SampleWorkflowScheduler, SampleSubscriptionStore } from "../stores/types.js";
 import { nodeModels } from "../nodes/index.js";
-import { deliverToSubscribers } from "../subscriptionDelivery.js";
 
 export function createSchedulerRoutes(
   workflowStore: SampleWorkflowStore,
@@ -39,13 +39,14 @@ export function createSchedulerRoutes(
       }
       const { scheduleId } = req.params;
 
-      const entry = await workflowScheduler.remove(scheduleId) as { event: { id: string; time: number; type: string; data?: unknown } } | null;
+      const entry = (await workflowScheduler.remove(scheduleId)) as { event: Event } | null;
       if (!entry) {
         res.status(404).json({ error: "Scheduled event not found" });
         return;
       }
 
-      // Determine domain from event data
+      // Fallback domain for events without envelope routing (subscription
+      // delivery copies carry explicit domain/subjectId and route themselves)
       const domain = "default";
 
       const manager = new WorkflowManager({
@@ -58,9 +59,10 @@ export function createSchedulerRoutes(
       });
       workflowScheduler.setWorkflowManager?.(manager);
 
-      await manager.processEvent(entry.event);
-
-      const deliveries = await deliverToSubscribers(manager, domain, entry.event);
+      // processEvent handles everything: a fired delivery copy resumes its
+      // target instance (result.delivered); an ordinary fired event (e.g. a
+      // timeout) runs normal routing and may schedule further deliveries.
+      const result = await manager.processEvent(entry.event);
 
       res.json({
         success: true,
@@ -69,7 +71,8 @@ export function createSchedulerRoutes(
           time: entry.event.time,
           type: entry.event.type,
         },
-        deliveries,
+        delivered: result.delivered,
+        deliveries: result.deliveries,
       });
     } catch (error) {
       console.error("Error firing scheduled event:", error);

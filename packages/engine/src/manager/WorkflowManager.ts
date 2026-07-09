@@ -1,6 +1,5 @@
 import {
   type Event,
-  type EventDelivery,
   type Workflow,
   type Context,
   type ContextSubscription,
@@ -51,13 +50,59 @@ export interface WorkflowManagerConfig {
    */
   subscriptionStore?: SubscriptionStore;
   /**
-   * Function to extract domain and subject ID from an event.
-   * The domain allows multi-tenant workflow isolation.
-   * The subject ID identifies which entity (user, order, etc.) the workflow is for.
+   * Function to derive domain and subject ID from an event that does not
+   * carry them explicitly.
+   *
+   * Routing precedence: when an event has top-level `domain` and `subjectId`
+   * (explicit envelope routing — e.g. set at ingest, or on delivery copies
+   * created by the engine), those always win and this function is not called.
+   * The extractor is the fallback for events that arrive without explicit
+   * routing (e.g. raw webhooks). Optional — a host that sets the envelope
+   * fields on every event needs no extractor; routing an event that has
+   * neither is an error.
+   *
    * @param event - The incoming event
    * @returns Tuple of [domain, subjectId]
    */
-  eventExtractor: (event: Event) => [string, string];
+  eventExtractor?: (event: Event) => [string, string];
+}
+
+/**
+ * One delivery scheduled by `processEvent` for a matched subscription.
+ * The delivery copy travels through the configured `workflowScheduler`
+ * (delay 0) and resumes the target instance when it comes back through
+ * `processEvent`.
+ */
+export interface ScheduledDelivery {
+  /** Schedule id returned by the workflowScheduler */
+  scheduleId: string;
+  /** Workflow of the subscribing instance */
+  workflowId: string;
+  /** Subject the subscribing instance lives under (e.g. `client:5`) */
+  subjectId: string;
+  /** The subscribing workflow instance */
+  instanceId: string;
+  /** The parked node that declared the subscription */
+  nodeId: string;
+  /** The subscription's match subject id (`"*"` for wildcard) */
+  matchSubjectId: string;
+}
+
+/**
+ * Result of `processEvent`.
+ */
+export interface ProcessEventResult {
+  /**
+   * Present only when the event was a delivery copy (`event.delivery`):
+   * true if the target instance was resumed, false if the delivery was
+   * dropped (instance gone / completed / no longer parked on the node).
+   */
+  delivered?: boolean;
+  /**
+   * Deliveries scheduled for subscriptions matched by this event
+   * (always empty for delivery copies — no fan-out of copies).
+   */
+  deliveries: ScheduledDelivery[];
 }
 
 /**
@@ -79,10 +124,13 @@ export interface WorkflowManagerConfig {
  *   workflowMemory: new InMemoryWorkflowMemory(),
  *   workflowScheduler: new InMemoryWorkflowScheduler(),
  *   nodeModels: { Trigger: TriggerModel, Action: ActionModel, Exit: ExitModel },
+ *   // fallback for events without top-level domain/subjectId:
  *   eventExtractor: (event) => [event.data.domain, event.data.userId],
  * });
  *
- * await manager.processEvent({ type: 'user_signup', time: Date.now(), data: {...} });
+ * // The single entry point for every incoming message — including delivery
+ * // copies relayed by the scheduler for cross-subject subscriptions.
+ * await manager.processEvent({ id, type: 'user_signup', time: Date.now(), data: {...} });
  * ```
  */
 export class WorkflowManager {
@@ -96,8 +144,8 @@ export class WorkflowManager {
   private nodeModels: NodeModelRegistry;
   /** Optional storage backend for cross-subject event subscriptions */
   private subscriptionStore?: SubscriptionStore;
-  /** Function to extract domain and subject ID from events */
-  private eventExtractor: (event: Event) => [string, string];
+  /** Fallback for events without explicit envelope routing */
+  private eventExtractor?: (event: Event) => [string, string];
 
   /**
    * Creates a new WorkflowManager instance.
@@ -113,12 +161,55 @@ export class WorkflowManager {
   }
 
   /**
-   * Process an event by routing it to appropriate workflow instances
-   * @param event - The event to process
+   * Resolve an event's routing. Explicit envelope fields (`event.domain` +
+   * `event.subjectId`) always win; the configured `eventExtractor` is the
+   * fallback for events that don't carry them. This precedence is what makes
+   * engine-created delivery copies self-routing under any host configuration.
    */
-  async processEvent(event: Event): Promise<void> {
+  private resolveRouting(event: Event): [string, string] {
+    if (event.domain != null && event.subjectId != null) {
+      return [event.domain, event.subjectId];
+    }
+    if (this.eventExtractor) {
+      return this.eventExtractor(event);
+    }
+    throw new Error(
+      `Cannot route event ${event.id} (${event.type}): it carries no domain/subjectId and no eventExtractor is configured`
+    );
+  }
+
+  /**
+   * Process an event — the single entry point for every incoming message.
+   *
+   * - A delivery copy (`event.delivery` present) is routed straight to
+   *   the targeted resume (`deliverEvent`) of exactly one instance; normal
+   *   matching never runs for it.
+   * - Any other event is routed to the workflows of its subject as before;
+   *   afterwards, if a subscriptionStore is configured, subscriptions
+   *   matching the event are looked up and one delivery copy per subscriber
+   *   is scheduled through the workflowScheduler (delay 0) — the copy comes
+   *   back through `processEvent` in the subscriber's own ordering scope.
+   *
+   * @param event - The event to process
+   * @returns What happened: `delivered` for delivery copies, `deliveries`
+   *          scheduled for matched subscriptions
+   */
+  async processEvent(event: Event): Promise<ProcessEventResult> {
+    const delivery = event.delivery;
+    if (delivery) {
+      const [domain, subjectId] = this.resolveRouting(event);
+      const delivered = await this.deliverEvent(
+        domain,
+        delivery.workflowId,
+        subjectId,
+        delivery.instanceId,
+        event
+      );
+      return { delivered, deliveries: [] };
+    }
+
     // Extract domain and subject ID from the event
-    const [domain, subjectId] = this.eventExtractor(event);
+    const [domain, subjectId] = this.resolveRouting(event);
 
     // Get all workflow definitions for this domain
     const workflows = await this.workflowStore.getAllWorkflows(domain);
@@ -149,6 +240,41 @@ export class WorkflowManager {
         // Continue processing other workflows even if one fails
       }
     }
+
+    // Cross-subject subscriptions: schedule one delivery copy per subscriber.
+    // Errors propagate — an at-least-once transport retries the whole
+    // message; duplicate schedules are absorbed by transport dedup and
+    // deliverEvent's idempotency.
+    const deliveries = await this.scheduleDeliveries(event);
+    return { deliveries };
+  }
+
+  /**
+   * Match an event against registered subscriptions and schedule one
+   * delivery copy per subscriber through the workflowScheduler (delay 0).
+   * No-op (empty result) when subscriptions are off or nothing matches.
+   */
+  private async scheduleDeliveries(event: Event): Promise<ScheduledDelivery[]> {
+    const matches = await this.matchSubscriptions(event);
+    const deliveries: ScheduledDelivery[] = [];
+
+    for (const subscription of matches) {
+      const deliveryEvent = this.createDeliveryEvent(event, subscription);
+      const scheduleId = await this.workflowScheduler.schedule(
+        deliveryEvent,
+        0
+      );
+      deliveries.push({
+        scheduleId,
+        workflowId: subscription.workflowId,
+        subjectId: subscription.subjectId,
+        instanceId: subscription.instanceId,
+        nodeId: subscription.nodeId,
+        matchSubjectId: subscription.matchSubjectId,
+      });
+    }
+
+    return deliveries;
   }
 
   /**
@@ -433,10 +559,9 @@ export class WorkflowManager {
    * domain, for this event's type, whose matchSubjectId equals the event's own
    * subject id — plus wildcard subscriptions for the same event type.
    *
-   * Call this after `processEvent` and relay a delivery copy of the event
-   * (see `createDeliveryEvent`) to each returned subscription — either
-   * synchronously via `deliverEvent` (single-process setups) or through a
-   * queue that serializes it with the subscriber's own events.
+   * `processEvent` calls this (and schedules the deliveries) automatically;
+   * it stays public as a low-level primitive for hosts that run their own
+   * relay.
    *
    * Returns an empty array when no subscriptionStore is configured, and for
    * delivery events (a delivered copy must not fan out again).
@@ -448,39 +573,43 @@ export class WorkflowManager {
     if (!this.subscriptionStore) {
       return [];
     }
-    if (event.data?.delivery) {
+    if (event.delivery) {
       return [];
     }
-    const [domain, subjectId] = this.eventExtractor(event);
+    const [domain, subjectId] = this.resolveRouting(event);
     return this.subscriptionStore.match(domain, event.type, subjectId);
   }
 
   /**
    * Build the delivery copy of an event for one matched subscription:
-   * the event retargeted at the subscriber's subject, carrying
-   * `data.delivery` metadata (see `createDeliveryEvent` for the shape).
+   * the event retargeted at the subscriber via the envelope (top-level
+   * `domain`/`subjectId`/`delivery` — see the standalone
+   * `createDeliveryEvent` for the shape).
+   *
+   * `processEvent` uses this internally; public as a low-level primitive.
    *
    * @param event - The original event that matched the subscription
    * @param subscription - The matched subscription
    * @returns The event copy to relay to the subscriber
    */
   createDeliveryEvent(event: Event, subscription: Subscription): Event {
-    const [, sourceSubjectId] = this.eventExtractor(event);
+    const [, sourceSubjectId] = this.resolveRouting(event);
     return createDeliveryEvent(event, subscription, sourceSubjectId);
   }
 
   /**
    * Deliver an event to one specific workflow instance (targeted resume).
    *
-   * Unlike `processEvent`, this never starts new instances and never touches
+   * Unlike normal routing, this never starts new instances and never touches
    * any other instance: it loads exactly the addressed context, lets the
    * parked node accept the event, and persists the result (including
-   * subscription cleanup). Used to resume instances across subject spaces
-   * after a subscription match.
+   * subscription cleanup). `processEvent` calls this automatically for
+   * delivery copies (`event.delivery`); public as a low-level primitive
+   * for hosts that address instances themselves.
    *
    * The delivery is dropped (with a log, returning false) when the workflow
    * or instance is gone, the instance already completed, or it is no longer
-   * parked on the node recorded in `event.data.delivery.nodeId` — this makes
+   * parked on the node recorded in `event.delivery.nodeId` — this makes
    * redelivery of the same event idempotent.
    *
    * @param domain - The domain identifier
@@ -488,7 +617,7 @@ export class WorkflowManager {
    * @param subjectId - The subject the target instance lives under
    * @param instanceId - The target workflow instance
    * @param event - The event to deliver (typically a delivery copy carrying
-   *          `data.delivery`)
+   *          `event.delivery`)
    * @returns True if the instance was resumed, false if the delivery was dropped
    */
   async deliverEvent(
@@ -530,7 +659,7 @@ export class WorkflowManager {
       return false;
     }
 
-    const delivery = event.data?.delivery as EventDelivery | undefined;
+    const delivery = event.delivery;
     if (delivery?.nodeId && context.currentNodeId !== delivery.nodeId) {
       console.warn(
         `deliverEvent: instance no longer parked on node ${delivery.nodeId}, dropping (${target})`

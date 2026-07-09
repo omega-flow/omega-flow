@@ -34,7 +34,7 @@ export interface SampleWorkflowMemory extends WorkflowMemory {
 export interface SampleWorkflowScheduler extends WorkflowScheduler {
   getAll?(): Promise<unknown[]>;
   remove?(scheduleId: string): Promise<unknown | null>;
-  setWorkflowManager?(manager: { processEvent(event: unknown): Promise<void> }): void;
+  setWorkflowManager?(manager: { processEvent(event: unknown): Promise<unknown> }): void;
 }
 
 /**

@@ -98,11 +98,15 @@ export interface SubscriptionStore {
 /**
  * Build the delivery copy of an event for one matched subscription.
  *
- * The copy is retargeted at the subscriber: `data.subjectId` is set to the
- * subscriber's own subject (so transports and eventExtractors group it with
- * the subscriber's events) and `data.delivery` carries the target instance,
- * so consumers know to call `WorkflowManager.deliverEvent` instead of
- * `processEvent`.
+ * The copy is retargeted at the subscriber via the envelope: top-level
+ * `domain` / `subjectId` are set to the subscriber's own domain/subject
+ * (they always win over any configured `eventExtractor`, so the copy routes
+ * to the subscriber regardless of how the host derives routing for ordinary
+ * events), and top-level `delivery` carries the target instance —
+ * `WorkflowManager.processEvent` recognizes it and performs a targeted
+ * resume. All addressing is engine-owned envelope state; `data` stays the
+ * host's (only `data.subjectId` is additionally retargeted, for hosts whose
+ * transport extractors read it).
  *
  * @param event - The original event that matched the subscription
  * @param subscription - The matched subscription
@@ -121,10 +125,12 @@ export function createDeliveryEvent(
   };
   return {
     ...event,
+    domain: subscription.domain,
+    subjectId: subscription.subjectId,
+    delivery,
     data: {
       ...(event.data ?? {}),
       subjectId: subscription.subjectId,
-      delivery,
     },
   };
 }

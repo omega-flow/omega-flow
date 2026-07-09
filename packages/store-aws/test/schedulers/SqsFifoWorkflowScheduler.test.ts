@@ -72,6 +72,66 @@ describe("SqsFifoWorkflowScheduler", () => {
         },
       });
     });
+
+    it("prefers explicit envelope routing over the messageGroupIdExtractor", async () => {
+      schedulerMock.on(CreateScheduleCommand).resolves({});
+
+      // A subscription delivery copy: envelope says client:5, the extractor
+      // would derive shopA#order-42 from data — the envelope must win.
+      const deliveryEvent: Event = {
+        ...sampleEvent,
+        domain: "shopA",
+        subjectId: "client:5",
+      };
+      await scheduler.schedule(deliveryEvent, 0);
+
+      const input =
+        schedulerMock.commandCalls(CreateScheduleCommand)[0].args[0].input;
+      expect(input.Target?.SqsParameters?.MessageGroupId).toBe("shopA#client:5");
+    });
+
+    it("works without a messageGroupIdExtractor when events carry envelope routing", async () => {
+      schedulerMock.on(CreateScheduleCommand).resolves({});
+      const envelopeOnly = new SqsFifoWorkflowScheduler({
+        client: new SchedulerClient({}),
+        queueArn: QUEUE_ARN,
+        roleArn: ROLE_ARN,
+      });
+
+      await envelopeOnly.schedule(
+        { ...sampleEvent, domain: "shopA", subjectId: "order-42" },
+        60_000
+      );
+
+      const input =
+        schedulerMock.commandCalls(CreateScheduleCommand)[0].args[0].input;
+      expect(input.Target?.SqsParameters?.MessageGroupId).toBe("shopA#order-42");
+    });
+
+    it("throws when an event has neither envelope routing nor an extractor", async () => {
+      const envelopeOnly = new SqsFifoWorkflowScheduler({
+        client: new SchedulerClient({}),
+        queueArn: QUEUE_ARN,
+        roleArn: ROLE_ARN,
+      });
+
+      await expect(envelopeOnly.schedule(sampleEvent, 60_000)).rejects.toThrow(
+        /Cannot derive MessageGroupId/
+      );
+    });
+
+    it("clamps near-now schedules a minute ahead (EventBridge rejects past times)", async () => {
+      schedulerMock.on(CreateScheduleCommand).resolves({});
+
+      await scheduler.schedule(sampleEvent, 0);
+
+      const input =
+        schedulerMock.commandCalls(CreateScheduleCommand)[0].args[0].input;
+      const expectedFireAt = new Date(FIXED_NOW + 60_000)
+        .toISOString()
+        .slice(0, 19);
+      expect(input.ScheduleExpression).toBe(`at(${expectedFireAt})`);
+    });
   });
 
   describe("cancel", () => {

@@ -134,17 +134,25 @@ interface Event {
   id: string;
   time: number;
   type: string;
+  domain?: string;
+  subjectId?: string;
+  delivery?: EventDelivery;
   data?: any;
 }
 ```
 
-An event that can trigger or progress a workflow.
+An event that can trigger or progress a workflow. Everything the engine uses
+for addressing lives on the envelope (`domain`, `subjectId`, `delivery`) —
+`data` belongs to the host.
 
 | Property | Type | Description |
 |----------|------|-------------|
 | `id` | `string` | Unique event identifier |
 | `time` | `number` | Timestamp (Unix ms) |
 | `type` | `string` | Event type for matching |
+| `domain` | `string` *(optional)* | Explicit envelope routing: the domain (tenant). When both `domain` and `subjectId` are set, they always win over the configured `eventExtractor` |
+| `subjectId` | `string` *(optional)* | Explicit envelope routing: the subject the event is addressed to (e.g. `client:5`). Set by the engine on subscription delivery copies |
+| `delivery` | `EventDelivery` *(optional)* | Present only on subscription delivery copies (engine-authored): the one instance this copy must resume |
 | `data` | `any` | Optional payload data |
 
 ---
@@ -160,7 +168,7 @@ interface EventDelivery {
 }
 ```
 
-Delivery metadata carried in `event.data.delivery` on events relayed to a subscriber via an [event subscription](/guide/event-subscriptions). A delivery event is a copy of the original event, retargeted at one specific workflow instance — consumers must resume it via `WorkflowManager.deliverEvent`, never `processEvent`.
+Delivery metadata carried in `event.delivery` on events relayed to a subscriber via an [event subscription](/guide/event-subscriptions). A delivery event is a copy of the original event, retargeted at one specific workflow instance — `WorkflowManager.processEvent` recognizes it and performs a targeted resume of exactly that instance instead of normal routing.
 
 | Property | Type | Description |
 |----------|------|-------------|

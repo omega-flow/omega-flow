@@ -310,16 +310,13 @@ export function DebuggerPage() {
               Event sent successfully!{"\n"}ID: {submitResult.id}{"\n"}Time: {new Date(submitResult.time).toISOString()}
               {submitResult.deliveries.length > 0 && (
                 <Box mt="2" pt="2" borderTop="1px solid" borderColor="green.300">
-                  Subscription deliveries:
+                  Subscription deliveries (fire them from Scheduled Events to
+                  resume the subscribers):
                   {submitResult.deliveries.map((delivery, index) => (
                     <Text key={index} fontSize="xs" mt="1">
                       → {delivery.subjectId} / {delivery.workflowId} @ {delivery.nodeId}{" "}
-                      <Badge
-                        colorPalette={delivery.resumed ? "green" : "orange"}
-                        variant="solid"
-                        size="xs"
-                      >
-                        {delivery.resumed ? "resumed" : "dropped"}
+                      <Badge colorPalette="blue" variant="solid" size="xs">
+                        scheduled
                       </Badge>
                     </Text>
                   ))}
@@ -380,6 +377,11 @@ export function DebuggerPage() {
                     <Box>
                       <Text fontSize="sm" fontWeight="500">
                         {entry.event.type}
+                        {entry.event.delivery ? (
+                          <Badge colorPalette="purple" variant="solid" size="xs" ml="2">
+                            delivery
+                          </Badge>
+                        ) : null}
                       </Text>
                       <Text fontSize="xs" color="gray.500">
                         Subject: {entry.event.data?.subjectId || "—"}

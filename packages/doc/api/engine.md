@@ -21,21 +21,31 @@ new WorkflowManager(config: WorkflowManagerConfig)
 | `workflowScheduler` | `WorkflowScheduler` | Scheduler for time-based events |
 | `nodeModels` | `NodeModelRegistry` | Map of node type names to their NodeModel classes (`Record<string, NodeModelClass>`) |
 | `subscriptionStore` | `SubscriptionStore` *(optional)* | Storage backend for cross-subject [event subscriptions](/guide/event-subscriptions). Absent → subscriptions disabled, zero behavior change |
-| `eventExtractor` | `(event: Event) => [string, string]` | Function to extract `[domain, subjectId]` from events |
+| `eventExtractor` | `(event: Event) => [string, string]` *(optional)* | Fallback to derive `[domain, subjectId]` from events without explicit envelope routing. Events carrying top-level `domain`/`subjectId` route by them directly (the extractor is not called); an event with neither is a routing error |
 
 ### Methods
 
 #### processEvent
 
 ```typescript
-processEvent(event: Event): Promise<void>
+processEvent(event: Event): Promise<ProcessEventResult>
 ```
 
-Process an event by routing it to appropriate workflow instances. This method:
-- Extracts domain and subject ID from the event
-- Loads all workflows for the domain
-- Resumes active workflow instances with the event
-- Starts new instances if allowed by frequency rules
+Process an event — the single entry point for every incoming message:
+- A subscription **delivery copy** (`event.delivery` present) resumes
+  exactly the addressed instance (targeted, never starts instances)
+- Any other event is routed to the workflows of its subject: active
+  instances are resumed, new instances started if frequency rules allow
+- With a `subscriptionStore` configured, matching subscriptions are then
+  looked up and one delivery copy per subscriber is scheduled through the
+  `workflowScheduler` (delay 0)
+
+**Returns** `ProcessEventResult`:
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `delivered` | `boolean` *(only for delivery copies)* | Whether the target instance was resumed (`false` = dropped: gone/completed/no longer parked) |
+| `deliveries` | `ScheduledDelivery[]` | Deliveries scheduled for matched subscriptions (`scheduleId`, `workflowId`, `subjectId`, `instanceId`, `nodeId`, `matchSubjectId`) |
 
 #### deliverEvent
 
@@ -51,11 +61,12 @@ deliverEvent(
 
 Deliver an event to **one specific workflow instance** (targeted resume) —
 the delivery half of [event subscriptions](/guide/event-subscriptions).
-Unlike `processEvent` it never starts new instances and never touches any
-other instance. The delivery is dropped with a log (returning `false`) when
-the workflow or instance is gone, the instance already completed, or it is no
-longer parked on the node recorded in `event.data.delivery.nodeId` — this
-makes redelivery idempotent.
+`processEvent` calls this automatically for delivery copies; it stays public
+as a low-level primitive. Unlike normal routing it never starts new instances
+and never touches any other instance. The delivery is dropped with a log
+(returning `false`) when the workflow or instance is gone, the instance
+already completed, or it is no longer parked on the node recorded in
+`event.delivery.nodeId` — this makes redelivery idempotent.
 
 **Returns:** `true` if the instance was resumed, `false` if the delivery was dropped.
 
@@ -67,9 +78,10 @@ matchSubscriptions(event: Event): Promise<Subscription[]>
 
 Find subscriptions matching an event: subscriptions in the event's domain,
 for the event's type, whose `matchSubjectId` equals the event's own subject id
-(per `eventExtractor`) — plus wildcard subscriptions. Returns `[]` when no
-`subscriptionStore` is configured and for delivery events (a delivered copy
-never fans out again).
+— plus wildcard subscriptions. `processEvent` calls this (and schedules the
+deliveries) automatically; public for hosts that run their own relay. Returns
+`[]` when no `subscriptionStore` is configured and for delivery events (a
+delivered copy never fans out again).
 
 #### createDeliveryEvent
 
@@ -78,9 +90,11 @@ createDeliveryEvent(event: Event, subscription: Subscription): Event
 ```
 
 Build the delivery copy of an event for one matched subscription: the event
-retargeted at the subscriber (`data.subjectId` set to the subscriber's
-subject) carrying `data.delivery` metadata (`EventDelivery` — workflowId,
-instanceId, nodeId, sourceSubjectId).
+retargeted at the subscriber via explicit envelope routing (top-level
+`domain`/`subjectId`, which always win over any `eventExtractor` — the copy
+is self-routing), carrying `event.delivery` metadata (`EventDelivery` —
+workflowId, instanceId, nodeId, sourceSubjectId). `data.subjectId` is also
+retargeted for transports that read it.
 
 #### getScheduler
 

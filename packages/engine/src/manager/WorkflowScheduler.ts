@@ -9,7 +9,7 @@ export interface IWorkflowManager {
    * Process an event through the workflow system.
    * @param event - The event to process
    */
-  processEvent(event: Event): Promise<void>;
+  processEvent(event: Event): Promise<unknown>;
 }
 
 /**

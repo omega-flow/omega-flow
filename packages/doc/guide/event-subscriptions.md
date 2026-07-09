@@ -9,7 +9,7 @@ like Temporal (signals) or Camunda (message correlation).
 The engine routes every event to exactly one subject:
 
 ```
-eventExtractor(event) -> [domain, subjectId]
+routing               =  event.domain / event.subjectId (or eventExtractor)
 instance identity     =  (domain, workflowId, subjectId)
 ```
 
@@ -35,8 +35,8 @@ subject space, the engine registers a **subscription**:
 > "Instance I (domain D, workflow W, subject S) wants events of type T whose
 > source subject is X."
 
-When such an event arrives, the router looks up subscribers and **delivers a
-copy of the event to each subscriber**, targeted at that specific instance.
+When such an event arrives, the engine looks up subscribers and **delivers a
+copy of the event to each one**, targeted at that specific instance.
 
 Key properties:
 
@@ -46,6 +46,10 @@ Key properties:
 - **One subscription per parked node.** The subscription is registered when
   the instance parks and deleted as soon as it advances (event delivered,
   timeout fired, or instance completed).
+- **Delivery rides the scheduler.** Delivery copies travel through the
+  ordinary `workflowScheduler` (delay 0) — the same transport as `Wait`
+  wake-ups — so they arrive serialized with the subscriber's own events and
+  need no extra infrastructure.
 - **Explicit wildcard.** A subscription without a match subject id ("ANY
   `product.update` in the domain") uses the same mechanism — allowed, but the
   cost is opt-in and per-instance.
@@ -53,7 +57,8 @@ Key properties:
 ## Enabling subscriptions
 
 Subscriptions are off by default. Configure a `SubscriptionStore` on the
-`WorkflowManager` to enable them — without one, nothing changes:
+`WorkflowManager` to enable them — that is the **only** wiring; `processEvent`
+does everything else:
 
 ```typescript
 import {
@@ -65,14 +70,20 @@ import {
 const manager = new WorkflowManager({
   workflowStore,
   workflowMemory,
-  workflowScheduler,
+  workflowScheduler,               // also carries subscription deliveries
   subscriptionStore: new InMemorySubscriptionStore(), // enables the feature
   nodeModels: defaultNodeModels,
   eventExtractor: (event) => [event.data.shop, event.data.subjectId],
 });
+
+// The single entry point for every incoming message — including the
+// delivery copies the scheduler relays back:
+const result = await manager.processEvent(event);
+result.deliveries; // deliveries scheduled for matched subscriptions
+result.delivered;  // set when the event itself was a delivery copy
 ```
 
-Available implementations:
+Available store implementations:
 
 - `InMemorySubscriptionStore` (`@omega-flow/engine`) — tests, development
 - `DynamoDBSubscriptionStore` (`@omega-flow/store-aws`) — production, see
@@ -114,9 +125,9 @@ The `subjectId` is a template resolved **once, at park time**, against the
 instance context. Double-curly-brace placeholders are looked up in a scope where
 `trigger` is the data of the event that started the instance (captured on
 `context.triggerEvent`). Paths support dot notation and array indices. The
-resolved value must equal the **subject id the source event is routed to**
-(whatever your `eventExtractor` produces for it) — e.g. `product:456` when
-product events are routed to typed `product:<id>` subjects.
+resolved value must equal the **subject id the source event is routed to** —
+e.g. `product:456` when product events are routed to typed `product:<id>`
+subjects.
 
 If the template cannot be resolved (missing path), a warning is logged and
 **no subscription is registered** — the instance can then only resume via its
@@ -129,82 +140,81 @@ from customer-less events already works by routing them to their own typed
 subject space (e.g. one instance per product).
 :::
 
-## End-to-end event flow
+## How delivery works
 
 Back-in-stock example: an instance under `client:5` parks on
 `TriggerOrTimeout(event=product.update, match.subjectId=product:456)`.
+Every step below happens inside `processEvent` — the host just keeps calling
+it for every message:
 
 ```
 1. PARK      client:5 event processed; the workflow stops on the node.
-             The engine resolves the match subject id and registers
-             (domain, product.update, product:456) -> instance, and records
-             the subscription on the instance's context.
+             The engine registers (domain, product.update, product:456)
+             -> instance, and records the subscription on the context.
 
-2. EVENT     product.update for product 456 arrives (no customer id).
-             It is routed to subject product:456 — exactly as today; any
-             product-space workflows see it via processEvent.
+2. EVENT     product.update for product 456 arrives (no customer id) and is
+             routed to subject product:456 — any product-space workflows see
+             it, exactly as without subscriptions.
 
-3. MATCH     After processEvent, the consumer calls
-             manager.matchSubscriptions(event) — two cheap lookups
+3. MATCH     processEvent then looks up subscribers — two cheap lookups
              (exact subject + wildcard), both usually empty.
 
-4. RELAY     For each match, manager.createDeliveryEvent(event, subscription)
-             builds a copy retargeted at the subscriber:
-               data.subjectId = "client:5"          // subscriber's subject
-               data.delivery  = { workflowId, instanceId, nodeId,
-                                  sourceSubjectId: "product:456" }
-             In a distributed setup, enqueue this copy into the subscriber's
-             FIFO group so it serializes with the subject's own events.
+4. RELAY     For each match, a delivery copy is scheduled through the
+             workflowScheduler (delay 0). All addressing is on the envelope:
+               domain / subjectId = "client:5"     // self-routing
+               delivery = { workflowId, instanceId, nodeId,
+                            sourceSubjectId: "product:456" }
 
-5. DELIVER   The consumer sees data.delivery and calls
-               manager.deliverEvent(domain, workflowId, subjectId,
-                                    instanceId, deliveryEvent)
-             which loads THAT context only, lets the parked node accept the
-             event, advances the workflow, saves, and deletes the node's
-             subscription.
+5. DELIVER   The copy comes back through processEvent (in the subscriber's
+             own ordering scope). processEvent sees event.delivery and
+             resumes exactly that instance — it loads that one context, lets
+             the parked node accept the event, advances, saves, and deletes
+             the subscription. Nothing else runs.
 ```
 
-In a single-process setup (like the sample server) steps 3–5 run
-synchronously right after `processEvent`:
+### Delivery copies route themselves
 
-```typescript
-await manager.processEvent(event);
+A delivery copy carries explicit **envelope routing**: top-level
+`event.domain` / `event.subjectId` set to the subscriber. Explicit envelope
+fields always win over the configured `eventExtractor`, so the copy reaches
+the subscriber no matter how the host derives routing for ordinary events —
+there is no extractor contract to keep in sync. (Any event can use envelope
+routing, not just delivery copies: set the fields at ingest and you don't
+need an `eventExtractor` at all.)
 
-for (const subscription of await manager.matchSubscriptions(event)) {
-  const deliveryEvent = manager.createDeliveryEvent(event, subscription);
-  await manager.deliverEvent(
-    domain,
-    subscription.workflowId,
-    subscription.subjectId,
-    subscription.instanceId,
-    deliveryEvent
-  );
-}
-```
+### Why a targeted resume instead of normal routing?
 
-### Why a targeted `deliverEvent` instead of `processEvent`?
+Running normal routing for the copy under the subscriber's subject would
+offer `product.update` to every *other* workflow in the domain under
+`client:5` — a workflow whose start trigger is `product.update` would happily
+start a bogus instance keyed to a customer. Delivery resumes exactly one
+instance and never starts anything.
 
-A full `processEvent` under the subscriber's subject would offer
-`product.update` to every *other* workflow in the domain under `client:5` — a
-workflow whose start trigger is `product.update` would happily start a bogus
-instance keyed to a customer. Delivery must resume exactly one instance and
-do nothing else: `deliverEvent` never starts instances.
-
-### Why relay through a queue in distributed setups?
+### Why through the scheduler instead of resuming inline?
 
 Resuming the subscriber inline while processing the source subject's event
 means two writers can touch the subscriber's context concurrently — exactly
-the lost-update problem per-subject FIFO groups exist to prevent. Re-enqueuing
-the delivery into the subscriber's own group buys back serialization.
+the lost-update problem per-subject serialization exists to prevent. The
+scheduler hop re-enters the event in the subscriber's own ordering scope
+(with `SqsFifoWorkflowScheduler`, its own FIFO message group), buying back
+serialization with infrastructure that is already there.
+
+### Low-level primitives
+
+`matchSubscriptions(event)`, `createDeliveryEvent(event, subscription)` and
+`deliverEvent(domain, workflowId, subjectId, instanceId, event)` remain
+public on `WorkflowManager` for hosts that run their own relay — but with the
+built-in pipeline they are not needed.
 
 ## Races and failure modes
 
 | Race | Handling |
 | --- | --- |
 | Event arrives before the subscription is registered | Missed by design — same as "you weren't listening yet". The `TriggerOrTimeout` timeout is the user-facing safety net. |
-| Instance completes/advances while a delivery is in flight | `deliverEvent` loads the context, sees it is completed or no longer parked on the delivery's `nodeId`, and drops the message with a log. Idempotent. |
+| Instance completes/advances while a delivery is in flight | The delivery loads the context, sees it is completed or no longer parked on the delivery's `nodeId`, and is dropped with a log. Idempotent. |
 | Crash between subscription registration and context save | The engine registers subscriptions **before** saving the context. Worst case is an orphan subscription — harmless (dropped on delivery) and TTL-cleaned — never a parked instance nobody can resume. |
-| Duplicate delivery (at-least-once transports) | Deduplicate on `event.id + instanceId` in your transport; beyond that, `deliverEvent` is idempotent because the node has advanced. |
+| Crash after processing, before all deliveries are scheduled | An at-least-once transport redelivers the source message; the rerun re-matches and re-schedules. Duplicates are absorbed by transport dedup and delivery idempotency. |
+| Duplicate delivery (at-least-once transports) | Delivery copies are unique per subscriber (`event.delivery` differs), so content-based dedup covers them; beyond the dedup window, redelivery is dropped because the node has advanced. |
 | Wildcard subscription during a bulk import | Real cost, but bounded: one delivery per (event × wildcard subscriber). Consider capping active wildcard subscriptions per domain if it becomes a problem. |
 | Match subject id resolves to the instance's own subject | Pointless but harmless — same-space events already reach the instance through normal routing, so omit `match` in that case. |
 
@@ -236,12 +246,16 @@ scenario is one click away:
    (`product.update` ← `product:456`); the instance shows a **Subscribed**
    badge.
 3. Send `product.update` with subject `product:456` — the submit result lists
-   the delivery (`→ client:5 … resumed`), the subscription row disappears,
-   and the `client:5` instance advances to completion.
+   the scheduled delivery, and a **delivery**-badged entry appears in the
+   **Scheduled Events** panel, retargeted at `client:5`.
+4. Fire it (or enable auto-fire) — the subscription row disappears and the
+   `client:5` instance advances to completion.
 
 The same state is available over HTTP: `GET /api/subscriptions` lists active
-subscriptions, `DELETE /api/subscriptions/:id` removes one, and
-`POST /api/execute/:domain` returns the `deliveries` performed for the event.
+subscriptions, `DELETE /api/subscriptions/:id` removes one,
+`POST /api/execute/:domain` returns the `deliveries` scheduled for the event,
+and `POST /api/scheduler/:scheduleId/fire` fires one (returning `delivered`
+for delivery copies).
 
 ## What subscriptions deliberately do NOT do
 

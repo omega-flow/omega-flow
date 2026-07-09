@@ -3,6 +3,8 @@ export {
   type WorkflowManagerConfig,
   type NodeModelClass,
   type NodeModelRegistry,
+  type ProcessEventResult,
+  type ScheduledDelivery,
 } from "./WorkflowManager";
 export { type WorkflowStore } from "./WorkflowStore";
 export { type WorkflowMemory } from "./WorkflowMemory";

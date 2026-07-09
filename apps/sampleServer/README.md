@@ -84,8 +84,12 @@ db/
 - Event `id` and `time` are auto-generated
 
 The response includes a `deliveries` array describing cross-subject
-subscription deliveries triggered by the event (empty when no parked
-instance subscribed to it).
+subscription deliveries **scheduled** by the event (empty when no parked
+instance subscribed to it). Deliveries travel through the workflow
+scheduler like any timed event — fire them via
+`POST /api/scheduler/:scheduleId/fire` (or the Debugger's fire/auto-fire)
+to resume the subscribed instances; the fire response then carries a
+`delivered` flag.
 
 ### Subscriptions API
 

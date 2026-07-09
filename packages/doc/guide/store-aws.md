@@ -183,7 +183,11 @@ The store implements the full `WorkflowMemory` interface (`getContexts`, `saveCo
 
 ## DynamoDBSubscriptionStore
 
-Stores cross-subject [event subscriptions](/guide/event-subscriptions) in DynamoDB. Pass it as `subscriptionStore` in the `WorkflowManagerConfig` to enable the feature.
+Stores cross-subject [event subscriptions](/guide/event-subscriptions) in DynamoDB. Pass it as `subscriptionStore` in the `WorkflowManagerConfig` to enable the feature — that is the only wiring: subscription delivery copies travel through the configured `WorkflowScheduler` (delay 0) and come back through `processEvent` like any other message. Delivery copies carry explicit top-level `domain`/`subjectId` (envelope routing), so a FIFO transport groups them with the subscriber's own events automatically.
+
+::: tip Delivery latency and dedup with EventBridge Scheduler
+Scheduler-based transports clamp near-now schedules about a minute ahead (EventBridge rejects past `at()` times), so a cross-subject delivery arrives within ~1–2 minutes — fine for waits whose timeouts span days. EventBridge's SQS target cannot set `MessageDeduplicationId`, so enable `ContentBasedDeduplication` on the queue; delivery copies are unique per subscriber (`event.delivery` differs), which gives per-instance dedup for free.
+:::
 
 ### Config
 

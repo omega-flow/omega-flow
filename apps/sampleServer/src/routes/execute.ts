@@ -9,7 +9,6 @@ import type {
   SampleSubscriptionStore,
 } from "../stores/types.js";
 import { nodeModels } from "../nodes/index.js";
-import { deliverToSubscribers } from "../subscriptionDelivery.js";
 
 interface ExecuteRequestBody {
   type: string;
@@ -43,11 +42,16 @@ export function createExecuteRoutes(
         return;
       }
 
-      // Create the event with auto-generated id and time
+      // Create the event with auto-generated id and time. Routing is set
+      // explicitly on the envelope (domain/subjectId), so the engine never
+      // needs to derive it — the eventExtractor below is only a fallback for
+      // events that lack it (e.g. older entries in the scheduler file).
       const event: Event = {
         id: nanoid(),
         time: Date.now(),
         type: body.type,
+        domain,
+        subjectId: body.data.subjectId,
         data: body.data,
       };
 
@@ -62,12 +66,11 @@ export function createExecuteRoutes(
       });
       workflowScheduler.setWorkflowManager?.(manager);
 
-      // Process the event
-      await manager.processEvent(event);
-
-      // Deliver the event to cross-subject subscribers (synchronously —
-      // the sample server needs no queue relay)
-      const deliveries = await deliverToSubscribers(manager, domain, event);
+      // Process the event. Cross-subject subscription matches are scheduled
+      // as delivery events through the workflowScheduler (delay 0) — fire
+      // them from the Debugger (or auto-fire) to resume the subscribers,
+      // the same topology a production queue relay runs.
+      const result = await manager.processEvent(event);
 
       res.json({
         success: true,
@@ -76,7 +79,7 @@ export function createExecuteRoutes(
           time: event.time,
           type: event.type,
         },
-        deliveries,
+        deliveries: result.deliveries,
       });
     } catch (error) {
       console.error("Error executing event:", error);
