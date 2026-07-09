@@ -96,7 +96,7 @@ export function DebuggerPage() {
         await fireScheduledEvent(entry.scheduleId);
         toaster.create({
           title: "Event auto-fired",
-          description: `${entry.event.type} (${entry.event.data?.subjectId || "—"})`,
+          description: `${entry.event.type} (${entry.event.subjectId || "—"})`,
           type: "info",
           duration: 3000,
         });
@@ -384,7 +384,7 @@ export function DebuggerPage() {
                         ) : null}
                       </Text>
                       <Text fontSize="xs" color="gray.500">
-                        Subject: {entry.event.data?.subjectId || "—"}
+                        Subject: {entry.event.subjectId || "—"}
                       </Text>
                       <Text fontSize="xs" color={isPast ? "orange.500" : "gray.500"}>
                         {formatTimeToFire(entry.fireAt)}

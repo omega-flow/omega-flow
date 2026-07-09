@@ -31,14 +31,15 @@ export async function executeEvent(
   subjectId: string,
   data?: Record<string, unknown>
 ): Promise<ExecuteResponse> {
+  // `type` (the action) and `subjectId` are envelope fields — they belong on
+  // the event itself, not inside `data`. `data` carries only the business
+  // payload, so routing never has to be derived from it.
   return apiRequest<ExecuteResponse>(`/execute/${DOMAIN}`, {
     method: "POST",
     body: JSON.stringify({
       type,
-      data: {
-        subjectId,
-        ...data,
-      },
+      subjectId,
+      data: data ?? {},
     }),
   });
 }

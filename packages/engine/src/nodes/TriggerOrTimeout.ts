@@ -78,7 +78,7 @@ export default class TriggerOrTimeoutModel extends WaitModel {
       return false;
     } else {
       // Start waiting and stay pending
-      await this.startWaiting(event.time, event.data);
+      await this.startWaiting(event);
       return false;
     }
   }

@@ -45,17 +45,16 @@ export function createSchedulerRoutes(
         return;
       }
 
-      // Fallback domain for events without envelope routing (subscription
-      // delivery copies carry explicit domain/subjectId and route themselves)
-      const domain = "default";
-
+      // Every scheduled event carries envelope routing: timeout copies inherit
+      // the source event's domain/subjectId, and subscription delivery copies
+      // carry explicit routing too. So the engine routes them directly — no
+      // eventExtractor fallback is needed.
       const manager = new WorkflowManager({
         workflowStore,
         workflowMemory,
         workflowScheduler,
         subscriptionStore,
         nodeModels,
-        eventExtractor: (evt) => [domain, evt.data?.subjectId as string],
       });
       workflowScheduler.setWorkflowManager?.(manager);
 

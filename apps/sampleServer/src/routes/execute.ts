@@ -12,10 +12,8 @@ import { nodeModels } from "../nodes/index.js";
 
 interface ExecuteRequestBody {
   type: string;
-  data?: {
-    subjectId: string;
-    [key: string]: unknown;
-  };
+  subjectId: string;
+  data?: Record<string, unknown>;
 }
 
 export function createExecuteRoutes(
@@ -37,22 +35,22 @@ export function createExecuteRoutes(
         return;
       }
 
-      if (!body.data?.subjectId) {
-        res.status(400).json({ error: "data.subjectId is required" });
+      if (!body.subjectId) {
+        res.status(400).json({ error: "subjectId is required" });
         return;
       }
 
-      // Create the event with auto-generated id and time. Routing is set
-      // explicitly on the envelope (domain/subjectId), so the engine never
-      // needs to derive it — the eventExtractor below is only a fallback for
-      // events that lack it (e.g. older entries in the scheduler file).
+      // Create the event with auto-generated id and time. `type` (the action),
+      // `domain`, and `subjectId` are envelope fields; `data` carries only the
+      // business payload. Because routing lives on the envelope, the engine
+      // never derives it from the payload — no eventExtractor is configured.
       const event: Event = {
         id: nanoid(),
         time: Date.now(),
         type: body.type,
         domain,
-        subjectId: body.data.subjectId,
-        data: body.data,
+        subjectId: body.subjectId,
+        data: body.data ?? {},
       };
 
       // Create WorkflowManager
@@ -62,7 +60,6 @@ export function createExecuteRoutes(
         workflowScheduler,
         subscriptionStore,
         nodeModels,
-        eventExtractor: (evt) => [domain, evt.data?.subjectId as string],
       });
       workflowScheduler.setWorkflowManager?.(manager);
 
