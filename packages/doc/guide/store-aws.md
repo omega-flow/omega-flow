@@ -185,8 +185,8 @@ The store implements the full `WorkflowMemory` interface (`getContexts`, `saveCo
 
 Stores cross-subject [event subscriptions](/guide/event-subscriptions) in DynamoDB. Pass it as `subscriptionStore` in the `WorkflowManagerConfig` to enable the feature — that is the only wiring: subscription delivery copies travel through the configured `WorkflowScheduler` (delay 0) and come back through `processEvent` like any other message. Delivery copies carry explicit top-level `domain`/`subjectId` (envelope routing), so a FIFO transport groups them with the subscriber's own events automatically.
 
-::: tip Delivery latency and dedup with EventBridge Scheduler
-Scheduler-based transports clamp near-now schedules about a minute ahead (EventBridge rejects past `at()` times), so a cross-subject delivery arrives within ~1–2 minutes — fine for waits whose timeouts span days. EventBridge's SQS target cannot set `MessageDeduplicationId`, so enable `ContentBasedDeduplication` on the queue; delivery copies are unique per subscriber (`event.delivery` differs), which gives per-instance dedup for free.
+::: tip Delivery transport with `SqsFifoWorkflowScheduler`
+Delivery copies are scheduled with delay 0, which takes the scheduler's **immediate-send fast path**: a direct `sqs:SendMessage` with an explicit per-subscriber `MessageDeduplicationId` — no EventBridge schedule, no minute-granularity latency, no CreateSchedule TPS pressure under wildcard match storms. Two requirements: the **caller's** IAM role needs `sqs:SendMessage` on the queue (the scheduler's `roleArn` only covers delayed schedules), and the queue should still run `ContentBasedDeduplication` for the delayed path (EventBridge's SQS target cannot set a dedup id).
 :::
 
 ### Config
