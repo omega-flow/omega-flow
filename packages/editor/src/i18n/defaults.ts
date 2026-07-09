@@ -96,6 +96,19 @@ export const defaultTranslations: TranslationDictionary = {
 
   "nodeDetails.exit.message": "This is where the workflow ends.",
 
+  // Cross-subject match (event subscription) — shared by Trigger and
+  // TriggerOrTimeout detail panels.
+  "nodeDetails.match.toggleLabel": "Event from different subject",
+  "nodeDetails.match.subjectIdLabel": "Match subject id",
+  "nodeDetails.match.subjectIdPlaceholder":
+    "e.g., product:{{trigger.payload.products[0].product_id}}",
+  "nodeDetails.match.subjectIdHint":
+    "Full typed subject id of the source event to wait for. {{path}} templates resolve from the trigger event when the workflow reaches this node.",
+  "nodeDetails.match.wildcardHint":
+    "Empty = match this event from ANY subject. Every matching event is delivered to each waiting workflow — use with care on frequent events.",
+  "nodeDetails.match.startNodeWarning":
+    "A start trigger cannot listen for events from another subject — this setting is ignored until the node has an incoming connection. Turn it off or connect the node mid-flow.",
+
   // ── Default node type definitions (labels & descriptions) ──
   "nodeTypes.trigger.label": "Trigger",
   "nodeTypes.trigger.description": "Starts the workflow when a specific event occurs",
