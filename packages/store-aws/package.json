@@ -47,10 +47,10 @@
     "aws-sdk-client-mock": "^4.1.0"
   },
   "dependencies": {
-    "@aws-sdk/client-dynamodb": "^3.1078.0",
-    "@aws-sdk/client-scheduler": "^3.1078.0",
-    "@aws-sdk/client-sqs": "^3.1083.0",
-    "@aws-sdk/lib-dynamodb": "^3.1078.0",
+    "@aws-sdk/client-dynamodb": "^3.1084.0",
+    "@aws-sdk/client-scheduler": "^3.1084.0",
+    "@aws-sdk/client-sqs": "^3.1084.0",
+    "@aws-sdk/lib-dynamodb": "^3.1084.0",
     "@omega-flow/engine": "workspace:*",
     "@omega-flow/types": "workspace:*",
     "nanoid": "^5.1.16"
