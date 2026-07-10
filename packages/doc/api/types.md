@@ -134,18 +134,48 @@ interface Event {
   id: string;
   time: number;
   type: string;
+  domain?: string;
+  subjectId?: string;
+  delivery?: EventDelivery;
   data?: any;
 }
 ```
 
-An event that can trigger or progress a workflow.
+An event that can trigger or progress a workflow. Everything the engine uses
+for addressing lives on the envelope (`domain`, `subjectId`, `delivery`) —
+`data` belongs to the host.
 
 | Property | Type | Description |
 |----------|------|-------------|
 | `id` | `string` | Unique event identifier |
 | `time` | `number` | Timestamp (Unix ms) |
 | `type` | `string` | Event type for matching |
+| `domain` | `string` *(optional)* | Explicit envelope routing: the domain (tenant). When both `domain` and `subjectId` are set, they always win over the configured `eventExtractor` |
+| `subjectId` | `string` *(optional)* | Explicit envelope routing: the subject the event is addressed to (e.g. `client:5`). Set by the engine on subscription delivery copies |
+| `delivery` | `EventDelivery` *(optional)* | Present only on subscription delivery copies (engine-authored): the one instance this copy must resume |
 | `data` | `any` | Optional payload data |
+
+---
+
+### EventDelivery
+
+```typescript
+interface EventDelivery {
+  workflowId: string;
+  instanceId: string;
+  nodeId: string;
+  sourceSubjectId: string;
+}
+```
+
+Delivery metadata carried in `event.delivery` on events relayed to a subscriber via an [event subscription](/guide/event-subscriptions). A delivery event is a copy of the original event, retargeted at one specific workflow instance — `WorkflowManager.processEvent` recognizes it and performs a targeted resume of exactly that instance instead of normal routing.
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `workflowId` | `string` | Workflow the subscribing instance belongs to |
+| `instanceId` | `string` | Instance that registered the subscription |
+| `nodeId` | `string` | The parked node that declared the subscription |
+| `sourceSubjectId` | `string` | Subject id the original event was routed to (e.g. `product:456`) |
 
 ---
 
@@ -160,6 +190,9 @@ interface Context {
   history: WorkflowHistoryItem[];
   isCompleted?: boolean;
   startedAt: number;
+  version?: number;
+  triggerEvent?: Event;
+  subscriptions?: ContextSubscription[];
 }
 ```
 
@@ -174,6 +207,29 @@ Execution state for a workflow instance.
 | `history` | `WorkflowHistoryItem[]` | Execution history |
 | `isCompleted` | `boolean` | Whether workflow finished |
 | `startedAt` | `number` | Start timestamp (Unix ms) |
+| `version` | `number` | Optimistic-lock version, managed by persistent memory backends |
+| `triggerEvent` | `Event` | The event that started this instance — captured when the start node fires, used e.g. to resolve subscription match templates |
+| `subscriptions` | `ContextSubscription[]` | Active [event subscriptions](/guide/event-subscriptions) held by this instance; managed by the `WorkflowManager` |
+
+---
+
+### ContextSubscription
+
+```typescript
+interface ContextSubscription {
+  eventType: string;
+  matchSubjectId: string;
+  nodeId: string;
+}
+```
+
+An active event subscription recorded on the Context. The Context is the source of truth for which subscriptions an instance holds in the `SubscriptionStore` — when the instance advances past the node that declared one, the `WorkflowManager` deletes exactly these entries.
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `eventType` | `string` | Event type the instance is waiting for |
+| `matchSubjectId` | `string` | Subject id of the source event, or `"*"` for wildcard |
+| `nodeId` | `string` | Parked node that declared the subscription |
 
 ---
 

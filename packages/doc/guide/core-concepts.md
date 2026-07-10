@@ -202,7 +202,7 @@ interface Event {
 ### Event Flow
 
 1. Event arrives at Workflow Manager
-2. Manager runs the **`eventExtractor`** to derive `[domain, subjectId]` from the event
+2. Manager resolves routing: the event's own top-level `domain`/`subjectId` when present (explicit envelope routing), otherwise the **`eventExtractor`** derives `[domain, subjectId]`
 3. Manager loads workflows for that domain and active contexts for that Subject
 4. For each active instance, the event is passed to the current node's `acceptEvent` method
 5. If a workflow has no active instance for the Subject, the Manager checks `WorkflowOptions.frequency` to decide whether to start a new one
@@ -211,7 +211,7 @@ interface Event {
 
 ### Tenants and Subjects
 
-Routing is entirely driven by the **`eventExtractor`** function you pass to `WorkflowManager`. It maps every incoming event to a `[domain, subjectId]` tuple — there is no implicit notion of "current user" inside the engine.
+Routing resolves **explicit first**: an event carrying top-level `domain` and `subjectId` (envelope routing) is routed by them directly — set them at ingest and no extractor is needed. The **`eventExtractor`** you pass to `WorkflowManager` is the fallback for events that arrive without them; it maps an event to a `[domain, subjectId]` tuple — there is no implicit notion of "current user" inside the engine. (Subscription delivery copies created by the engine carry envelope routing, which is what makes them reach their subscriber under any extractor.)
 
 ```typescript
 // Single-tenant: domain is constant, subject is the user
@@ -228,6 +228,10 @@ eventExtractor: (event) => event.type.startsWith("order.")
 
 - **Domain** scopes which workflow definitions are loaded (the `WorkflowStore` is queried per domain). Use it for tenant isolation.
 - **Subject** is the entity the workflow runs *for* — a user, an order, a device. Each Subject has its own independent workflow Context, so two users running the same workflow never share state.
+
+A useful convention is to make subject ids **typed entity references** (`client:5`, `product:456`, `order:78`): each entity type gets its own subject space, and events about different entities never collide.
+
+By default this means a flow can only be driven by events that resolve to its own subject — a flow living under `client:5` never sees an event routed to `product:456`. When one flow needs events from two subject spaces ("when the customer orders product X, wait for product X to be updated"), use **[Event Subscriptions](/guide/event-subscriptions)**: the parked instance registers interest in the foreign subject and the event is delivered back to it, without changing how routing works for everything else.
 
 See [Workflow Execution → Event Extraction](/guide/engine-execution#event-extraction) for more patterns.
 
@@ -260,6 +264,8 @@ interface Context {
   history: WorkflowHistoryItem[]; // Execution log
   isCompleted?: boolean;        // Completion flag
   startedAt: number;            // Start timestamp
+  triggerEvent?: Event;         // Event that started the instance
+  subscriptions?: ContextSubscription[]; // Active event subscriptions
 }
 ```
 

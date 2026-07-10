@@ -5,7 +5,7 @@ import type { Event } from "@omega-flow/types";
 import type { WorkflowScheduler } from "@omega-flow/engine";
 
 interface IWorkflowManager {
-  processEvent(event: Event): Promise<void>;
+  processEvent(event: Event): Promise<unknown>;
 }
 
 export interface ScheduledEvent {

@@ -19,3 +19,11 @@ export async function fireScheduledEvent(
     method: "POST",
   });
 }
+
+export async function deleteScheduledEvent(
+  scheduleId: string
+): Promise<{ success: boolean }> {
+  return apiRequest(`/scheduler/${encodeURIComponent(scheduleId)}`, {
+    method: "DELETE",
+  });
+}

@@ -1,8 +1,28 @@
-import { type Node, type Event } from "@omega-flow/types";
+import { type Node, type Event, type Context } from "@omega-flow/types";
 
 import EdgeModel from "./EdgeModel";
 import { type Connection } from "./Connection";
 import type { NodeServices } from "./NodeServices";
+
+/**
+ * A node's declaration of interest in events outside its instance's own
+ * subject space, returned by {@link NodeModel.getSubscription}.
+ */
+export interface SubscriptionRequest {
+  /** Event type to subscribe to (e.g. `product.update`) */
+  eventType: string;
+  /**
+   * Subject id of the source event to match (e.g. `product:456`),
+   * or `"*"` for a wildcard subscription.
+   */
+  matchSubjectId: string;
+  /**
+   * Optional lifetime hint for the subscription's TTL safety net, in seconds.
+   * Nodes with a bounded wait (e.g. TriggerOrTimeout) should set this to
+   * their timeout plus a margin.
+   */
+  ttlSeconds?: number;
+}
 
 /**
  * Base class for all workflow node types.
@@ -220,6 +240,35 @@ class NodeModel {
   async acceptEvent(_event: Event): Promise<boolean> {
     // This method should be overridden by subclasses
     throw new Error("acceptEvent method not implemented");
+  }
+
+  /**
+   * Declares the event subscription this node wants while the workflow is
+   * parked on it.
+   *
+   * Called by the WorkflowManager after each run that leaves the workflow
+   * waiting on this node (only when a SubscriptionStore is configured). If it
+   * returns a request, the manager registers a subscription so that a
+   * matching event arriving in another subject space is delivered back to
+   * this exact instance via `deliverEvent`; the manager also deletes the
+   * subscription once the workflow advances past this node. Nodes only
+   * *declare* interest — they never touch the SubscriptionStore themselves.
+   *
+   * The delivered event is handed to this node through the regular
+   * `acceptEvent(event)`, so a custom node can apply additional acceptance
+   * logic on top of the store-level match.
+   *
+   * The base implementation returns null (no subscription). Override it in
+   * custom nodes that wait for events outside the instance's own subject
+   * space. Built-in Trigger / TriggerOrTimeout nodes implement it from their
+   * `params.match` configuration.
+   *
+   * @param _context - The instance's context (e.g. to resolve values from
+   *          the trigger event captured in `context.triggerEvent`)
+   * @returns The subscription to register, or null for none
+   */
+  getSubscription(_context: Context): SubscriptionRequest | null {
+    return null;
   }
 
   /**

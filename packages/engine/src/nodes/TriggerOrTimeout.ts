@@ -1,7 +1,8 @@
-import { type Node, type Event } from "@omega-flow/types";
+import { type Node, type Event, type Context } from "@omega-flow/types";
 
-import NodeModel from "../engine/NodeModel";
+import NodeModel, { type SubscriptionRequest } from "../engine/NodeModel";
 import WaitModel from "./WaitModel";
+import { resolveSubscriptionFromParams } from "./subscriptionMatch";
 
 /**
  * Node that waits for either a specific event or a timeout, whichever comes first.
@@ -77,9 +78,25 @@ export default class TriggerOrTimeoutModel extends WaitModel {
       return false;
     } else {
       // Start waiting and stay pending
-      await this.startWaiting(event.time, event.data);
+      await this.startWaiting(event);
       return false;
     }
+  }
+
+  /**
+   * Declares a cross-subject subscription when the node has a
+   * `params.match` section (see {@link resolveSubscriptionFromParams}).
+   * The subscription's TTL safety net is derived from `params.duration`,
+   * since the timeout bounds how long the wait can be pending.
+   * @param context - The instance's context, used to resolve the match subject id
+   * @returns The subscription to register, or null for none
+   */
+  getSubscription(context: Context): SubscriptionRequest | null {
+    return resolveSubscriptionFromParams(
+      this.getData().params,
+      context,
+      this.getId()
+    );
   }
 
   /**

@@ -55,6 +55,7 @@ class MyCustomNode extends NodeModel {
 | `getSourceHandles()` | Returns all output handle identifiers |
 | `getTargetNodeFromSourceHandle(handle)` | Gets the node connected to a specific output |
 | `getDefaultNext()` | Shortcut for the single-output case — returns the node connected to the first source handle, or null |
+| `getSubscription(context)` | Overridable — declare a cross-subject event subscription for while the workflow is parked on this node (base returns `null`) |
 
 ## Creating a Custom Node
 
@@ -406,6 +407,73 @@ export default class DelayNode extends NodeModel {
 ::: tip
 When no scheduler is provided (e.g., in unit tests), `this.services.scheduler` is `undefined`. Always guard access with an `if` check so nodes degrade gracefully.
 :::
+
+## Subscribing to cross-subject events
+
+Nodes that wait for events **outside the instance's own subject space** (see
+[Event Subscriptions](/guide/event-subscriptions)) declare that interest by
+overriding `getSubscription(context)`:
+
+```typescript
+import { NodeModel, type SubscriptionRequest } from "@omega-flow/engine";
+import type { Node, Event, Context } from "@omega-flow/types";
+
+export default class WaitForExternalSystemNode extends NodeModel {
+  static create(node: Node): WaitForExternalSystemNode {
+    if (node.type !== "WaitForExternalSystem") {
+      throw new Error("Node type must be WaitForExternalSystem");
+    }
+    return new this(node);
+  }
+
+  // Declare interest: called by the WorkflowManager after each run that
+  // leaves the workflow parked on this node.
+  getSubscription(context: Context): SubscriptionRequest | null {
+    // Resolve the source subject from the instance's own context — here,
+    // the id captured from the event that started the instance.
+    const externalId = context.triggerEvent?.data?.externalId;
+    if (!externalId) {
+      return null; // nothing to subscribe to
+    }
+    return {
+      eventType: "external.sync.finished",
+      matchSubjectId: `sync:${externalId}`,
+      ttlSeconds: 7 * 24 * 60 * 60, // safety-net TTL: give up after a week
+    };
+  }
+
+  // Accept the delivered event: deliveries arrive through the regular
+  // acceptEvent, so the node can apply extra acceptance logic on top of
+  // the store-level match.
+  async acceptEvent(event: Event): Promise<boolean> {
+    if (event.type !== "external.sync.finished") {
+      return false;
+    }
+    return event.data?.payload?.status === "ok";
+  }
+
+  async nextNode(_event: Event): Promise<NodeModel | null> {
+    return this.getDefaultNext();
+  }
+}
+```
+
+How the pieces fit together:
+
+- **Nodes only declare interest** — the `WorkflowManager` owns the whole
+  lifecycle: it registers the subscription when the workflow parks on the
+  node, and deletes it when the workflow advances past it (or completes).
+  Nodes never touch the `SubscriptionStore`, so the store backend stays
+  swappable without node changes.
+- **The manager only talks to the interface.** Your custom node gets
+  identical treatment to the built-in `Trigger` / `TriggerOrTimeout` — there
+  is no switch on node types.
+- **Delivery is symmetric.** The delivered event is handed to the parked node
+  via the ordinary `acceptEvent(event)`; return `false` to reject it and keep
+  waiting.
+- `matchSubjectId` must equal the subject id the source event is routed to by
+  your `eventExtractor`; use `"*"` (`SUBSCRIPTION_WILDCARD`) to match any
+  subject of that event type.
 
 ## State Management
 

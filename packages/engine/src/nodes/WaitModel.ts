@@ -60,20 +60,28 @@ export default class WaitModel extends NodeModel {
   }
 
   /**
-   * Starts the waiting period by recording the start time and scheduling a timeout event.
-   * @param time - The timestamp when waiting begins (usually event.time)
-   * @param eventData - Optional event data to include in the scheduled timeout (for routing)
+   * Starts the waiting period by recording the start time and scheduling a
+   * timeout event.
+   *
+   * The timeout copy carries the source event's envelope routing
+   * (`domain`/`subjectId`) so that, when it fires, it routes straight back to
+   * this instance's subject — the host never has to re-derive routing from the
+   * payload (no `eventExtractor` fallback required).
+   * @param event - The event that started the wait; source of both routing
+   *   (envelope `domain`/`subjectId`) and the payload carried forward
    */
-  async startWaiting(time: number, eventData?: any) {
-    this.updateState({ waitStartsAt: time });
+  async startWaiting(event: Event) {
+    this.updateState({ waitStartsAt: event.time });
 
     if (this.services.scheduler) {
       const duration = this.getData().params.duration || 0;
       const timeoutEvent: Event = {
         id: `timeout_${this.getId()}_${Date.now()}`,
         type: "system:timeout",
-        time: time + duration,
-        data: eventData,
+        time: event.time + duration,
+        domain: event.domain,
+        subjectId: event.subjectId,
+        data: event.data,
       };
       await this.services.scheduler.schedule(timeoutEvent, duration);
     }
@@ -122,7 +130,7 @@ export default class WaitModel extends NodeModel {
       return false;
     } else {
       // Start waiting and stay pending
-      await this.startWaiting(event.time, event.data);
+      await this.startWaiting(event);
       return false;
     }
   }
