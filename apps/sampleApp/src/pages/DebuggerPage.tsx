@@ -3,9 +3,11 @@ import { Link as RouterLink } from "react-router-dom";
 import { useContexts } from "../hooks/useContexts";
 import { useWorkflows } from "../hooks/useWorkflows";
 import { useScheduler } from "../hooks/useScheduler";
-import { executeEvent } from "../api/execute";
+import { useSubscriptions } from "../hooks/useSubscriptions";
+import { executeEvent, type DeliveryResult } from "../api/execute";
 import { deleteContext } from "../api/contexts";
-import { fireScheduledEvent } from "../api/scheduler";
+import { fireScheduledEvent, deleteScheduledEvent } from "../api/scheduler";
+import { deleteSubscription } from "../api/subscriptions";
 import { toaster } from "../components/Toaster";
 import {
   Badge,
@@ -32,15 +34,25 @@ export function DebuggerPage() {
     isLoading: schedulerLoading,
     refetch: refetchScheduler,
   } = useScheduler();
+  const {
+    subscriptions,
+    isLoading: subscriptionsLoading,
+    refetch: refetchSubscriptions,
+  } = useSubscriptions();
 
   const [subjectId, setSubjectId] = useState("");
   const [eventType, setEventType] = useState("");
   const [eventData, setEventData] = useState("{}");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitResult, setSubmitResult] = useState<{ id: string; time: number } | null>(null);
+  const [submitResult, setSubmitResult] = useState<{
+    id: string;
+    time: number;
+    deliveries: DeliveryResult[];
+  } | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [expandedContext, setExpandedContext] = useState<string | null>(null);
   const [firingId, setFiringId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [autoFire, setAutoFire] = useState(false);
   const [now, setNow] = useState(() => Date.now());
   const autoFireRef = useRef(false);
@@ -56,6 +68,21 @@ export function DebuggerPage() {
     autoFireRef.current = autoFire;
   }, [autoFire]);
 
+  // subjectId is injected from the Subject ID field, so it must not be set in the JSON
+  const eventDataHasSubjectId = (() => {
+    if (!eventData.trim()) return false;
+    try {
+      const parsed = JSON.parse(eventData);
+      return (
+        parsed !== null &&
+        typeof parsed === "object" &&
+        Object.prototype.hasOwnProperty.call(parsed, "subjectId")
+      );
+    } catch {
+      return false;
+    }
+  })();
+
   const autoFireDueEvents = useCallback(async () => {
     if (!autoFireRef.current || autoFiringRef.current) return;
 
@@ -69,13 +96,14 @@ export function DebuggerPage() {
         await fireScheduledEvent(entry.scheduleId);
         toaster.create({
           title: "Event auto-fired",
-          description: `${entry.event.type} (${entry.event.data?.subjectId || "—"})`,
+          description: `${entry.event.type} (${entry.event.subjectId || "—"})`,
           type: "info",
           duration: 3000,
         });
       }
       refetchScheduler();
       refetch();
+      refetchSubscriptions();
     } catch (err) {
       toaster.create({
         title: "Auto-fire failed",
@@ -86,7 +114,7 @@ export function DebuggerPage() {
     } finally {
       autoFiringRef.current = false;
     }
-  }, [scheduledEvents, refetchScheduler, refetch]);
+  }, [scheduledEvents, refetchScheduler, refetch, refetchSubscriptions]);
 
   // Poll and auto-fire every 2 seconds
   useEffect(() => {
@@ -107,7 +135,7 @@ export function DebuggerPage() {
     setSubmitError(null);
 
     try {
-      let parsedData = {};
+      let parsedData: Record<string, unknown> = {};
       if (eventData.trim()) {
         try {
           parsedData = JSON.parse(eventData);
@@ -116,10 +144,25 @@ export function DebuggerPage() {
         }
       }
 
+      if (
+        parsedData !== null &&
+        typeof parsedData === "object" &&
+        Object.prototype.hasOwnProperty.call(parsedData, "subjectId")
+      ) {
+        throw new Error(
+          'Remove "subjectId" from Event Data — it is injected from the Subject ID field above.'
+        );
+      }
+
       const result = await executeEvent(eventType, subjectId, parsedData);
-      setSubmitResult({ id: result.event.id, time: result.event.time });
+      setSubmitResult({
+        id: result.event.id,
+        time: result.event.time,
+        deliveries: result.deliveries ?? [],
+      });
       refetch();
       refetchScheduler();
+      refetchSubscriptions();
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : "Failed to execute event");
     } finally {
@@ -152,10 +195,36 @@ export function DebuggerPage() {
       await fireScheduledEvent(scheduleId);
       refetchScheduler();
       refetch();
+      refetchSubscriptions();
     } catch (err) {
       alert(err instanceof Error ? err.message : "Failed to fire event");
     } finally {
       setFiringId(null);
+    }
+  };
+
+  const handleDeleteScheduledEvent = async (scheduleId: string) => {
+    if (!confirm("Delete this scheduled event?")) return;
+
+    setDeletingId(scheduleId);
+    try {
+      await deleteScheduledEvent(scheduleId);
+      refetchScheduler();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to delete event");
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  const handleDeleteSubscription = async (id: string) => {
+    if (!confirm("Remove this subscription?")) return;
+
+    try {
+      await deleteSubscription(id);
+      refetchSubscriptions();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to remove subscription");
     }
   };
 
@@ -219,12 +288,18 @@ export function DebuggerPage() {
                 minH="120px"
                 fontFamily="mono"
                 resize="vertical"
+                borderColor={eventDataHasSubjectId ? "red.400" : undefined}
               />
+              {eventDataHasSubjectId && (
+                <Text fontSize="xs" color="red.500" mt="1">
+                  Remove "subjectId" from the event data — it is injected from the Subject ID field above.
+                </Text>
+              )}
             </Field.Root>
             <Button
               type="submit"
               colorPalette="blue"
-              disabled={isSubmitting}
+              disabled={isSubmitting || eventDataHasSubjectId}
             >
               {isSubmitting ? "Sending..." : "Send Event"}
             </Button>
@@ -233,6 +308,20 @@ export function DebuggerPage() {
           {submitResult && (
             <Box bg="green.100" color="green.800" p="3" borderRadius="md" mt="4" fontSize="sm" fontFamily="mono" whiteSpace="pre-wrap">
               Event sent successfully!{"\n"}ID: {submitResult.id}{"\n"}Time: {new Date(submitResult.time).toISOString()}
+              {submitResult.deliveries.length > 0 && (
+                <Box mt="2" pt="2" borderTop="1px solid" borderColor="green.300">
+                  Subscription deliveries (fire them from Scheduled Events to
+                  resume the subscribers):
+                  {submitResult.deliveries.map((delivery, index) => (
+                    <Text key={index} fontSize="xs" mt="1">
+                      → {delivery.subjectId} / {delivery.workflowId} @ {delivery.nodeId}{" "}
+                      <Badge colorPalette="blue" variant="solid" size="xs">
+                        scheduled
+                      </Badge>
+                    </Text>
+                  ))}
+                </Box>
+              )}
             </Box>
           )}
 
@@ -288,25 +377,101 @@ export function DebuggerPage() {
                     <Box>
                       <Text fontSize="sm" fontWeight="500">
                         {entry.event.type}
+                        {entry.event.delivery ? (
+                          <Badge colorPalette="purple" variant="solid" size="xs" ml="2">
+                            delivery
+                          </Badge>
+                        ) : null}
                       </Text>
                       <Text fontSize="xs" color="gray.500">
-                        Subject: {entry.event.data?.subjectId || "—"}
+                        Subject: {entry.event.subjectId || "—"}
                       </Text>
                       <Text fontSize="xs" color={isPast ? "orange.500" : "gray.500"}>
                         {formatTimeToFire(entry.fireAt)}
                       </Text>
                     </Box>
-                    <Button
-                      size="xs"
-                      colorPalette={isPast ? "blue" : "gray"}
-                      disabled={!isPast || firingId === entry.scheduleId}
-                      onClick={() => handleFire(entry.scheduleId)}
-                    >
-                      {firingId === entry.scheduleId ? "Firing..." : "Fire"}
-                    </Button>
+                    <Flex align="center" gap="2">
+                      <Button
+                        size="xs"
+                        colorPalette={isPast ? "blue" : "gray"}
+                        disabled={!isPast || firingId === entry.scheduleId}
+                        onClick={() => handleFire(entry.scheduleId)}
+                      >
+                        {firingId === entry.scheduleId ? "Firing..." : "Fire"}
+                      </Button>
+                      <Button
+                        size="xs"
+                        variant="subtle"
+                        colorPalette="red"
+                        disabled={deletingId === entry.scheduleId}
+                        onClick={() => handleDeleteScheduledEvent(entry.scheduleId)}
+                      >
+                        {deletingId === entry.scheduleId ? "Deleting..." : "Delete"}
+                      </Button>
+                    </Flex>
                   </Flex>
                 );
               })}
+            </Box>
+          )}
+        </Box>
+
+        {/* Subscriptions */}
+        <Box bg="white" border="1px solid" borderColor="gray.200" borderRadius="lg" p="5" mt="6">
+          <Flex justify="space-between" align="center" mb="4">
+            <Heading size="md">Subscriptions</Heading>
+            <Button variant="solid" colorPalette="gray" size="sm" onClick={refetchSubscriptions}>
+              Refresh
+            </Button>
+          </Flex>
+
+          {subscriptionsLoading ? (
+            <Text textAlign="center" py="4" color="gray.500" fontSize="sm">
+              Loading...
+            </Text>
+          ) : subscriptions.length === 0 ? (
+            <Text textAlign="center" py="4" color="gray.500" fontSize="sm">
+              No active subscriptions. An instance parked on a trigger with a
+              match section registers one.
+            </Text>
+          ) : (
+            <Box>
+              {subscriptions.map((sub) => (
+                <Flex
+                  key={sub.id}
+                  justify="space-between"
+                  align="center"
+                  p="3"
+                  borderBottom="1px solid"
+                  borderColor="gray.100"
+                >
+                  <Box>
+                    <Text fontSize="sm" fontWeight="500">
+                      {sub.eventType}{" "}
+                      <Badge
+                        colorPalette={sub.matchSubjectId === "*" ? "orange" : "purple"}
+                        variant="subtle"
+                      >
+                        {sub.matchSubjectId === "*" ? "any subject" : sub.matchSubjectId}
+                      </Badge>
+                    </Text>
+                    <Text fontSize="xs" color="gray.500">
+                      → {sub.subjectId} / {sub.workflowId} @ {sub.nodeId}
+                    </Text>
+                    <Text fontSize="xs" color="gray.500">
+                      since {new Date(sub.createdAt).toLocaleString()}
+                    </Text>
+                  </Box>
+                  <Button
+                    size="xs"
+                    variant="subtle"
+                    colorPalette="red"
+                    onClick={() => handleDeleteSubscription(sub.id)}
+                  >
+                    Remove
+                  </Button>
+                </Flex>
+              ))}
             </Box>
           )}
         </Box>
@@ -385,6 +550,19 @@ export function DebuggerPage() {
                           >
                             {ctx.isCompleted ? "Completed" : "Active"}
                           </Badge>
+                          {!ctx.isCompleted &&
+                            (ctx.subscriptions?.length ?? 0) > 0 && (
+                              <Badge
+                                colorPalette="purple"
+                                variant="subtle"
+                                ml="1"
+                                title={ctx.subscriptions
+                                  ?.map((s) => `${s.eventType} ← ${s.matchSubjectId}`)
+                                  .join(", ")}
+                              >
+                                Subscribed
+                              </Badge>
+                            )}
                         </Table.Cell>
                       </Table.Row>
                       {isExpanded && (

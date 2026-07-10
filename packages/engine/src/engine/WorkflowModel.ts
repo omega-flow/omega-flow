@@ -75,6 +75,20 @@ class WorkflowModel {
   version?: number;
 
   /**
+   * The event that started this workflow instance. Captured when the start
+   * node fires and persisted in the context, so later nodes can resolve
+   * values from it (e.g. subscription match templates).
+   */
+  triggerEvent?: Event;
+
+  /**
+   * Active event subscriptions, round-tripped through persistence. Managed
+   * entirely by the WorkflowManager — the model only carries them so
+   * getContext emits what setContext restored.
+   */
+  subscriptions?: Context["subscriptions"];
+
+  /**
    * Creates a new WorkflowModel instance from a workflow definition.
    * @param workflow - The workflow definition to execute
    * @param nodeModels - Map of node type names to their NodeModel classes
@@ -190,6 +204,9 @@ class WorkflowModel {
     this.startedAt = context.startedAt;
     // Restore optimistic-lock version so getContext can emit it back unchanged
     this.version = context.version;
+    // Restore the instance's trigger event and active subscriptions
+    this.triggerEvent = context.triggerEvent;
+    this.subscriptions = context.subscriptions;
 
     if (context.isCompleted) {
       this.status = WorkflowStatus.Completed;
@@ -216,6 +233,8 @@ class WorkflowModel {
       isCompleted: this.status === WorkflowStatus.Completed,
       startedAt: this.startedAt,
       version: this.version,
+      triggerEvent: this.triggerEvent,
+      subscriptions: this.subscriptions,
     };
   }
 
@@ -385,11 +404,13 @@ class WorkflowModel {
   // PRIVATE METHODS
 
   /**
-   * Records workflow start in history.
+   * Records workflow start in history and captures the triggering event.
    * Called when the workflow transitions from the start node.
-   * @param _event - The triggering event (unused, kept for consistency)
+   * @param event - The event that started the instance
    */
-  #startWorkflow(_event: Event) {
+  #startWorkflow(event: Event) {
+    // Capture the trigger event so later nodes can resolve values from it
+    this.triggerEvent = event;
     // History
     this.history.push({
       time: Date.now(),

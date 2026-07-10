@@ -2,21 +2,25 @@ import { Router } from "express";
 import { nanoid } from "nanoid";
 import { WorkflowManager } from "@omega-flow/engine";
 import type { Event } from "@omega-flow/types";
-import type { SampleWorkflowStore, SampleWorkflowMemory, SampleWorkflowScheduler } from "../stores/types.js";
+import type {
+  SampleWorkflowStore,
+  SampleWorkflowMemory,
+  SampleWorkflowScheduler,
+  SampleSubscriptionStore,
+} from "../stores/types.js";
 import { nodeModels } from "../nodes/index.js";
 
 interface ExecuteRequestBody {
   type: string;
-  data?: {
-    subjectId: string;
-    [key: string]: unknown;
-  };
+  subjectId: string;
+  data?: Record<string, unknown>;
 }
 
 export function createExecuteRoutes(
   workflowStore: SampleWorkflowStore,
   workflowMemory: SampleWorkflowMemory,
   workflowScheduler: SampleWorkflowScheduler,
+  subscriptionStore: SampleSubscriptionStore,
 ): Router {
   const router = Router();
 
@@ -31,17 +35,22 @@ export function createExecuteRoutes(
         return;
       }
 
-      if (!body.data?.subjectId) {
-        res.status(400).json({ error: "data.subjectId is required" });
+      if (!body.subjectId) {
+        res.status(400).json({ error: "subjectId is required" });
         return;
       }
 
-      // Create the event with auto-generated id and time
+      // Create the event with auto-generated id and time. `type` (the action),
+      // `domain`, and `subjectId` are envelope fields; `data` carries only the
+      // business payload. Because routing lives on the envelope, the engine
+      // never derives it from the payload — no eventExtractor is configured.
       const event: Event = {
         id: nanoid(),
         time: Date.now(),
         type: body.type,
-        data: body.data,
+        domain,
+        subjectId: body.subjectId,
+        data: body.data ?? {},
       };
 
       // Create WorkflowManager
@@ -49,13 +58,16 @@ export function createExecuteRoutes(
         workflowStore,
         workflowMemory,
         workflowScheduler,
+        subscriptionStore,
         nodeModels,
-        eventExtractor: (evt) => [domain, evt.data?.subjectId as string],
       });
       workflowScheduler.setWorkflowManager?.(manager);
 
-      // Process the event
-      await manager.processEvent(event);
+      // Process the event. Cross-subject subscription matches are scheduled
+      // as delivery events through the workflowScheduler (delay 0) — fire
+      // them from the Debugger (or auto-fire) to resume the subscribers,
+      // the same topology a production queue relay runs.
+      const result = await manager.processEvent(event);
 
       res.json({
         success: true,
@@ -64,6 +76,7 @@ export function createExecuteRoutes(
           time: event.time,
           type: event.type,
         },
+        deliveries: result.deliveries,
       });
     } catch (error) {
       console.error("Error executing event:", error);

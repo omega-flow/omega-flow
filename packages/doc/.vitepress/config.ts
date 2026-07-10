@@ -23,13 +23,14 @@ export default defineConfig({
           text: 'Workflow Engine',
           items: [
             { text: 'Executing Workflows', link: '/guide/engine-execution' },
+            { text: 'Event Subscriptions', link: '/guide/event-subscriptions' },
             { text: 'Custom Nodes (Engine)', link: '/guide/engine-custom-nodes' }
           ]
         },
         {
           text: 'Adapters',
           items: [
-            { text: 'AWS (DynamoDB + EventBridge)', link: '/guide/store-aws' }
+            { text: 'AWS', link: '/guide/store-aws' }
           ]
         },
         {

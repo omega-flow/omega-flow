@@ -99,14 +99,27 @@ interface WorkflowManagerConfig {
   // Map of node type names to their NodeModel classes
   nodeModels: NodeModelRegistry;
 
-  // Function to extract domain and subject ID from events
-  eventExtractor: (event: Event) => [domain: string, subjectId: string];
+  // Optional storage for cross-subject event subscriptions.
+  // Absent -> subscriptions disabled, zero behavior change.
+  subscriptionStore?: SubscriptionStore;
+
+  // Fallback routing for events without explicit envelope routing
+  eventExtractor?: (event: Event) => [domain: string, subjectId: string];
 }
 ```
 
-### Event Extraction
+### Event Routing
 
-The `eventExtractor` function determines how events are routed:
+Routing resolves in two steps, explicit first:
+
+1. **Envelope routing** — when an event carries top-level `domain` and
+   `subjectId`, those are used directly and the extractor is never called.
+   Set them at ingest and you don't need an `eventExtractor` at all. The
+   engine also sets them on the delivery copies it creates for
+   [event subscriptions](/guide/event-subscriptions), which makes those
+   copies self-routing.
+2. **`eventExtractor`** — the fallback for events that arrive without
+   explicit routing (e.g. raw webhooks):
 
 ```typescript
 // Simple: all events go to same domain, subject from event data
@@ -124,6 +137,9 @@ eventExtractor: (event) => {
 }
 ```
 
+An event with neither envelope routing nor a configured extractor is a
+routing error.
+
 ### Processing Events
 
 ```typescript
@@ -137,17 +153,38 @@ const event: Event = {
   }
 };
 
-await manager.processEvent(event);
+const result = await manager.processEvent(event);
 ```
 
-When `processEvent` is called:
+`processEvent` is the single entry point for every incoming message:
 
-1. Extract domain and subject ID from event
-2. Load all workflows for the domain
-3. For each workflow:
+1. If the event is a subscription **delivery copy** (`event.delivery`
+   present), resume exactly the addressed instance — targeted, never starts
+   instances — and return `{ delivered, deliveries: [] }`.
+2. Otherwise resolve routing, load all workflows for the domain, and for each:
    - Resume all active instances with the event
    - Check if a new instance should start
    - Start new instance if trigger accepts the event
+3. When a `subscriptionStore` is configured, match the event against
+   registered [event subscriptions](/guide/event-subscriptions) and schedule
+   one delivery copy per subscriber through the `workflowScheduler`
+   (delay 0). The scheduled deliveries are returned in
+   `result.deliveries`.
+
+### Targeted delivery (internal)
+
+The delivery half of the pipeline is a private implementation detail of
+`processEvent` — you never call it yourself. Where normal routing offers an
+event to *every* workflow in the domain (and may start new instances), a
+delivery copy triggers a **targeted resume — it never starts instances**:
+the manager loads exactly the addressed context, lets the parked node accept
+the event, and persists the result. The delivery is dropped with a log
+(`result.delivered === false`) when the instance is gone, already completed,
+or no longer parked on the node recorded in `event.delivery.nodeId`, which
+makes redelivery idempotent.
+
+See the [Event Subscriptions guide](/guide/event-subscriptions) for the full
+event flow and failure modes.
 
 ## Using WorkflowModel Directly
 
@@ -201,7 +238,7 @@ await workflow.acceptEvent(nextEvent);
 
 ## Storage Interfaces
 
-The engine uses three interfaces for pluggable storage:
+The engine uses four interfaces for pluggable storage:
 
 ### WorkflowStore
 
@@ -236,6 +273,19 @@ interface WorkflowScheduler {
 }
 ```
 
+### SubscriptionStore (optional)
+
+Stores cross-subject event subscriptions (see
+[Event Subscriptions](/guide/event-subscriptions)):
+
+```typescript
+interface SubscriptionStore {
+  put(subscription: Subscription): Promise<void>;
+  match(domain: string, eventType: string, matchSubjectId: string): Promise<Subscription[]>;
+  delete(subscriptions: SubscriptionRef[]): Promise<void>;
+}
+```
+
 ### Built-in Implementations
 
 The engine includes in-memory implementations for development and testing:
@@ -243,6 +293,7 @@ The engine includes in-memory implementations for development and testing:
 - `InMemoryWorkflowStore` - Stores workflows in memory
 - `InMemoryWorkflowMemory` - Stores contexts in memory
 - `InMemoryWorkflowScheduler` - Basic scheduler implementation
+- `InMemorySubscriptionStore` - Stores event subscriptions in memory
 
 For production, implement these interfaces with your preferred storage (database, Redis, etc.).
 
@@ -256,7 +307,10 @@ Event arrives
     ▼
 WorkflowManager.processEvent(event)
     │
-    ├── Extract domain & subjectId via eventExtractor
+    ├── Delivery copy (event.delivery)? → targeted resume of that
+    │   one instance (deliverEvent), done
+    │
+    ├── Resolve routing: event.domain/subjectId, else eventExtractor
     │
     ├── For each workflow in domain:
     │   │
@@ -266,7 +320,10 @@ WorkflowManager.processEvent(event)
     │   └── Try to start new instance
     │       └── WorkflowModel.acceptEvent(event)
     │
-    └── Save updated contexts to WorkflowMemory
+    ├── Save updated contexts to WorkflowMemory
+    │
+    └── Match subscriptions → schedule delivery copies
+        via workflowScheduler (when subscriptionStore is set)
 ```
 
 ### Inside WorkflowModel.acceptEvent

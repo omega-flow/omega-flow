@@ -4,3 +4,8 @@ export { ConditionNodeDetail, type ConditionNodeDetailProps } from "./ConditionN
 export { ExitNodeDetail } from "./ExitNodeDetail";
 export { WaitNodeDetail } from "./WaitNodeDetail";
 export { TriggerOrTimeoutNodeDetail } from "./TriggerOrTimeoutNodeDetail";
+export {
+  SubscriptionMatchFields,
+  type MatchParams,
+  type SubscriptionMatchFieldsProps,
+} from "./SubscriptionMatchFields";
