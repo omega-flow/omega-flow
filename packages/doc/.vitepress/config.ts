@@ -30,7 +30,7 @@ export default defineConfig({
         {
           text: 'Adapters',
           items: [
-            { text: 'AWS (DynamoDB + EventBridge)', link: '/guide/store-aws' }
+            { text: 'AWS', link: '/guide/store-aws' }
           ]
         },
         {

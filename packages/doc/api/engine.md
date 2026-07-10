@@ -615,7 +615,7 @@ The `@omega-flow/store-aws` package provides production-ready implementations ba
 | `DynamoDBWorkflowStore` | `WorkflowStore` | DynamoDB |
 | `DynamoDBWorkflowMemory` | `WorkflowMemory` | DynamoDB |
 | `DynamoDBSubscriptionStore` | `SubscriptionStore` | DynamoDB |
-| `EventBusWorkflowScheduler` | `WorkflowScheduler` | EventBridge Scheduler |
+| `SqsFifoWorkflowScheduler` | `WorkflowScheduler` | EventBridge Scheduler → SQS FIFO |
 
 See the [AWS Storage & Scheduler guide](/guide/store-aws) for configuration, table schemas, and IAM setup.
 
