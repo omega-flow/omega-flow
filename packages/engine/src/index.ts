@@ -13,10 +13,6 @@ export type { SubscriptionRequest } from "./engine/NodeModel";
 
 // Node helpers
 export { resolveTemplate } from "./nodes/templateResolver";
-export {
-  resolveSubscriptionFromParams,
-  type MatchParams,
-} from "./nodes/subscriptionMatch";
 
 // Export manager components
 export {

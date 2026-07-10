@@ -30,6 +30,10 @@ export interface MatchParams {
  * Build a SubscriptionRequest from trigger-like node params
  * (`{ event, duration?, match? }`).
  *
+ * Internal helper for the built-in `Trigger` / `TriggerOrTimeout` models —
+ * not part of the public API. Custom nodes declare interest by overriding
+ * `NodeModel.getSubscription(context)` directly.
+ *
  * Returns null when there is no `match` section (the node waits in its own
  * subject space — today's behavior) or when the match subject-id template
  * cannot be resolved from the context; in the latter case a warning is logged and

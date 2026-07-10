@@ -475,13 +475,6 @@ How the pieces fit together:
   your `eventExtractor`; use `"*"` (`SUBSCRIPTION_WILDCARD`) to match any
   subject of that event type.
 
-The built-in triggers implement `getSubscription` from their `params.match`
-section, resolving template placeholders against the trigger event — see the
-[Event Subscriptions guide](/guide/event-subscriptions#declaring-a-cross-subject-wait).
-If your node's params follow the same `{ event, duration?, match? }` shape you
-can reuse the same logic via `resolveSubscriptionFromParams(params, context, nodeId)`
-exported from `@omega-flow/engine`.
-
 ## State Management
 
 Use `setState`, `getState`, and `updateState` to manage node state:

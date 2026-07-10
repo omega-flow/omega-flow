@@ -226,30 +226,6 @@ timeout. Custom nodes can hint their own lifetime via
 node can declare interest in cross-subject events by overriding it. See
 [Custom Nodes for Engine → Subscribing to cross-subject events](/guide/engine-custom-nodes#subscribing-to-cross-subject-events).
 
-## Trying it in the sample apps
-
-The sample server seeds a cross-subject workflow (**Back in stock**) so the
-scenario is one click away:
-
-1. Start the sample server and app (`pnpm dev` in `apps/sampleServer` and
-   `apps/sampleApp`), open the **Debugger** page.
-2. Send `order.create` with subject `client:5` and data
-   `{"payload": {"products": [{"product_id": 456}]}}` — the instance parks
-   and a row appears in the **Subscriptions** panel
-   (`product.update` ← `product:456`); the instance shows a **Subscribed**
-   badge.
-3. Send `product.update` with subject `product:456` — the submit result lists
-   the scheduled delivery, and a **delivery**-badged entry appears in the
-   **Scheduled Events** panel, retargeted at `client:5`.
-4. Fire it (or enable auto-fire) — the subscription row disappears and the
-   `client:5` instance advances to completion.
-
-The same state is available over HTTP: `GET /api/subscriptions` lists active
-subscriptions, `DELETE /api/subscriptions/:id` removes one,
-`POST /api/execute/:domain` returns the `deliveries` scheduled for the event,
-and `POST /api/scheduler/:scheduleId/fire` fires one (returning `delivered`
-for delivery copies).
-
 ## What subscriptions deliberately do NOT do
 
 - **No broadcast routing.** Events never fan out to "all instances in the
