@@ -47,54 +47,27 @@ Process an event — the single entry point for every incoming message:
 | `delivered` | `boolean` *(only for delivery copies)* | Whether the target instance was resumed (`false` = dropped: gone/completed/no longer parked) |
 | `deliveries` | `ScheduledDelivery[]` | Deliveries scheduled for matched subscriptions (`scheduleId`, `workflowId`, `subjectId`, `instanceId`, `nodeId`, `matchSubjectId`) |
 
-#### deliverEvent
+::: details How processEvent handles subscriptions internally
+The subscription pipeline is fully encapsulated — these steps are private
+implementation details, listed here only to explain the observable behavior:
 
-```typescript
-deliverEvent(
-  domain: string,
-  workflowId: string,
-  subjectId: string,
-  instanceId: string,
-  event: Event
-): Promise<boolean>
-```
-
-Deliver an event to **one specific workflow instance** (targeted resume) —
-the delivery half of [event subscriptions](/guide/event-subscriptions).
-`processEvent` calls this automatically for delivery copies; it stays public
-as a low-level primitive. Unlike normal routing it never starts new instances
-and never touches any other instance. The delivery is dropped with a log
-(returning `false`) when the workflow or instance is gone, the instance
-already completed, or it is no longer parked on the node recorded in
-`event.delivery.nodeId` — this makes redelivery idempotent.
-
-**Returns:** `true` if the instance was resumed, `false` if the delivery was dropped.
-
-#### matchSubscriptions
-
-```typescript
-matchSubscriptions(event: Event): Promise<Subscription[]>
-```
-
-Find subscriptions matching an event: subscriptions in the event's domain,
-for the event's type, whose `matchSubjectId` equals the event's own subject id
-— plus wildcard subscriptions. `processEvent` calls this (and schedules the
-deliveries) automatically; public for hosts that run their own relay. Returns
-`[]` when no `subscriptionStore` is configured and for delivery events (a
-delivered copy never fans out again).
-
-#### createDeliveryEvent
-
-```typescript
-createDeliveryEvent(event: Event, subscription: Subscription): Event
-```
-
-Build the delivery copy of an event for one matched subscription: the event
-retargeted at the subscriber via explicit envelope routing (top-level
-`domain`/`subjectId`, which always win over any `eventExtractor` — the copy
-is self-routing), carrying `event.delivery` metadata (`EventDelivery` —
-workflowId, instanceId, nodeId, sourceSubjectId). `data.subjectId` is also
-retargeted for transports that read it.
+- **Match** — subscriptions in the event's domain, for the event's type,
+  whose `matchSubjectId` equals the event's own subject id, plus wildcard
+  subscriptions. Skipped when no `subscriptionStore` is configured and for
+  delivery copies (a delivered copy never fans out again).
+- **Delivery copy** — the matched event is retargeted at each subscriber via
+  explicit envelope routing (top-level `domain`/`subjectId`, which always win
+  over any `eventExtractor` — the copy is self-routing), carrying
+  `event.delivery` metadata (`EventDelivery` — workflowId, instanceId,
+  nodeId, sourceSubjectId). `data.subjectId` is also retargeted for
+  transports that read it.
+- **Targeted resume** — a delivery copy resumes exactly the addressed
+  instance; it never starts new instances and never touches any other
+  instance. The delivery is dropped with a log (`delivered: false`) when the
+  workflow or instance is gone, the instance already completed, or it is no
+  longer parked on the node recorded in `event.delivery.nodeId` — this makes
+  redelivery idempotent.
+:::
 
 #### getScheduler
 
@@ -596,7 +569,6 @@ Helpers exported alongside the interface:
 | `SUBSCRIPTION_WILDCARD` | The `"*"` wildcard match subject id |
 | `subscriptionKey(sub)` | `` `${domain}#${eventType}#${matchSubjectId}` `` — partition key |
 | `subscriptionTarget(sub)` | `` `${workflowId}#${subjectId}#${instanceId}#${nodeId}` `` — sort key |
-| `createDeliveryEvent(event, sub, sourceSubjectId)` | Standalone version of `WorkflowManager.createDeliveryEvent` |
 
 ---
 

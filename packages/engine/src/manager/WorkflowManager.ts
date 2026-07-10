@@ -565,9 +565,8 @@ export class WorkflowManager {
    * domain, for this event's type, whose matchSubjectId equals the event's own
    * subject id — plus wildcard subscriptions for the same event type.
    *
-   * `processEvent` calls this (and schedules the deliveries) automatically;
-   * it stays public as a low-level primitive for hosts that run their own
-   * relay.
+   * Internal step of `processEvent`, which calls this and schedules the
+   * deliveries automatically.
    *
    * Returns an empty array when no subscriptionStore is configured, and for
    * delivery events (a delivered copy must not fan out again).
@@ -575,7 +574,7 @@ export class WorkflowManager {
    * @param event - The event to match against registered subscriptions
    * @returns Matching subscriptions (possibly empty)
    */
-  async matchSubscriptions(event: Event): Promise<Subscription[]> {
+  private async matchSubscriptions(event: Event): Promise<Subscription[]> {
     if (!this.subscriptionStore) {
       return [];
     }
@@ -590,15 +589,13 @@ export class WorkflowManager {
    * Build the delivery copy of an event for one matched subscription:
    * the event retargeted at the subscriber via the envelope (top-level
    * `domain`/`subjectId`/`delivery` — see the standalone
-   * `createDeliveryEvent` for the shape).
-   *
-   * `processEvent` uses this internally; public as a low-level primitive.
+   * `createDeliveryEvent` for the shape). Internal step of `processEvent`.
    *
    * @param event - The original event that matched the subscription
    * @param subscription - The matched subscription
    * @returns The event copy to relay to the subscriber
    */
-  createDeliveryEvent(event: Event, subscription: Subscription): Event {
+  private createDeliveryEvent(event: Event, subscription: Subscription): Event {
     const [, sourceSubjectId] = this.resolveRouting(event);
     return createDeliveryEvent(event, subscription, sourceSubjectId);
   }
@@ -609,9 +606,8 @@ export class WorkflowManager {
    * Unlike normal routing, this never starts new instances and never touches
    * any other instance: it loads exactly the addressed context, lets the
    * parked node accept the event, and persists the result (including
-   * subscription cleanup). `processEvent` calls this automatically for
-   * delivery copies (`event.delivery`); public as a low-level primitive
-   * for hosts that address instances themselves.
+   * subscription cleanup). Internal step of `processEvent`, which calls this
+   * for delivery copies (`event.delivery`).
    *
    * The delivery is dropped (with a log, returning false) when the workflow
    * or instance is gone, the instance already completed, or it is no longer
@@ -626,7 +622,7 @@ export class WorkflowManager {
    *          `event.delivery`)
    * @returns True if the instance was resumed, false if the delivery was dropped
    */
-  async deliverEvent(
+  private async deliverEvent(
     domain: string,
     workflowId: string,
     subjectId: string,

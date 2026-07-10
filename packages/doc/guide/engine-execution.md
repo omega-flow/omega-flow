@@ -171,30 +171,17 @@ const result = await manager.processEvent(event);
    (delay 0). The scheduled deliveries are returned in
    `result.deliveries`.
 
-### Targeted delivery (low-level)
+### Targeted delivery (internal)
 
-The delivery half of the pipeline is also exposed directly for hosts that run
-their own relay:
-
-```typescript
-deliverEvent(
-  domain: string,
-  workflowId: string,
-  subjectId: string,
-  instanceId: string,
-  event: Event
-): Promise<boolean>
-```
-
-Where normal routing offers an event to *every* workflow in the domain (and
-may start new instances), `deliverEvent` is a **targeted resume — it never
-starts instances**: it loads exactly the addressed context, lets the parked
-node accept the event, and persists the result. The delivery is dropped with
-a log (returning `false`) when the instance is gone, already completed, or no
-longer parked on the node recorded in `event.delivery.nodeId`, which
-makes redelivery idempotent. `matchSubscriptions` and `createDeliveryEvent`
-are public for the same reason — but with the built-in pipeline you never
-call any of the three yourself.
+The delivery half of the pipeline is a private implementation detail of
+`processEvent` — you never call it yourself. Where normal routing offers an
+event to *every* workflow in the domain (and may start new instances), a
+delivery copy triggers a **targeted resume — it never starts instances**:
+the manager loads exactly the addressed context, lets the parked node accept
+the event, and persists the result. The delivery is dropped with a log
+(`result.delivered === false`) when the instance is gone, already completed,
+or no longer parked on the node recorded in `event.delivery.nodeId`, which
+makes redelivery idempotent.
 
 See the [Event Subscriptions guide](/guide/event-subscriptions) for the full
 event flow and failure modes.

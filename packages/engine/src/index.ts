@@ -35,7 +35,6 @@ export {
   SUBSCRIPTION_WILDCARD,
   subscriptionKey,
   subscriptionTarget,
-  createDeliveryEvent,
   InMemoryWorkflowStore,
   InMemoryWorkflowMemory,
   InMemoryWorkflowScheduler,

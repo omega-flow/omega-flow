@@ -97,6 +97,8 @@ export interface SubscriptionStore {
 
 /**
  * Build the delivery copy of an event for one matched subscription.
+ * Engine-internal (used by `WorkflowManager.processEvent`), not part of the
+ * public package API.
  *
  * The copy is retargeted at the subscriber via the envelope: top-level
  * `domain` / `subjectId` are set to the subscriber's own domain/subject

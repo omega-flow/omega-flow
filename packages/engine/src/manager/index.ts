@@ -13,7 +13,6 @@ export {
   SUBSCRIPTION_WILDCARD,
   subscriptionKey,
   subscriptionTarget,
-  createDeliveryEvent,
   type Subscription,
   type SubscriptionRef,
   type SubscriptionStore,

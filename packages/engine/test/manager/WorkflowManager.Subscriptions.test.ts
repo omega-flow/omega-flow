@@ -212,11 +212,11 @@ describe("WorkflowManager - Event subscriptions", () => {
       );
       await manager.processEvent(orderCreateEvent);
 
-      const matches = await manager.matchSubscriptions(productUpdateEvent);
+      const matches = await manager["matchSubscriptions"](productUpdateEvent);
       expect(matches).toHaveLength(1);
       expect(matches[0].subjectId).toBe("client:5");
 
-      const other = await manager.matchSubscriptions({
+      const other = await manager["matchSubscriptions"]({
         ...productUpdateEvent,
         id: "evt-product-2",
         data: { subjectId: "product:999", payload: { product_id: 999 } },
@@ -228,7 +228,7 @@ describe("WorkflowManager - Event subscriptions", () => {
       const manager = createManager(buildCrossSubjectWorkflow(undefined));
       await manager.processEvent(orderCreateEvent);
 
-      const matches = await manager.matchSubscriptions({
+      const matches = await manager["matchSubscriptions"]({
         ...productUpdateEvent,
         data: { subjectId: "product:999", payload: { product_id: 999 } },
       });
@@ -239,13 +239,13 @@ describe("WorkflowManager - Event subscriptions", () => {
       const manager = createManager(buildCrossSubjectWorkflow(undefined));
       await manager.processEvent(orderCreateEvent);
 
-      const [match] = await manager.matchSubscriptions(productUpdateEvent);
-      const deliveryEvent = manager.createDeliveryEvent(
+      const [match] = await manager["matchSubscriptions"](productUpdateEvent);
+      const deliveryEvent = manager["createDeliveryEvent"](
         productUpdateEvent,
         match
       );
 
-      expect(await manager.matchSubscriptions(deliveryEvent)).toHaveLength(0);
+      expect(await manager["matchSubscriptions"](deliveryEvent)).toHaveLength(0);
     });
 
     it("returns no matches when no subscriptionStore is configured", async () => {
@@ -257,7 +257,7 @@ describe("WorkflowManager - Event subscriptions", () => {
       );
       await manager.processEvent(orderCreateEvent);
 
-      expect(await manager.matchSubscriptions(productUpdateEvent)).toEqual([]);
+      expect(await manager["matchSubscriptions"](productUpdateEvent)).toEqual([]);
     });
   });
 
@@ -269,9 +269,9 @@ describe("WorkflowManager - Event subscriptions", () => {
         )
       );
       await manager.processEvent(orderCreateEvent);
-      const [match] = await manager.matchSubscriptions(productUpdateEvent);
+      const [match] = await manager["matchSubscriptions"](productUpdateEvent);
 
-      const deliveryEvent = manager.createDeliveryEvent(
+      const deliveryEvent = manager["createDeliveryEvent"](
         productUpdateEvent,
         match
       );
@@ -303,7 +303,7 @@ describe("WorkflowManager - Event subscriptions", () => {
   describe("delivery (targeted resume)", () => {
     async function parkAndMatch(manager: WorkflowManager) {
       await manager.processEvent(orderCreateEvent);
-      const [match] = await manager.matchSubscriptions(productUpdateEvent);
+      const [match] = await manager["matchSubscriptions"](productUpdateEvent);
       return match;
     }
 
@@ -314,12 +314,12 @@ describe("WorkflowManager - Event subscriptions", () => {
         )
       );
       const match = await parkAndMatch(manager);
-      const deliveryEvent = manager.createDeliveryEvent(
+      const deliveryEvent = manager["createDeliveryEvent"](
         productUpdateEvent,
         match
       );
 
-      const resumed = await manager.deliverEvent(
+      const resumed = await manager["deliverEvent"](
         testDomain,
         match.workflowId,
         match.subjectId,
@@ -348,19 +348,19 @@ describe("WorkflowManager - Event subscriptions", () => {
         )
       );
       const match = await parkAndMatch(manager);
-      const deliveryEvent = manager.createDeliveryEvent(
+      const deliveryEvent = manager["createDeliveryEvent"](
         productUpdateEvent,
         match
       );
 
-      await manager.deliverEvent(
+      await manager["deliverEvent"](
         testDomain,
         match.workflowId,
         match.subjectId,
         match.instanceId,
         deliveryEvent
       );
-      const second = await manager.deliverEvent(
+      const second = await manager["deliverEvent"](
         testDomain,
         match.workflowId,
         match.subjectId,
@@ -380,12 +380,12 @@ describe("WorkflowManager - Event subscriptions", () => {
         )
       );
       const match = await parkAndMatch(manager);
-      const deliveryEvent = manager.createDeliveryEvent(
+      const deliveryEvent = manager["createDeliveryEvent"](
         productUpdateEvent,
         match
       );
 
-      const resumed = await manager.deliverEvent(
+      const resumed = await manager["deliverEvent"](
         testDomain,
         match.workflowId,
         match.subjectId,
@@ -405,13 +405,13 @@ describe("WorkflowManager - Event subscriptions", () => {
         )
       );
       const match = await parkAndMatch(manager);
-      const deliveryEvent = manager.createDeliveryEvent(
+      const deliveryEvent = manager["createDeliveryEvent"](
         productUpdateEvent,
         match
       );
       deliveryEvent.delivery.nodeId = "some-other-node";
 
-      const resumed = await manager.deliverEvent(
+      const resumed = await manager["deliverEvent"](
         testDomain,
         match.workflowId,
         match.subjectId,
@@ -493,8 +493,8 @@ describe("WorkflowManager - Event subscriptions", () => {
         )
       );
       await manager.processEvent(orderCreateEvent);
-      const [match] = await manager.matchSubscriptions(productUpdateEvent);
-      const deliveryEvent = manager.createDeliveryEvent(
+      const [match] = await manager["matchSubscriptions"](productUpdateEvent);
+      const deliveryEvent = manager["createDeliveryEvent"](
         productUpdateEvent,
         match
       );
@@ -520,8 +520,8 @@ describe("WorkflowManager - Event subscriptions", () => {
         )
       );
       await manager.processEvent(orderCreateEvent);
-      const [match] = await manager.matchSubscriptions(productUpdateEvent);
-      const deliveryEvent = manager.createDeliveryEvent(
+      const [match] = await manager["matchSubscriptions"](productUpdateEvent);
+      const deliveryEvent = manager["createDeliveryEvent"](
         productUpdateEvent,
         match
       );

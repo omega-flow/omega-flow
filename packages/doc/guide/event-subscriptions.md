@@ -199,13 +199,6 @@ scheduler hop re-enters the event in the subscriber's own ordering scope
 (with `SqsFifoWorkflowScheduler`, its own FIFO message group), buying back
 serialization with infrastructure that is already there.
 
-### Low-level primitives
-
-`matchSubscriptions(event)`, `createDeliveryEvent(event, subscription)` and
-`deliverEvent(domain, workflowId, subjectId, instanceId, event)` remain
-public on `WorkflowManager` for hosts that run their own relay — but with the
-built-in pipeline they are not needed.
-
 ## Races and failure modes
 
 | Race | Handling |
