@@ -1,6 +1,6 @@
 {
   "name": "@omega-flow/editor",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Workflow editor components for Omega Flow",
   "type": "module",
   "sideEffects": false,
