@@ -11,10 +11,6 @@ export {
   type DynamoDBSubscriptionStoreConfig,
 } from "./subscriptions/DynamoDBSubscriptionStore";
 export {
-  EventBusWorkflowScheduler,
-  type EventBusWorkflowSchedulerConfig,
-} from "./schedulers/EventBusWorkflowScheduler";
-export {
   SqsFifoWorkflowScheduler,
   type SqsFifoWorkflowSchedulerConfig,
 } from "./schedulers/SqsFifoWorkflowScheduler";

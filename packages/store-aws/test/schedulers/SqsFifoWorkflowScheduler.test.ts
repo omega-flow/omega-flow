@@ -228,7 +228,7 @@ describe("SqsFifoWorkflowScheduler", () => {
 
     it("returns false when the schedule does not exist", async () => {
       schedulerMock.on(DeleteScheduleCommand).rejects(
-        new ResourceNotFoundException({ $metadata: {}, message: "not found" })
+        new ResourceNotFoundException({ $metadata: {}, message: "not found", Message: "not found" })
       );
 
       const result = await scheduler.cancel("omf-missing");
