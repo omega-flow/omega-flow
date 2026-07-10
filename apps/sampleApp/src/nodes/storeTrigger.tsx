@@ -103,4 +103,6 @@ export const storeTriggerNodeType: NodeTypeDefinition = {
   defaultData: { params: { action: "" } },
   ViewComponent: StoreTriggerNodeView,
   DetailComponent: StoreTriggerNodeDetail,
+  sourceHandles: [{ id: "output" }],
+  role: "trigger",
 };

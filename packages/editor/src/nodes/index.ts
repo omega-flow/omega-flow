@@ -45,6 +45,8 @@ export const defaultNodeTypes: NodeTypeDefinition[] = [
     defaultData: { params: { event: "" } },
     ViewComponent: TriggerNodeView,
     DetailComponent: TriggerNodeDetail,
+    sourceHandles: [{ id: "output" }],
+    role: "trigger",
   },
   {
     type: "Action",
@@ -56,6 +58,7 @@ export const defaultNodeTypes: NodeTypeDefinition[] = [
     defaultData: { action: "", params: {} },
     ViewComponent: ActionNodeView,
     DetailComponent: ActionNodeDetail,
+    sourceHandles: [{ id: "output" }],
   },
   {
     type: "Condition",
@@ -67,6 +70,7 @@ export const defaultNodeTypes: NodeTypeDefinition[] = [
     defaultData: { conditions: { all: [] } },
     ViewComponent: ConditionNodeView,
     DetailComponent: ConditionNodeDetail,
+    sourceHandles: [{ id: "true" }, { id: "false" }],
   },
   {
     type: "Wait",
@@ -78,6 +82,7 @@ export const defaultNodeTypes: NodeTypeDefinition[] = [
     defaultData: { params: { duration: 60000 } },
     ViewComponent: WaitNodeView,
     DetailComponent: WaitNodeDetail,
+    sourceHandles: [{ id: "output" }],
   },
   {
     type: "TriggerOrTimeout",
@@ -89,6 +94,7 @@ export const defaultNodeTypes: NodeTypeDefinition[] = [
     defaultData: { params: { event: "", duration: 60000 } },
     ViewComponent: TriggerOrTimeoutNodeView,
     DetailComponent: TriggerOrTimeoutNodeDetail,
+    sourceHandles: [{ id: "trigger" }, { id: "timeout" }],
   },
   {
     type: "Exit",
@@ -100,6 +106,7 @@ export const defaultNodeTypes: NodeTypeDefinition[] = [
     defaultData: {},
     ViewComponent: ExitNodeView,
     DetailComponent: ExitNodeDetail,
+    role: "terminal",
   },
 ];
 

@@ -19,8 +19,19 @@ import type {
   WorkflowEditorState,
   NodeTypeDefinition,
   WorkflowEditorProps,
+  EditorMode,
+  PendingInsertion,
+  LayoutOptions,
 } from "./types";
 import { defaultNodeTypes } from "../nodes";
+import { generateNodeId, generateEdgeId } from "../utils/ids";
+import {
+  insertNodeAfter as insertNodeAfterGraph,
+  insertNodeOnEdge as insertNodeOnEdgeGraph,
+  removeNodeWithHealing,
+  getSourceHandles,
+} from "../utils/graph";
+import { layoutFlow } from "../utils/layout";
 
 // Action types for reducer
 type Action =
@@ -40,7 +51,18 @@ type Action =
   | { type: "REGISTER_NODE_TYPE"; payload: NodeTypeDefinition }
   | { type: "MARK_CLEAN" }
   | { type: "APPLY_NODE_CHANGES"; payload: NodeChange[] }
-  | { type: "APPLY_EDGE_CHANGES"; payload: EdgeChange[] };
+  | { type: "APPLY_EDGE_CHANGES"; payload: EdgeChange[] }
+  | { type: "SET_MODE"; payload: EditorMode }
+  | { type: "SET_PENDING_INSERTION"; payload: PendingInsertion | null }
+  | {
+      type: "INSERT_NODE_AFTER";
+      payload: { node: Node; sourceNodeId: string; sourceHandleId?: string };
+    }
+  | {
+      type: "INSERT_NODE_ON_EDGE";
+      payload: { node: Node; edgeId: string; nodeSourceHandleId?: string };
+    }
+  | { type: "AUTO_LAYOUT" };
 
 function findSelectedNodeId(nodes: Node[]): string | null {
   return nodes.find((n) => (n as Node & { selected?: boolean }).selected)?.id ?? null;
@@ -48,35 +70,105 @@ function findSelectedNodeId(nodes: Node[]): string | null {
 
 function createInitialState(
   workflow?: Workflow,
-  nodeTypes?: NodeTypeDefinition[]
+  nodeTypes?: NodeTypeDefinition[],
+  mode?: EditorMode,
+  layoutOptions?: LayoutOptions
 ): WorkflowEditorState {
   // Use provided node types, or fall back to defaults if none provided
   const nodeTypesMap = new Map<string, NodeTypeDefinition>();
   const typesToUse = nodeTypes ?? defaultNodeTypes;
   typesToUse.forEach((def) => nodeTypesMap.set(def.type, def));
 
+  const common = {
+    mode: mode ?? ("freeform" as EditorMode),
+    pendingInsertion: null,
+    layoutOptions: layoutOptions ?? {},
+    nodeTypes: nodeTypesMap,
+    isDirty: false,
+  };
+
   if (workflow) {
     return {
+      ...common,
       workflow,
       nodes: workflow.flow.nodes,
       edges: workflow.flow.edges,
       options: workflow.options,
       name: workflow.name,
       selectedNodeId: findSelectedNodeId(workflow.flow.nodes),
-      isDirty: false,
-      nodeTypes: nodeTypesMap,
     };
   }
 
   return {
+    ...common,
     workflow: null,
     nodes: [],
     edges: [],
     options: { frequency: { type: "one_time" } },
     name: "",
     selectedNodeId: null,
-    isDirty: false,
-    nodeTypes: nodeTypesMap,
+  };
+}
+
+/** Re-layout nodes when in guided mode; identity otherwise. */
+function withAutoLayout(state: WorkflowEditorState): WorkflowEditorState {
+  if (state.mode !== "guided") return state;
+  return {
+    ...state,
+    nodes: layoutFlow(
+      state.nodes,
+      state.edges,
+      state.nodeTypes,
+      state.layoutOptions
+    ),
+  };
+}
+
+/** Marks `node` as the only selected node in the list. */
+function selectOnly(nodes: Node[], nodeId: string): Node[] {
+  return nodes.map((node) => ({ ...node, selected: node.id === nodeId }));
+}
+
+/** Applies ReactFlow node changes (positions, selection, removals) to state. */
+function applyNodeChangesToState(
+  state: WorkflowEditorState,
+  changes: NodeChange[]
+): WorkflowEditorState {
+  const newNodes = applyNodeChanges(changes, state.nodes);
+  // Check for selection changes
+  // Process selections first, then deselections, to handle the case where
+  // ReactFlow sends deselect of old node after select of new node
+  let newSelectedId = state.selectedNodeId;
+
+  // First pass: handle selections (new node being selected)
+  for (const change of changes) {
+    if (change.type === "select" && change.selected) {
+      newSelectedId = change.id;
+    }
+  }
+
+  // Second pass: handle deselections and removals
+  for (const change of changes) {
+    if (
+      change.type === "select" &&
+      !change.selected &&
+      change.id === newSelectedId
+    ) {
+      // Only clear selection if the deselected node is still the selected one
+      newSelectedId = null;
+    } else if (change.type === "remove" && change.id === newSelectedId) {
+      newSelectedId = null;
+    }
+  }
+  // Only mark dirty for position/data changes, not selections
+  const hasDirtyChange = changes.some(
+    (c) => c.type === "position" || c.type === "dimensions" || c.type === "remove"
+  );
+  return {
+    ...state,
+    nodes: newNodes,
+    selectedNodeId: newSelectedId,
+    isDirty: state.isDirty || hasDirtyChange,
   };
 }
 
@@ -84,7 +176,8 @@ function reducer(state: WorkflowEditorState, action: Action): WorkflowEditorStat
   switch (action.type) {
     case "LOAD_WORKFLOW": {
       const workflow = action.payload;
-      return {
+      // In guided mode positions are always the automatic layout's
+      return withAutoLayout({
         ...state,
         workflow,
         nodes: workflow.flow.nodes,
@@ -92,8 +185,9 @@ function reducer(state: WorkflowEditorState, action: Action): WorkflowEditorStat
         options: workflow.options,
         name: workflow.name,
         selectedNodeId: findSelectedNodeId(workflow.flow.nodes),
+        pendingInsertion: null,
         isDirty: false,
-      };
+      });
     }
 
     case "RESET_WORKFLOW": {
@@ -125,12 +219,23 @@ function reducer(state: WorkflowEditorState, action: Action): WorkflowEditorStat
     case "SET_EDGES":
       return { ...state, edges: action.payload, isDirty: true };
 
-    case "ADD_NODE":
+    case "ADD_NODE": {
+      if (state.mode === "guided") {
+        // Guided adds (e.g. the first trigger) are laid out and selected
+        return withAutoLayout({
+          ...state,
+          nodes: selectOnly([...state.nodes, action.payload], action.payload.id),
+          selectedNodeId: action.payload.id,
+          pendingInsertion: null,
+          isDirty: true,
+        });
+      }
       return {
         ...state,
         nodes: [...state.nodes, action.payload],
         isDirty: true,
       };
+    }
 
     case "UPDATE_NODE": {
       const { nodeId, data } = action.payload;
@@ -156,6 +261,24 @@ function reducer(state: WorkflowEditorState, action: Action): WorkflowEditorStat
 
     case "REMOVE_NODE": {
       const nodeId = action.payload;
+      if (state.mode === "guided") {
+        // Heal the flow around the removed node (A→B→C becomes A→C)
+        const healed = removeNodeWithHealing(
+          { nodes: state.nodes, edges: state.edges },
+          nodeId
+        );
+        return withAutoLayout({
+          ...state,
+          nodes: healed.nodes,
+          edges: healed.edges,
+          selectedNodeId:
+            state.selectedNodeId &&
+            healed.nodes.some((n) => n.id === state.selectedNodeId)
+              ? state.selectedNodeId
+              : null,
+          isDirty: true,
+        });
+      }
       return {
         ...state,
         nodes: state.nodes.filter((node) => node.id !== nodeId),
@@ -199,48 +322,99 @@ function reducer(state: WorkflowEditorState, action: Action): WorkflowEditorStat
     case "MARK_CLEAN":
       return { ...state, isDirty: false };
 
-    case "APPLY_NODE_CHANGES": {
-      const newNodes = applyNodeChanges(action.payload, state.nodes);
-      // Check for selection changes
-      // Process selections first, then deselections, to handle the case where
-      // ReactFlow sends deselect of old node after select of new node
-      let newSelectedId = state.selectedNodeId;
+    case "SET_MODE": {
+      const next: WorkflowEditorState = {
+        ...state,
+        mode: action.payload,
+        pendingInsertion: null,
+      };
+      // Entering guided mode adopts the automatic layout right away
+      return action.payload === "guided" ? withAutoLayout(next) : next;
+    }
 
-      // First pass: handle selections (new node being selected)
-      for (const change of action.payload) {
-        if (change.type === "select" && change.selected) {
-          newSelectedId = change.id;
-        }
-      }
+    case "SET_PENDING_INSERTION":
+      return { ...state, pendingInsertion: action.payload };
 
-      // Second pass: handle deselections and removals
-      for (const change of action.payload) {
-        if (
-          change.type === "select" &&
-          !change.selected &&
-          change.id === newSelectedId
-        ) {
-          // Only clear selection if the deselected node is still the selected one
-          newSelectedId = null;
-        } else if (change.type === "remove" && change.id === newSelectedId) {
-          newSelectedId = null;
-        }
-      }
-      // Only mark dirty for position/data changes, not selections
-      const hasDirtyChange = action.payload.some(
-        (c) => c.type === "position" || c.type === "dimensions" || c.type === "remove"
+    case "INSERT_NODE_AFTER": {
+      const { node, sourceNodeId, sourceHandleId } = action.payload;
+      const inserted = insertNodeAfterGraph(
+        { nodes: state.nodes, edges: state.edges },
+        sourceNodeId,
+        sourceHandleId,
+        node
       );
+      return withAutoLayout({
+        ...state,
+        nodes: selectOnly(inserted.nodes, node.id),
+        edges: inserted.edges,
+        selectedNodeId: node.id,
+        pendingInsertion: null,
+        isDirty: true,
+      });
+    }
+
+    case "INSERT_NODE_ON_EDGE": {
+      const { node, edgeId, nodeSourceHandleId } = action.payload;
+      const inserted = insertNodeOnEdgeGraph(
+        { nodes: state.nodes, edges: state.edges },
+        edgeId,
+        node,
+        nodeSourceHandleId
+      );
+      if (inserted.nodes === state.nodes) {
+        return { ...state, pendingInsertion: null };
+      }
+      return withAutoLayout({
+        ...state,
+        nodes: selectOnly(inserted.nodes, node.id),
+        edges: inserted.edges,
+        selectedNodeId: node.id,
+        pendingInsertion: null,
+        isDirty: true,
+      });
+    }
+
+    case "AUTO_LAYOUT":
       return {
         ...state,
-        nodes: newNodes,
-        selectedNodeId: newSelectedId,
-        isDirty: state.isDirty || hasDirtyChange,
+        nodes: layoutFlow(
+          state.nodes,
+          state.edges,
+          state.nodeTypes,
+          state.layoutOptions
+        ),
+        isDirty: true,
       };
+
+    case "APPLY_NODE_CHANGES": {
+      if (state.mode === "guided") {
+        // Route removals (delete key) through healing, and re-run the layout
+        // once ReactFlow reports measured node sizes.
+        const removals = action.payload.filter((c) => c.type === "remove");
+        const rest = action.payload.filter((c) => c.type !== "remove");
+        let next = state;
+        for (const removal of removals) {
+          next = reducer(next, { type: "REMOVE_NODE", payload: removal.id });
+        }
+        if (rest.length > 0) {
+          next = applyNodeChangesToState(next, rest);
+          if (rest.some((c) => c.type === "dimensions")) {
+            next = withAutoLayout(next);
+          }
+        }
+        return next;
+      }
+      return applyNodeChangesToState(state, action.payload);
     }
 
     case "APPLY_EDGE_CHANGES": {
-      const newEdges = applyEdgeChanges(action.payload, state.edges);
-      const hasDirtyChange = action.payload.some((c) => c.type === "remove");
+      // Guided mode owns the edges: connections can never be deleted directly
+      const changes =
+        state.mode === "guided"
+          ? action.payload.filter((c) => c.type !== "remove")
+          : action.payload;
+      const newEdges = applyEdgeChanges(changes, state.edges);
+      const hasDirtyChange = changes.some((c) => c.type === "remove");
       return {
         ...state,
         edges: newEdges,
@@ -256,18 +430,6 @@ function reducer(state: WorkflowEditorState, action: Action): WorkflowEditorStat
 // Create context
 const WorkflowEditorContext = createContext<WorkflowEditorContextValue | null>(null);
 
-// Counter for generating unique node IDs
-let nodeIdCounter = 0;
-
-function generateNodeId(type: string): string {
-  nodeIdCounter++;
-  return `${type.toLowerCase()}-${Date.now()}-${nodeIdCounter}`;
-}
-
-function generateEdgeId(source: string, target: string): string {
-  return `edge-${source}-${target}-${Date.now()}`;
-}
-
 /**
  * Provider component for workflow editor context
  */
@@ -277,11 +439,14 @@ export function WorkflowEditorProvider({
   nodeTypes,
   onWorkflowChange,
   onDirtyChange,
+  mode,
+  layoutOptions,
 }: WorkflowEditorProps) {
   const [state, dispatch] = useReducer(
     reducer,
-    { workflow, nodeTypes },
-    ({ workflow, nodeTypes }) => createInitialState(workflow, nodeTypes)
+    { workflow, nodeTypes, mode, layoutOptions },
+    ({ workflow, nodeTypes, mode, layoutOptions }) =>
+      createInitialState(workflow, nodeTypes, mode, layoutOptions)
   );
 
   // Load workflow when prop changes
@@ -290,6 +455,13 @@ export function WorkflowEditorProvider({
       dispatch({ type: "LOAD_WORKFLOW", payload: workflow });
     }
   }, [workflow]);
+
+  // Follow mode prop changes (consumers may also switch via setMode)
+  useEffect(() => {
+    if (mode) {
+      dispatch({ type: "SET_MODE", payload: mode });
+    }
+  }, [mode]);
 
   // Notify parent of dirty state changes
   useEffect(() => {
@@ -405,6 +577,65 @@ export function WorkflowEditorProvider({
     dispatch({ type: "REGISTER_NODE_TYPE", payload: definition });
   }, []);
 
+  const setMode = useCallback((mode: EditorMode) => {
+    dispatch({ type: "SET_MODE", payload: mode });
+  }, []);
+
+  const requestInsertion = useCallback(
+    (insertion: PendingInsertion | null) => {
+      dispatch({ type: "SET_PENDING_INSERTION", payload: insertion });
+    },
+    []
+  );
+
+  const createNodeOfType = useCallback(
+    (type: string): Node | null => {
+      const nodeTypeDef = state.nodeTypes.get(type);
+      if (!nodeTypeDef) {
+        console.warn(`Unknown node type: ${type}`);
+        return null;
+      }
+      return {
+        id: generateNodeId(type),
+        type,
+        position: { x: 0, y: 0 },
+        data: { ...nodeTypeDef.defaultData },
+      };
+    },
+    [state.nodeTypes]
+  );
+
+  const insertNodeAfter = useCallback(
+    (sourceNodeId: string, sourceHandleId: string | undefined, type: string) => {
+      const node = createNodeOfType(type);
+      if (!node) return;
+      dispatch({
+        type: "INSERT_NODE_AFTER",
+        payload: { node, sourceNodeId, sourceHandleId },
+      });
+    },
+    [createNodeOfType]
+  );
+
+  const insertNodeOnEdge = useCallback(
+    (edgeId: string, type: string) => {
+      const node = createNodeOfType(type);
+      if (!node) return;
+      // The new node's first output inherits the downstream connection
+      const nodeSourceHandleId = getSourceHandles(state.nodeTypes.get(type))[0]
+        ?.id;
+      dispatch({
+        type: "INSERT_NODE_ON_EDGE",
+        payload: { node, edgeId, nodeSourceHandleId },
+      });
+    },
+    [createNodeOfType, state.nodeTypes]
+  );
+
+  const autoLayout = useCallback(() => {
+    dispatch({ type: "AUTO_LAYOUT" });
+  }, []);
+
   const getWorkflow = useCallback(() => getWorkflowImpl(), [getWorkflowImpl]);
 
   const markClean = useCallback(() => {
@@ -445,6 +676,9 @@ export function WorkflowEditorProvider({
       selectedNodeId: state.selectedNodeId,
       isDirty: state.isDirty,
       nodeTypes: state.nodeTypes,
+      mode: state.mode,
+      pendingInsertion: state.pendingInsertion,
+      layoutOptions: state.layoutOptions,
       // Actions
       loadWorkflow,
       resetWorkflow,
@@ -463,6 +697,11 @@ export function WorkflowEditorProvider({
       onNodesChange,
       onEdgesChange,
       onConnect,
+      setMode,
+      insertNodeAfter,
+      insertNodeOnEdge,
+      autoLayout,
+      requestInsertion,
     }),
     [
       state,
@@ -483,6 +722,11 @@ export function WorkflowEditorProvider({
       onNodesChange,
       onEdgesChange,
       onConnect,
+      setMode,
+      insertNodeAfter,
+      insertNodeOnEdge,
+      autoLayout,
+      requestInsertion,
     ]
   );
 

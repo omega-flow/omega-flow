@@ -148,4 +148,13 @@ export const defaultTranslations: TranslationDictionary = {
   "conditionBuilder.editButton": "Edit",
   "conditionBuilder.apply": "Apply",
   "conditionBuilder.cancel": "Cancel",
+
+  // ── Guided mode ────────────────────────────────────────────
+  "guided.addNode": "Add node",
+  "guided.chooseTrigger": "Choose a trigger",
+  "guided.insertNode": "Insert node here",
+  "guided.chooser.title": "Add node",
+  "guided.chooser.triggerTitle": "Choose a trigger",
+  "guided.chooser.empty": "No node types available",
+  "guided.chooser.cancel": "Cancel",
 };

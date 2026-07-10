@@ -19,6 +19,7 @@ export function useWorkflowEditor() {
       ? context.nodes.find((n) => n.id === context.selectedNodeId) ?? null
       : null,
     selectedNodeId: context.selectedNodeId,
+    mode: context.mode,
 
     // Actions
     loadWorkflow: context.loadWorkflow,
@@ -33,5 +34,9 @@ export function useWorkflowEditor() {
     setOptions: context.setOptions,
     getWorkflow: context.getWorkflow,
     markClean: context.markClean,
+    setMode: context.setMode,
+    insertNodeAfter: context.insertNodeAfter,
+    insertNodeOnEdge: context.insertNodeOnEdge,
+    autoLayout: context.autoLayout,
   };
 }

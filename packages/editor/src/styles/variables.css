@@ -144,4 +144,17 @@
   --of-button-danger-color: var(--of-color-status-error);
   --of-button-radius: var(--of-radius-md);
   --of-button-padding: 8px 16px;
+
+  /* Guided mode */
+  --of-guided-placeholder-bg: var(--of-color-bg-secondary);
+  --of-guided-placeholder-border: var(--of-color-border-primary);
+  --of-guided-placeholder-color: var(--of-color-text-tertiary);
+  --of-guided-placeholder-border-hover: var(--of-color-border-focus);
+  --of-guided-placeholder-color-hover: var(--of-color-interactive-primary);
+  --of-guided-edge-color: var(--of-color-border-primary);
+  --of-guided-add-button-bg: var(--of-color-bg-primary);
+  --of-guided-add-button-color: var(--of-color-text-secondary);
+  --of-guided-add-button-border: var(--of-color-border-primary);
+  --of-guided-add-button-color-hover: var(--of-color-interactive-primary);
+  --of-guided-add-button-border-hover: var(--of-color-border-focus);
 }

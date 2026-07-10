@@ -21,7 +21,21 @@ export {
   useNodeRegistry,
   useDragAndDrop,
   useSelectedNode,
+  useGuidedFlow,
 } from "./hooks";
+
+// Guided mode
+export {
+  AddNodePlaceholderView,
+  InsertableEdge,
+  NodeChooser,
+  derivePlaceholders,
+  PLACEHOLDER_NODE_TYPE,
+  INSERTABLE_EDGE_TYPE,
+  isPlaceholderId,
+} from "./guided";
+export type { NodeChooserProps } from "./guided";
+export { layoutFlow, defaultLayoutOptions } from "./utils/layout";
 
 // Node system
 export { defaultNodeTypes, mergeNodeTypes } from "./nodes";
@@ -73,6 +87,10 @@ export type {
   NodeViewProps,
   NodeDetailProps,
   HandleDefinition,
+  EditorMode,
+  NodeRole,
+  PendingInsertion,
+  LayoutOptions,
 } from "./context/types";
 
 // Types - Node views

@@ -25,6 +25,8 @@ export function WorkflowEditor({
   onDirtyChange,
   translationFn,
   translations,
+  mode,
+  layoutOptions,
 }: WorkflowEditorProps) {
   return (
     <ReactFlowProvider>
@@ -37,6 +39,8 @@ export function WorkflowEditor({
           nodeTypes={nodeTypes}
           onWorkflowChange={onWorkflowChange}
           onDirtyChange={onDirtyChange}
+          mode={mode}
+          layoutOptions={layoutOptions}
         >
           {children}
         </WorkflowEditorProvider>

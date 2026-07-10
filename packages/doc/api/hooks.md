@@ -418,6 +418,53 @@ function SelectionInfo() {
 
 ---
 
+## useGuidedFlow
+
+One-stop hook for rendering a [guided-mode](/guide/guided-mode) canvas.
+Returns the flow augmented with derived "Add node" placeholders, laid out
+automatically, plus everything to wire up `<ReactFlow>`.
+
+```tsx
+import { ReactFlow } from "@xyflow/react";
+import { NodeChooser, useGuidedFlow } from "@omega-flow/editor";
+
+function GuidedCanvas() {
+  const { nodes, edges, nodeTypes, edgeTypes, reactFlowProps } =
+    useGuidedFlow();
+
+  return (
+    <ReactFlow
+      nodes={nodes}
+      edges={edges}
+      nodeTypes={nodeTypes}
+      edgeTypes={edgeTypes}
+      {...reactFlowProps}
+      fitView
+    >
+      <NodeChooser />
+    </ReactFlow>
+  );
+}
+```
+
+### Returns
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `nodes` | `Node[]` | Real nodes plus derived placeholders (guided mode) |
+| `edges` | `Edge[]` | Edges typed for the insertable "+" edge (guided mode) |
+| `nodeTypes` | `NodeTypes` | ReactFlow node types map including the placeholder view |
+| `edgeTypes` | `EdgeTypes` | ReactFlow edge types map with the insertable edge |
+| `reactFlowProps` | `object` | Props to spread onto `<ReactFlow>` |
+| `mode` | `EditorMode` | Current editor mode (`"freeform"` \| `"guided"`) |
+| `isGuided` | `boolean` | Convenience flag |
+
+In freeform mode the hook is a plain pass-through (no placeholders, standard
+change handlers plus `onConnect`), so one canvas component can serve both
+modes.
+
+---
+
 ## Context Hook
 
 For advanced use cases, you can access the raw context:

@@ -12,22 +12,65 @@ import {
   OptionsPanel,
   DetailPanel,
   ControlPanel,
-  useNodes,
-  useEdges,
-  useNodeRegistry,
+  NodeChooser,
   useDragAndDrop,
+  useGuidedFlow,
   useWorkflowEditor,
+  type EditorMode,
 } from "@omega-flow/editor";
 import { nodeTypes } from "../nodes";
 import { useWorkflow } from "../hooks/useWorkflow";
 import { useAutoSave } from "../hooks/useAutoSave";
 import { updateWorkflow } from "../api/workflows";
-import { Box, Flex, HStack, Link, Text } from "@chakra-ui/react";
+import { Box, Button, Flex, HStack, Link, Text } from "@chakra-ui/react";
+
+const EDITOR_MODE_STORAGE_KEY = "omega-flow-sample-editor-mode";
+
+function loadStoredMode(): EditorMode {
+  return localStorage.getItem(EDITOR_MODE_STORAGE_KEY) === "guided"
+    ? "guided"
+    : "freeform";
+}
+
+function ModeSwitch() {
+  const { mode, setMode } = useWorkflowEditor();
+
+  const select = (next: EditorMode) => {
+    setMode(next);
+    localStorage.setItem(EDITOR_MODE_STORAGE_KEY, next);
+  };
+
+  return (
+    <HStack gap="0" borderRadius="md" borderWidth="1px" overflow="hidden">
+      {(
+        [
+          ["freeform", "Classic"],
+          ["guided", "Guided"],
+        ] as const
+      ).map(([value, label]) => (
+        <Button
+          key={value}
+          size="xs"
+          variant={mode === value ? "solid" : "ghost"}
+          borderRadius="0"
+          onClick={() => select(value)}
+        >
+          {label}
+        </Button>
+      ))}
+    </HStack>
+  );
+}
 
 function EditorCanvas() {
-  const { nodes, onNodesChange } = useNodes();
-  const { edges, onEdgesChange, onConnect } = useEdges();
-  const { reactFlowNodeTypes } = useNodeRegistry();
+  const {
+    nodes,
+    edges,
+    nodeTypes: reactFlowNodeTypes,
+    edgeTypes,
+    reactFlowProps,
+    isGuided,
+  } = useGuidedFlow();
   const { onDragOver, onDrop } = useDragAndDrop();
   const { getWorkflow, isDirty, markClean } = useWorkflowEditor();
   const [saveStatus, setSaveStatus] = useState<
@@ -71,6 +114,7 @@ function EditorCanvas() {
         <Link asChild color="gray.500" fontSize="sm" display="flex" alignItems="center" gap="1" _hover={{ textDecoration: "none" }}>
           <RouterLink to="/">&larr; Back to Workflows</RouterLink>
         </Link>
+        <ModeSwitch />
         <Text ml="auto" fontSize="xs" color="gray.500">
           {saveStatus === "saving" && "Saving..."}
           {saveStatus === "saved" && "Saved"}
@@ -83,21 +127,23 @@ function EditorCanvas() {
         <ReactFlow
           nodes={nodes}
           edges={edges}
-          onNodesChange={onNodesChange}
-          onEdgesChange={onEdgesChange}
-          onConnect={onConnect}
-          onDragOver={onDragOver}
-          onDrop={onDrop}
           nodeTypes={reactFlowNodeTypes}
+          edgeTypes={edgeTypes}
+          {...reactFlowProps}
+          {...(isGuided ? {} : { onDragOver, onDrop })}
           fitView
           fitViewOptions={{ padding: 0.2 }}
         >
           <Background />
           <Controls />
 
-          <Panel position="top-left">
-            <NodesPanel />
-          </Panel>
+          <NodeChooser />
+
+          {!isGuided && (
+            <Panel position="top-left">
+              <NodesPanel />
+            </Panel>
+          )}
 
           <Panel position="top-right">
             <ControlPanel onSave={handleSave} />
@@ -158,7 +204,11 @@ export function WorkflowEditorPage() {
 
   return (
     <Flex direction="column" h="calc(100vh - 52px)">
-      <WorkflowEditor workflow={workflow} nodeTypes={nodeTypes}>
+      <WorkflowEditor
+        workflow={workflow}
+        nodeTypes={nodeTypes}
+        mode={loadStoredMode()}
+      >
         <EditorCanvas />
       </WorkflowEditor>
     </Flex>

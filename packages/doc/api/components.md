@@ -21,6 +21,8 @@ interface WorkflowEditorProps {
   nodeTypes?: NodeTypeDefinition[];
   onWorkflowChange?: (workflow: Workflow) => void;
   onDirtyChange?: (isDirty: boolean) => void;
+  mode?: "freeform" | "guided";
+  layoutOptions?: LayoutOptions;
 }
 ```
 
@@ -31,6 +33,8 @@ interface WorkflowEditorProps {
 | `nodeTypes` | `NodeTypeDefinition[]` | Node types to register (defaults to built-in types) |
 | `onWorkflowChange` | `(workflow: Workflow) => void` | Called when workflow changes |
 | `onDirtyChange` | `(isDirty: boolean) => void` | Called when dirty state changes |
+| `mode` | `EditorMode` | Editing style: `"freeform"` (default) or `"guided"` — see [Guided Building Mode](/guide/guided-mode) |
+| `layoutOptions` | `LayoutOptions` | Options for the automatic layout used in guided mode |
 
 ### Usage
 
@@ -338,6 +342,44 @@ The panel shows save status feedback:
 - Displays "Saving..." during save
 - Shows "Saved" on success
 - Shows "Error saving" on failure
+
+---
+
+## NodeChooser
+
+Popover listing the node types that can be inserted at the pending insertion
+point in [guided mode](/guide/guided-mode). Renders nothing while no
+insertion is pending. Must be placed inside `<ReactFlow>`.
+
+### Import
+
+```tsx
+import { NodeChooser } from "@omega-flow/editor";
+```
+
+### Props
+
+```typescript
+interface NodeChooserProps {
+  className?: string;
+  filter?: (nodeType: NodeTypeDefinition) => boolean;
+  renderItem?: (nodeType: NodeTypeDefinition) => ReactNode;
+}
+```
+
+| Prop | Type | Description |
+|------|------|-------------|
+| `className` | `string` | Additional CSS class for the panel |
+| `filter` | `function` | Additional filter on the offered node types |
+| `renderItem` | `function` | Custom render function for items |
+
+### Offered node types
+
+The chooser filters the registered node types by the insertion point:
+
+- **Empty canvas** — only types with `role: "trigger"`
+- **After a node** (placeholder click) — all non-trigger types
+- **On an edge** ("+" button) — non-trigger, non-terminal types
 
 ---
 

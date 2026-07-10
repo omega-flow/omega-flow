@@ -39,7 +39,8 @@ export default defineConfig({
             { text: 'Editor Setup', link: '/guide/editor-setup' },
             { text: 'Theming', link: '/guide/theming' },
             { text: 'Localization', link: '/guide/localization' },
-            { text: 'Custom Nodes (Editor)', link: '/guide/custom-nodes' }
+            { text: 'Custom Nodes (Editor)', link: '/guide/custom-nodes' },
+            { text: 'Guided Building Mode', link: '/guide/guided-mode' }
           ]
         }
       ],
