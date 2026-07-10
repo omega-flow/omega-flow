@@ -24,7 +24,9 @@ jobs:
           cache: pnpm
           registry-url: https://registry.npmjs.org
 
-      - run: npm install -g npm@latest
+      # npm@12.0.0 dropped the bundled `sigstore` module, breaking provenance/OIDC
+      # publishing (npm/cli#9722). Pin to 11.x until upstream ships a fix.
+      - run: npm install -g npm@11
 
       - run: pnpm install --frozen-lockfile
 
