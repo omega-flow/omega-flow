@@ -10,14 +10,14 @@
     "start": "node dist/index.js"
   },
   "dependencies": {
-    "@aws-sdk/client-dynamodb": "^3.1098.0",
+    "@aws-sdk/client-dynamodb": "^3.1111.0",
     "@omega-flow/engine": "workspace:*",
     "@omega-flow/store-aws": "workspace:*",
     "@omega-flow/types": "workspace:*",
     "ajv": "^8.20.0",
     "cors": "^2.8.6",
     "express": "^5.2.1",
-    "nanoid": "^6.0.0"
+    "nanoid": "^6.0.1"
   },
   "devDependencies": {
     "@types/cors": "^2.8.19",

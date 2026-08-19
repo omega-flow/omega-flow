@@ -4,7 +4,7 @@ packages:
   - tools/*
 
 catalog:
-  '@xyflow/react': ^12.11.2
+  '@xyflow/react': ^12.11.3
 
 overrides:
   rollup@>=4.0.0 <4.59.0: '>=4.59.0'
