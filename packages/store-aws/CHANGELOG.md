@@ -1,5 +1,11 @@
 # @omega-flow/store-aws
 
+## 0.3.0
+
+### Minor Changes
+
+- [#54](https://github.com/omega-flow/omega-flow/pull/54) [`f8ae82f`](https://github.com/omega-flow/omega-flow/commit/f8ae82feb02e304d8bb4b47b8a96520656595500) Thanks [@fones](https://github.com/fones)! - Raise the declared Node engine to `>=22` to match the `nanoid@^6` runtime dependency, which supports `^22 || ^24 || >=26`.
+
 ## 0.2.0
 
 ### Minor Changes
