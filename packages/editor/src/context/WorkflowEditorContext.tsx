@@ -21,6 +21,7 @@ import type {
   WorkflowEditorProps,
 } from "./types";
 import { defaultNodeTypes } from "../nodes";
+import { uniqueNodeName } from "../utils/nodeName";
 
 // Action types for reducer
 type Action =
@@ -339,12 +340,17 @@ export function WorkflowEditorProvider({
         id: generateNodeId(type),
         type,
         position,
-        data: { ...nodeTypeDef.defaultData },
+        data: {
+          ...nodeTypeDef.defaultData,
+          // Unique default name ("Action", "Action 2", …) so the node's
+          // state is addressable from other nodes via {{state.<name>.…}}
+          name: uniqueNodeName(type, state.nodes),
+        },
       };
 
       dispatch({ type: "ADD_NODE", payload: newNode });
     },
-    [state.nodeTypes]
+    [state.nodeTypes, state.nodes]
   );
 
   const updateNode = useCallback(
@@ -505,4 +511,13 @@ export function useWorkflowEditorContext(): WorkflowEditorContextValue {
     );
   }
   return context;
+}
+
+/**
+ * Like {@link useWorkflowEditorContext} but returns null outside a
+ * WorkflowEditorProvider. For primitives that degrade gracefully when used
+ * standalone (e.g. DynamicValueField's node-state picker).
+ */
+export function useOptionalWorkflowEditorContext(): WorkflowEditorContextValue | null {
+  return useContext(WorkflowEditorContext);
 }

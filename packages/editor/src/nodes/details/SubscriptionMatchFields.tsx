@@ -1,5 +1,5 @@
 import React from "react";
-import { CheckboxField, TextField } from "../../primitives";
+import { CheckboxField, DynamicValueField } from "../../primitives";
 import { useTranslation } from "../../i18n";
 
 /** Shape of the optional `params.match` section on trigger-like nodes. */
@@ -48,7 +48,7 @@ export function SubscriptionMatchFields({
         onChange={handleToggle}
       />
       {enabled && (
-        <TextField
+        <DynamicValueField
           label={t("nodeDetails.match.subjectIdLabel")}
           value={subjectId}
           onChange={handleSubjectIdChange}

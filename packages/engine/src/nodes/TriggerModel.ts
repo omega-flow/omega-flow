@@ -68,7 +68,8 @@ export default class TriggerModel extends NodeModel {
     return resolveSubscriptionFromParams(
       this.getData().params,
       context,
-      this.getId()
+      this.getId(),
+      this.getScope().state
     );
   }
 

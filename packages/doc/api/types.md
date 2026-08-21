@@ -282,6 +282,9 @@ interface NodeTypeDefinition {
   targetHandles: HandleDefinition[];
   ViewComponent: ComponentType<NodeViewProps>;
   DetailComponent: ComponentType<NodeDetailProps>;
+  stateFields?:
+    | StateFieldDefinition[]
+    | ((node: Node) => StateFieldDefinition[]);
 }
 ```
 
@@ -298,6 +301,25 @@ Complete definition of a node type.
 | `targetHandles` | `HandleDefinition[]` | Input handles |
 | `ViewComponent` | `ComponentType` | Canvas render component |
 | `DetailComponent` | `ComponentType` | Properties panel component |
+| `stateFields` | `StateFieldDefinition[] \| fn` | State fields exposed to the [dynamic value](/guide/dynamic-values) picker; function form derives them from the node's configuration |
+
+---
+
+### StateFieldDefinition
+
+```typescript
+interface StateFieldDefinition {
+  path: string;                     // path under state.<nodeId>, e.g. "resolvedParams.price"
+  label?: string;                   // display label (defaults to path)
+  labelKey?: string;                // optional translation key for the label
+  type?: "string" | "number" | "boolean" | "object" | "array" | "any";
+}
+```
+
+One field a node type promises to write into its state at runtime. Drives
+the dynamic value picker: users choose from declared fields when inserting a
+`state.<nodeId>.<path>` reference. See
+[Dynamic Values](/guide/dynamic-values).
 
 ---
 

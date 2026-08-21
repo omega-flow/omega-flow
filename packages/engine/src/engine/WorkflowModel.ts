@@ -16,6 +16,7 @@ import {
 import NodeModel from "./NodeModel";
 import EdgeModel from "./EdgeModel";
 import type { NodeServices } from "./NodeServices";
+import { buildResolutionScope } from "./resolutionScope";
 
 /**
  * Core workflow execution engine that manages the lifecycle of a single workflow instance.
@@ -311,6 +312,14 @@ class WorkflowModel {
     if (!currentNode) {
       throw new Error("Current node not set");
     }
+
+    // Provide the resolution scope for dynamic values ({{...}} templates,
+    // prefixed condition facts). A provider — not a snapshot — so state
+    // written earlier in this event's processing chain is always visible.
+    // Before the start node fires, triggerEvent is not captured yet; the
+    // event being processed is the trigger candidate, so fall back to it.
+    currentNode.scopeProvider = () =>
+      buildResolutionScope(this.nodes, event, this.triggerEvent ?? event);
 
     // Accept and process the event
     const processed = await currentNode.acceptEvent(event);

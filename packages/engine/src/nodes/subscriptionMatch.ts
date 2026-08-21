@@ -18,10 +18,12 @@ const TTL_MARGIN_SECONDS = 24 * 60 * 60; // 1 day
 export interface MatchParams {
   /**
    * Template resolving to the subject id of the source event to wait for,
-   * e.g. `product:{{trigger.payload.products[0].product_id}}`. Placeholders
-   * are resolved against the instance context at park time (`trigger` is the
-   * data of the event that started the instance). Omit for a wildcard
-   * subscription (any event of that type in the domain).
+   * e.g. `product:{{trigger.payload.products[0].product_id}}` or
+   * `product:{{state.<nodeId>.resolvedParams.productId}}`. Placeholders are
+   * resolved at park time: `trigger` is the data of the event that started
+   * the instance, `state` is the saved state of the workflow's nodes (keyed
+   * by node id).
+   * Omit for a wildcard subscription (any event of that type in the domain).
    */
   subjectId?: string;
 }
@@ -43,7 +45,8 @@ export interface MatchParams {
 export function resolveSubscriptionFromParams(
   params: { event?: string; duration?: number; match?: MatchParams } | undefined,
   context: Context,
-  nodeId: string
+  nodeId: string,
+  stateScope?: Record<string, unknown>
 ): SubscriptionRequest | null {
   const match = params?.match;
   const eventType = params?.event;
@@ -55,6 +58,7 @@ export function resolveSubscriptionFromParams(
   if (match.subjectId != null && match.subjectId !== "") {
     const resolved = resolveTemplate(String(match.subjectId), {
       trigger: context.triggerEvent?.data ?? {},
+      state: stateScope ?? {},
     });
     if (resolved === undefined || resolved === "") {
       console.warn(

@@ -54,6 +54,9 @@ export {
   DurationField,
   JsonField,
   FieldGroup,
+  DynamicValueField,
+  DynamicValueInput,
+  isDynamicValue,
   ConditionBuilder,
   ConditionBuilderDialog,
   defaultOperators,
@@ -70,6 +73,7 @@ export type {
   OptionsPanelProps,
   ControlPanelProps,
   NodeTypeDefinition,
+  StateFieldDefinition,
   NodeViewProps,
   NodeDetailProps,
   HandleDefinition,
@@ -78,10 +82,18 @@ export type {
 // Types - Node views
 export type { BaseNodeViewProps } from "./nodes/views/BaseNodeView";
 
+// Node name helpers (display names; state references use node ids)
+export { getNodeName, uniqueNodeName } from "./utils/nodeName";
+
+// State field helpers (dynamic value picker)
+export { getStateFields, getStateFieldLabel } from "./utils/stateFields";
+
 // Types - Primitives
 export type {
   FieldProps,
   TextFieldProps,
+  DynamicValueFieldProps,
+  DynamicValueInputProps,
   NumberFieldProps,
   SelectFieldProps,
   SelectOption,

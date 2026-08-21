@@ -35,6 +35,8 @@ export const themeVars = {
     statusError: "var(--of-color-status-error, #DC2626)",
     statusErrorBg: "var(--of-color-status-error-bg, #FEE2E2)",
     statusWarning: "var(--of-color-status-warning, #FF9800)",
+    accent: "var(--of-color-accent, #7C3AED)",
+    accentBg: "var(--of-color-accent-bg, #EDE9FE)",
   },
 
   // Node colors

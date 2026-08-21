@@ -49,11 +49,16 @@ export default class ConditionModel extends NodeModel {
   /**
    * Evaluates the condition against the event data using the built-in
    * evaluator. The result is stored in state for use by nextNode().
+   *
+   * Facts prefixed with `event.` / `trigger.` / `state.` resolve against the
+   * resolution scope (dynamic values); unprefixed facts keep their legacy
+   * meaning and resolve against the current event's data. Rule values may
+   * contain `{{path}}` templates resolved against the same scope.
    */
   async acceptEvent(event: Event): Promise<boolean> {
     const conditions = this.getData().conditions as Conditions | undefined;
     const facts = (event.data ?? {}) as Record<string, unknown>;
-    const conditionResult = evaluateConditions(conditions, facts);
+    const conditionResult = evaluateConditions(conditions, facts, this.getScope());
     this.setState({ conditionResult });
     return true;
   }

@@ -47,8 +47,10 @@ const handleStyle: React.CSSProperties = {
 /**
  * Base component for rendering nodes on the canvas.
  * Provides consistent styling and handle rendering.
+ * A user-defined node name (`data.name`) takes precedence over the type label.
  */
 export function BaseNodeView({
+  data,
   label,
   color = "#666",
   icon,
@@ -57,6 +59,10 @@ export function BaseNodeView({
   selected,
   children,
 }: BaseNodeViewProps) {
+  const displayLabel =
+    typeof data?.name === "string" && data.name.trim() !== ""
+      ? data.name.trim()
+      : label;
   return (
     <div
       style={{
@@ -85,7 +91,7 @@ export function BaseNodeView({
       {/* Header */}
       <div style={headerStyle}>
         {icon && <span style={{ color }}>{icon}</span>}
-        <span>{label}</span>
+        <span>{displayLabel}</span>
       </div>
 
       {/* Content */}

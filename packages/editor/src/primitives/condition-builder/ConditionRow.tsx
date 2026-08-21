@@ -3,6 +3,7 @@ import type { ConditionRule } from "@omega-flow/types";
 import type { ConditionProperties, OperatorOption } from "./types";
 import { isPropertyGroup } from "./types";
 import { useTranslation } from "../../i18n";
+import { DynamicValueInput } from "../DynamicValueField";
 
 interface ConditionRowProps {
   rule: ConditionRule;
@@ -38,18 +39,6 @@ const factSelectStyle: React.CSSProperties = {
 const operatorSelectStyle: React.CSSProperties = {
   ...selectStyle,
   flex: "1 1 30%",
-};
-
-const inputStyle: React.CSSProperties = {
-  padding: "var(--of-spacing-2, 6px) var(--of-spacing-3, 8px)",
-  borderRadius: "var(--of-field-radius, 6px)",
-  border: "1px solid var(--of-field-border, #D1D5DB)",
-  fontSize: "var(--of-font-size-sm, 12px)",
-  outline: "none",
-  backgroundColor: "var(--of-field-bg, #fff)",
-  color: "var(--of-color-text-primary, #111827)",
-  flex: "1 1 25%",
-  minWidth: 0,
 };
 
 const removeButtonStyle: React.CSSProperties = {
@@ -119,12 +108,11 @@ export function ConditionRow({
           )}
         </select>
       ) : (
-        <input
-          type="text"
+        <DynamicValueInput
           value={rule.fact}
-          onChange={(e) => onChange({ ...rule, fact: e.target.value })}
+          onChange={(fact) => onChange({ ...rule, fact })}
           placeholder={t("conditionBuilder.factPlaceholder")}
-          style={{ ...inputStyle, flex: "1 1 30%" }}
+          style={{ flex: "1 1 30%" }}
         />
       )}
 
@@ -145,14 +133,11 @@ export function ConditionRow({
       </select>
 
       {/* Value input */}
-      <input
-        type="text"
+      <DynamicValueInput
         value={formatValue(rule.value)}
-        onChange={(e) =>
-          onChange({ ...rule, value: parseValue(e.target.value) })
-        }
+        onChange={(raw) => onChange({ ...rule, value: parseValue(raw) })}
         placeholder={t("conditionBuilder.valuePlaceholder")}
-        style={inputStyle}
+        style={{ flex: "1 1 25%" }}
       />
 
       {/* Remove button */}

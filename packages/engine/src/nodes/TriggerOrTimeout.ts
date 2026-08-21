@@ -95,7 +95,8 @@ export default class TriggerOrTimeoutModel extends WaitModel {
     return resolveSubscriptionFromParams(
       this.getData().params,
       context,
-      this.getId()
+      this.getId(),
+      this.getScope().state
     );
   }
 

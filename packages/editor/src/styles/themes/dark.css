@@ -41,6 +41,10 @@
   --of-color-status-error-bg: #7F1D1D;
   --of-color-status-warning: #F59E0B;
 
+  /* Accent colors (dynamic value indicators) */
+  --of-color-accent: #A78BFA;
+  --of-color-accent-bg: #3B2E63;
+
   /* Node colors - slightly adjusted for dark mode visibility */
   --of-node-trigger-color: #4ADE80;
   --of-node-action-color: #60A5FA;

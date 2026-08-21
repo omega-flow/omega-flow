@@ -24,6 +24,7 @@ export const defaultTranslations: TranslationDictionary = {
   "panels.detail.emptyMessage": "Select a node to edit its properties",
   "panels.detail.delete": "Delete",
   "panels.detail.deleteTitle": "Delete node",
+  "panels.detail.renameTitle": "Rename node",
 
   // ── Nodes Panel ────────────────────────────────────────────
   "panels.nodes.title": "Nodes",
@@ -76,7 +77,8 @@ export const defaultTranslations: TranslationDictionary = {
   "nodeDetails.action.namePlaceholder": "e.g., sendEmail, createTask",
   "nodeDetails.action.nameHint": "The action to perform when this node is reached",
   "nodeDetails.action.paramsLabel": "Parameters",
-  "nodeDetails.action.paramsHint": "JSON object with action parameters",
+  "nodeDetails.action.paramsHint":
+    "JSON object with action parameters. String values support dynamic templates: {{event.field}} (current event), {{trigger.field}} (trigger event), {{state.nodeName.field}} (another node's state).",
 
   "nodeDetails.condition.group": "Condition Configuration",
   "nodeDetails.condition.conditionsLabel": "Conditions",
@@ -103,7 +105,7 @@ export const defaultTranslations: TranslationDictionary = {
   "nodeDetails.match.subjectIdPlaceholder":
     "e.g., product:{{trigger.payload.products[0].product_id}}",
   "nodeDetails.match.subjectIdHint":
-    "Full typed subject id of the source event to wait for. {{path}} templates resolve from the trigger event when the workflow reaches this node.",
+    "Full typed subject id of the source event to wait for. {{path}} templates resolve from the trigger event ({{trigger.field}}) or node state ({{state.nodeName.field}}) when the workflow reaches this node.",
   "nodeDetails.match.wildcardHint":
     "Empty = match this event from ANY subject. Every matching event is delivered to each waiting workflow — use with care on frequent events.",
   "nodeDetails.match.startNodeWarning":
@@ -125,6 +127,13 @@ export const defaultTranslations: TranslationDictionary = {
 
   // ── Primitives / fields ────────────────────────────────────
   "fields.json.invalidJson": "Invalid JSON",
+  "fields.dynamicValue.insertTitle": "Insert dynamic value",
+  "fields.dynamicValue.dynamicBadge": "dynamic",
+  "fields.dynamicValue.currentEvent": "Current event",
+  "fields.dynamicValue.triggerEvent": "Trigger event",
+  "fields.dynamicValue.nodeStateGroup": "Node state",
+  "fields.dynamicValue.customPath": "Custom path…",
+  "fields.dynamicValue.back": "Back",
   "fields.duration.days": "d",
   "fields.duration.hours": "h",
   "fields.duration.minutes": "m",

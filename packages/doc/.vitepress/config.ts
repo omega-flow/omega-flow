@@ -23,6 +23,7 @@ export default defineConfig({
           text: 'Workflow Engine',
           items: [
             { text: 'Executing Workflows', link: '/guide/engine-execution' },
+            { text: 'Dynamic Values', link: '/guide/dynamic-values' },
             { text: 'Event Subscriptions', link: '/guide/event-subscriptions' },
             { text: 'Custom Nodes (Engine)', link: '/guide/engine-custom-nodes' }
           ]

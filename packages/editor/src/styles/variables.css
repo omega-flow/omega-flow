@@ -41,6 +41,10 @@
   --of-color-status-error-bg: #FEE2E2;
   --of-color-status-warning: #FF9800;
 
+  /* Accent colors (dynamic value indicators) */
+  --of-color-accent: #7C3AED;
+  --of-color-accent-bg: #EDE9FE;
+
   /* ============================================
    * NODE COLORS
    * ============================================ */

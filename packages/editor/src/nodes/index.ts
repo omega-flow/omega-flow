@@ -56,6 +56,17 @@ export const defaultNodeTypes: NodeTypeDefinition[] = [
     defaultData: { action: "", params: {} },
     ViewComponent: ActionNodeView,
     DetailComponent: ActionNodeDetail,
+    // The engine's ActionModel saves resolved params to state as
+    // resolvedParams — one field per configured param key
+    stateFields: (node) => {
+      const params = (node.data as { params?: unknown } | undefined)?.params;
+      if (!params || typeof params !== "object" || Array.isArray(params)) {
+        return [];
+      }
+      return Object.keys(params).map((key) => ({
+        path: `resolvedParams.${key}`,
+      }));
+    },
   },
   {
     type: "Condition",
@@ -67,6 +78,7 @@ export const defaultNodeTypes: NodeTypeDefinition[] = [
     defaultData: { conditions: { all: [] } },
     ViewComponent: ConditionNodeView,
     DetailComponent: ConditionNodeDetail,
+    stateFields: [{ path: "conditionResult", type: "boolean" }],
   },
   {
     type: "Wait",
@@ -78,6 +90,10 @@ export const defaultNodeTypes: NodeTypeDefinition[] = [
     defaultData: { params: { duration: 60000 } },
     ViewComponent: WaitNodeView,
     DetailComponent: WaitNodeDetail,
+    stateFields: [
+      { path: "waitStartsAt", type: "number" },
+      { path: "waitEndsAt", type: "number" },
+    ],
   },
   {
     type: "TriggerOrTimeout",
@@ -89,6 +105,8 @@ export const defaultNodeTypes: NodeTypeDefinition[] = [
     defaultData: { params: { event: "", duration: 60000 } },
     ViewComponent: TriggerOrTimeoutNodeView,
     DetailComponent: TriggerOrTimeoutNodeDetail,
+    // "trigger" or "timeout", depending on how the wait resolved
+    stateFields: [{ path: "resolvedBy", type: "string" }],
   },
   {
     type: "Exit",

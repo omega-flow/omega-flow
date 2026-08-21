@@ -295,6 +295,48 @@ getData(): any
 
 Returns the node's data payload (params, configuration).
 
+#### getName
+
+```typescript
+getName(): string
+```
+
+The node's display name (`data.name` set in the editor, falling back to the
+node type). Display-only — [dynamic value](/guide/dynamic-values) state
+references always use the node id (`state.<nodeId>.…`), so renaming a node
+never breaks templates.
+
+#### getScope
+
+```typescript
+getScope(): ResolutionScope
+```
+
+The current [dynamic value](/guide/dynamic-values) resolution scope
+(`{ event, trigger, state }`). Provided by the `WorkflowModel` while an event
+is being processed; empty outside a workflow run.
+
+#### resolveValue
+
+```typescript
+resolveValue(value: unknown): unknown
+```
+
+Resolves one value that may contain template placeholders (scope paths in
+double curly braces) against the
+current scope. A string that is exactly one placeholder keeps the resolved
+value's type; embedded placeholders produce a string; non-strings pass
+through.
+
+#### resolveParams
+
+```typescript
+resolveParams(): any
+```
+
+Returns `data.params` with every template placeholder deep-resolved against
+the current scope. Never mutates the node definition.
+
 #### getState
 
 ```typescript

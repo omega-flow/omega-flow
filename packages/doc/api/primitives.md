@@ -16,6 +16,8 @@ import {
   TextAreaField,
   DurationField,
   JsonField,
+  DynamicValueField,
+  DynamicValueInput,
   FieldGroup,
 } from "@omega-flow/editor";
 ```
@@ -464,6 +466,67 @@ function MyNodeDetail({ node, onChange }) {
   ]
 }
 ```
+
+---
+
+## DynamicValueField
+
+Text input that accepts a literal value **or** a
+[dynamic value](/guide/dynamic-values) template (a scope path in double curly
+braces). Shows a "dynamic" badge when the value contains a template and
+offers a two-level picker: the current event (`event.` paths), the trigger
+event (`trigger.`), or a node — shown by display name — followed by one of
+the state fields its type declares via `NodeTypeDefinition.stateFields`. The
+picker inserts a complete `state.<nodeId>.<path>` reference (ids, never
+names, so renames are safe), with a *Custom path* entry for undeclared
+fields. The node list comes from the editor context when available.
+
+### Props
+
+```typescript
+interface DynamicValueFieldProps {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+  disabled?: boolean;
+  error?: string;
+  hint?: string;
+}
+```
+
+Same contract as `TextField` — a drop-in replacement wherever a node
+property should support dynamic values.
+
+### Usage
+
+```tsx
+import { DynamicValueField } from "@omega-flow/editor";
+
+<DynamicValueField
+  label="Threshold"
+  value={params.threshold ?? ""}
+  onChange={(threshold) =>
+    onChange({ ...data, params: { ...params, threshold } })
+  }
+/>
+```
+
+For compact layouts (e.g. table-like rows) use the bare `DynamicValueInput`,
+which renders the input + picker without the `Field` label wrapper:
+
+```tsx
+import { DynamicValueInput, isDynamicValue } from "@omega-flow/editor";
+
+<DynamicValueInput
+  value={rule.value}
+  onChange={(value) => onChange({ ...rule, value })}
+  style={{ flex: 1 }}
+/>
+```
+
+`isDynamicValue(value)` returns `true` when a string contains a template
+placeholder.
 
 ---
 

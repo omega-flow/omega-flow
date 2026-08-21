@@ -185,6 +185,10 @@ function EditorCanvas() {
 ### How It Works
 
 - Displays the `DetailComponent` from the selected node's `NodeTypeDefinition`
+- Header shows the node's display name (`data.name`, falling back to the type
+  label) with inline renaming — hover to reveal the pencil, click to edit,
+  Enter/blur commits, Escape cancels. Names are display-only; dynamic value
+  references use the node id, so renaming is always safe
 - Automatically calls `onChange` when user modifies node properties
 - Shows a delete button to remove the selected node
 

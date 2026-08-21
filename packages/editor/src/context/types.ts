@@ -26,6 +26,25 @@ export interface NodeDetailProps {
 }
 
 /**
+ * One field a node type promises to write into its state at runtime.
+ * Drives the dynamic value picker: users choose from declared fields when
+ * inserting a `state.<nodeId>.<path>` reference.
+ */
+export interface StateFieldDefinition {
+  /** Path under `state.<nodeId>`, e.g. `"resolvedParams.price"` */
+  path: string;
+  /** Display label; defaults to {@link path} */
+  label?: string;
+  /**
+   * Optional translation key for the label, resolved through the editor's
+   * translation function (falls back to {@link label}, then {@link path}).
+   */
+  labelKey?: string;
+  /** Value type hint, usable by inputs to filter offered fields */
+  type?: "string" | "number" | "boolean" | "object" | "array" | "any";
+}
+
+/**
  * Complete definition of a node type including visual components
  */
 export interface NodeTypeDefinition {
@@ -55,6 +74,15 @@ export interface NodeTypeDefinition {
   ViewComponent: ComponentType<NodeViewProps>;
   /** Component to render in the detail panel */
   DetailComponent: ComponentType<NodeDetailProps>;
+  /**
+   * Fields this node type writes into its state at runtime, offered by the
+   * dynamic value picker as `state.<nodeId>.<path>` references. Use the
+   * function form when the fields depend on the node's configuration (e.g.
+   * Action exposes `resolvedParams.<key>` for each configured param).
+   */
+  stateFields?:
+    | StateFieldDefinition[]
+    | ((node: Node) => StateFieldDefinition[]);
 }
 
 /**

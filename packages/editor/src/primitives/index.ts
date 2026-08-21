@@ -8,6 +8,13 @@ export { DurationField, type DurationFieldProps } from "./DurationField";
 export { JsonField, type JsonFieldProps } from "./JsonField";
 export { FieldGroup, type FieldGroupProps } from "./FieldGroup";
 export {
+  DynamicValueField,
+  DynamicValueInput,
+  isDynamicValue,
+  type DynamicValueFieldProps,
+  type DynamicValueInputProps,
+} from "./DynamicValueField";
+export {
   ConditionBuilder,
   ConditionBuilderDialog,
   defaultOperators,

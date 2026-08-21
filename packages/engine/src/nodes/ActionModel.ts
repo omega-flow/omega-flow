@@ -52,10 +52,19 @@ export default class ActionModel extends NodeModel {
   /**
    * Accepts all events immediately.
    * Actions don't filter events - they execute whenever reached.
+   *
+   * When the node has `data.params`, every `{{path}}` placeholder in them is
+   * resolved against the resolution scope (`event.` / `trigger.` / `state.`)
+   * and the result is saved to state as `resolvedParams`, so action executors
+   * and other nodes consume resolved values instead of raw templates.
+   *
    * @param _event - The event being processed (unused)
    * @returns Always returns true (event accepted)
    */
   async acceptEvent(_event: Event): Promise<boolean> {
+    if (this.getData().params !== undefined) {
+      this.updateState({ resolvedParams: this.resolveParams() });
+    }
     // Accept all events and process immediately
     return true;
   }

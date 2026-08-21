@@ -3,6 +3,11 @@ import { type Node, type Event, type Context } from "@omega-flow/types";
 import EdgeModel from "./EdgeModel";
 import { type Connection } from "./Connection";
 import type { NodeServices } from "./NodeServices";
+import {
+  type ResolutionScope,
+  emptyResolutionScope,
+} from "./resolutionScope";
+import { resolveValue, resolveDeep } from "../nodes/templateResolver";
 
 /**
  * A node's declaration of interest in events outside its instance's own
@@ -72,6 +77,13 @@ class NodeModel {
   services: NodeServices = {};
 
   /**
+   * Provider of the current resolution scope, set by the WorkflowModel
+   * before each node call. Kept as a provider (not a snapshot) so
+   * `getScope()` always sees fresh node state.
+   */
+  scopeProvider: (() => ResolutionScope) | null = null;
+
+  /**
    * Creates a new NodeModel instance.
    * @param node - The node definition from the workflow
    * @throws Error if node is missing or doesn't have an id
@@ -100,6 +112,50 @@ class NodeModel {
    */
   getData(): any {
     return this.node.data || {};
+  }
+
+  /**
+   * Gets the display name of this node (`data.name` set in the editor,
+   * falling back to the node type, then the node id). Display-only — state
+   * references always use the node id (`{{state.<nodeId>.<key>}}`), so
+   * renaming a node never breaks templates.
+   * @returns The node's display name
+   */
+  getName(): string {
+    const name = this.getData().name;
+    if (typeof name === "string" && name.trim() !== "") {
+      return name.trim();
+    }
+    return this.node.type ? String(this.node.type) : this.getId();
+  }
+
+  /**
+   * Returns the current resolution scope (`event`, `trigger`, `state`) for
+   * dynamic values. The scope is provided by the WorkflowModel while an
+   * event is being processed; outside a workflow run (e.g. plain unit tests
+   * of a node) an empty scope is returned.
+   */
+  getScope(): ResolutionScope {
+    return this.scopeProvider ? this.scopeProvider() : emptyResolutionScope();
+  }
+
+  /**
+   * Resolves a single value that may contain `{{path}}` placeholders against
+   * the current scope. A string that is exactly one placeholder keeps the
+   * resolved value's type (`"{{state.fetch.count}}"` → number); embedded
+   * placeholders produce a string. Non-strings pass through unchanged.
+   */
+  resolveValue(value: unknown): unknown {
+    return resolveValue(value, this.getScope());
+  }
+
+  /**
+   * Returns this node's `data.params` with every `{{path}}` placeholder
+   * resolved against the current scope (deep walk through objects/arrays).
+   * The node definition itself is never mutated.
+   */
+  resolveParams(): any {
+    return resolveDeep(this.getData().params ?? {}, this.getScope());
   }
 
   /**
