@@ -215,6 +215,17 @@ This is useful for:
 --of-node-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 ```
 
+### Node Handles
+
+```css
+--of-handle-size: 10px;
+--of-handle-label-size: 10px;
+
+/* Branch colors used by multi-output nodes (Condition, Trigger or Timeout) */
+--of-handle-positive-color: #2E7D32;
+--of-handle-negative-color: #C62828;
+```
+
 ### Spacing
 
 ```css

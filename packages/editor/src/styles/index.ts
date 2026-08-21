@@ -50,6 +50,14 @@ export const themeVars = {
     shadow: "var(--of-node-shadow, 0 2px 4px rgba(0, 0, 0, 0.1))",
   },
 
+  // Node handles (connection points)
+  handle: {
+    size: "var(--of-handle-size, 10px)",
+    labelSize: "var(--of-handle-label-size, 10px)",
+    positive: "var(--of-handle-positive-color, #2E7D32)",
+    negative: "var(--of-handle-negative-color, #C62828)",
+  },
+
   // Spacing
   spacing: {
     1: "var(--of-spacing-1, 4px)",

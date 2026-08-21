@@ -333,8 +333,8 @@ function BranchNodeView({ id, data, selected }: NodeViewProps) {
       label="Branch"
       color="#FF9800"
       sourceHandles={[
-        { id: "yes", label: "Yes" },
-        { id: "no", label: "No" },
+        { id: "yes", label: "Yes", color: "var(--of-handle-positive-color, #2E7D32)" },
+        { id: "no", label: "No", color: "var(--of-handle-negative-color, #C62828)" },
         { id: "error", label: "Error" },
       ]}
       targetHandles={[{ id: "input", label: "In" }]}
@@ -344,6 +344,13 @@ function BranchNodeView({ id, data, selected }: NodeViewProps) {
   );
 }
 ```
+
+When a node has more than one handle on the same side, `BaseNodeView` renders
+each `label` next to its connection point so the branches can be told apart
+before a connection is drawn. Always give multi-output handles a label —
+`color` only reinforces the label, so a canvas stays readable for users who
+cannot distinguish the colors. The label is also exposed as a hover tooltip and
+to screen readers, on single-handle nodes too.
 
 ## Nodes Without Inputs (Start Nodes)
 

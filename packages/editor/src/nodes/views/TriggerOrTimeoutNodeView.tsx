@@ -5,6 +5,8 @@ import { useTranslation } from "../../i18n";
 import { formatDuration } from "../../utils/duration";
 
 const TRIGGER_OR_TIMEOUT_COLOR = "var(--of-node-trigger-timeout-color, #607D8B)";
+const TRIGGER_HANDLE_COLOR = "var(--of-handle-positive-color, #2E7D32)";
+const TIMEOUT_HANDLE_COLOR = "var(--of-handle-negative-color, #C62828)";
 
 interface TriggerOrTimeoutData {
   params?: {
@@ -36,8 +38,8 @@ export function TriggerOrTimeoutNodeView({ id, data, selected }: NodeProps) {
       color={TRIGGER_OR_TIMEOUT_COLOR}
       icon="⏰"
       sourceHandles={[
-        { id: "trigger", label: t("nodes.triggerOrTimeout.handleTrigger") },
-        { id: "timeout", label: t("nodes.triggerOrTimeout.handleTimeout") },
+        { id: "trigger", label: t("nodes.triggerOrTimeout.handleTrigger"), color: TRIGGER_HANDLE_COLOR },
+        { id: "timeout", label: t("nodes.triggerOrTimeout.handleTimeout"), color: TIMEOUT_HANDLE_COLOR },
       ]}
       targetHandles={[{ id: "input" }]}
     >

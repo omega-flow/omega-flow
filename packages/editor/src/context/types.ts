@@ -8,7 +8,18 @@ import type { TranslationFunction, TranslationDictionary } from "../i18n/types";
  */
 export interface HandleDefinition {
   id: string;
+  /**
+   * Human-readable name for the connection point. Rendered next to the handle
+   * on the canvas whenever a node exposes more than one handle of that type,
+   * so branches such as "True" / "False" can be told apart before connecting.
+   */
   label?: string;
+  /**
+   * Optional color for the handle dot and its label, overriding the node color.
+   * Prefer a themeable CSS variable, e.g. `var(--of-handle-positive-color, #2E7D32)`.
+   * Color only reinforces the label, it never carries the meaning on its own.
+   */
+  color?: string;
 }
 
 /**

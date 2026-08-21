@@ -22,6 +22,7 @@ const baseStyle: React.CSSProperties = {
   minWidth: "150px",
   fontSize: "var(--of-font-size-sm, 12px)",
   fontFamily: "var(--of-font-family-base, system-ui, sans-serif)",
+  position: "relative",
 };
 
 const headerStyle: React.CSSProperties = {
@@ -39,10 +40,72 @@ const contentStyle: React.CSSProperties = {
 };
 
 const handleStyle: React.CSSProperties = {
-  width: "10px",
-  height: "10px",
+  width: "var(--of-handle-size, 10px)",
+  height: "var(--of-handle-size, 10px)",
   borderRadius: "50%",
 };
+
+const handleLabelRowStyle: React.CSSProperties = {
+  position: "relative",
+  height: "var(--of-handle-label-size, 10px)",
+  lineHeight: "var(--of-handle-label-size, 10px)",
+};
+
+const handleLabelStyle: React.CSSProperties = {
+  position: "absolute",
+  transform: "translateX(-50%)",
+  fontSize: "var(--of-handle-label-size, 10px)",
+  fontWeight: "var(--of-font-weight-medium, 500)" as React.CSSProperties["fontWeight"],
+  letterSpacing: "0.02em",
+  whiteSpace: "nowrap",
+  pointerEvents: "none",
+};
+
+/** Handles are spread evenly across the edge they sit on. */
+function handleOffset(index: number, total: number): string {
+  return `${((index + 1) / (total + 1)) * 100}%`;
+}
+
+/**
+ * Labels for a set of handles, laid out at the same offsets as the handles
+ * themselves so each name sits directly above/below its connection point.
+ * Rendered only for multi-handle edges, where the position alone would not
+ * tell the user which branch a handle belongs to.
+ */
+function HandleLabels({
+  handles,
+  color,
+  placement,
+}: {
+  handles: HandleDefinition[];
+  color: string;
+  placement: "top" | "bottom";
+}) {
+  if (handles.length < 2 || !handles.some((handle) => handle.label)) return null;
+
+  return (
+    <div
+      style={{
+        ...handleLabelRowStyle,
+        [placement === "top" ? "marginBottom" : "marginTop"]: "var(--of-spacing-1, 4px)",
+      }}
+      aria-hidden="true"
+    >
+      {handles.map((handle, index) => (
+        <span
+          key={handle.id}
+          style={{
+            ...handleLabelStyle,
+            left: handleOffset(index, handles.length),
+            color: handle.color ?? color,
+          }}
+        >
+          {handle.label}
+        </span>
+      ))}
+    </div>
+  );
+}
 
 /**
  * Base component for rendering nodes on the canvas.
@@ -74,13 +137,17 @@ export function BaseNodeView({
           type="target"
           position={Position.Top}
           id={handle.id}
+          title={handle.label}
+          aria-label={handle.label}
           style={{
             ...handleStyle,
-            backgroundColor: color,
-            left: `${((index + 1) / (targetHandles.length + 1)) * 100}%`,
+            backgroundColor: handle.color ?? color,
+            left: handleOffset(index, targetHandles.length),
           }}
         />
       ))}
+
+      <HandleLabels handles={targetHandles} color={color} placement="top" />
 
       {/* Header */}
       <div style={headerStyle}>
@@ -92,16 +159,20 @@ export function BaseNodeView({
       {children && <div style={contentStyle}>{children}</div>}
 
       {/* Source handles (outputs) */}
+      <HandleLabels handles={sourceHandles} color={color} placement="bottom" />
+
       {sourceHandles.map((handle, index) => (
         <Handle
           key={handle.id}
           type="source"
           position={Position.Bottom}
           id={handle.id}
+          title={handle.label}
+          aria-label={handle.label}
           style={{
             ...handleStyle,
-            backgroundColor: color,
-            left: `${((index + 1) / (sourceHandles.length + 1)) * 100}%`,
+            backgroundColor: handle.color ?? color,
+            left: handleOffset(index, sourceHandles.length),
           }}
         />
       ))}

@@ -53,6 +53,10 @@
   --of-node-bg: #374151;
   --of-node-content-color: #9CA3AF;
 
+  /* Handle branch colors - brightened for dark backgrounds */
+  --of-handle-positive-color: #4ADE80;
+  --of-handle-negative-color: #F87171;
+
   /* Shadows adjusted for dark mode */
   --of-shadow-panel: 0 2px 8px rgba(0, 0, 0, 0.3);
   --of-shadow-node: 0 2px 4px rgba(0, 0, 0, 0.3);

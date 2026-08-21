@@ -4,6 +4,8 @@ import { BaseNodeView } from "./BaseNodeView";
 import { useTranslation } from "../../i18n";
 
 const CONDITION_COLOR = "var(--of-node-condition-color, #FF9800)";
+const TRUE_HANDLE_COLOR = "var(--of-handle-positive-color, #2E7D32)";
+const FALSE_HANDLE_COLOR = "var(--of-handle-negative-color, #C62828)";
 
 interface ConditionData {
   conditions?: {
@@ -35,8 +37,8 @@ export function ConditionNodeView({ id, data, selected }: NodeProps) {
       color={CONDITION_COLOR}
       icon="?"
       sourceHandles={[
-        { id: "true", label: t("nodes.condition.handleTrue") },
-        { id: "false", label: t("nodes.condition.handleFalse") },
+        { id: "true", label: t("nodes.condition.handleTrue"), color: TRUE_HANDLE_COLOR },
+        { id: "false", label: t("nodes.condition.handleFalse"), color: FALSE_HANDLE_COLOR },
       ]}
       targetHandles={[{ id: "input" }]}
     >
