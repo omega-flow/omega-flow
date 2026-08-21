@@ -58,6 +58,18 @@
   --of-node-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 
   /* ============================================
+   * NODE HANDLES (connection points)
+   * ============================================ */
+
+  --of-handle-size: 10px;
+  --of-handle-label-size: 10px;
+
+  /* Branch colors for multi-output nodes. These reinforce the handle labels;
+   * the label is always rendered, so the color is never the only signal. */
+  --of-handle-positive-color: #2E7D32;
+  --of-handle-negative-color: #C62828;
+
+  /* ============================================
    * SPACING
    * ============================================ */
 

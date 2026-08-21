@@ -307,6 +307,7 @@ Complete definition of a node type.
 interface HandleDefinition {
   id: string;
   label?: string;
+  color?: string;
 }
 ```
 
@@ -315,7 +316,8 @@ Definition for a connection handle on a node.
 | Property | Type | Description |
 |----------|------|-------------|
 | `id` | `string` | Handle identifier |
-| `label` | `string` | Display label |
+| `label` | `string` | Display label. Rendered next to the handle whenever the node has more than one handle on that side, and always exposed as a hover tooltip and to screen readers |
+| `color` | `string` | Color of the handle dot and its label, overriding the node color. Prefer a themeable CSS variable, e.g. `var(--of-handle-positive-color, #2E7D32)` |
 
 ---
 
