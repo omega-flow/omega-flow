@@ -34,10 +34,10 @@ jobs:
 
       - uses: changesets/action@v2
         with:
-          publish: pnpm changeset publish
-          version: pnpm changeset version
-          title: "Version Packages"
-          commit: "Version Packages"
+          publish-script: pnpm changeset publish
+          version-script: pnpm changeset version
+          pr-title: "Version Packages"
+          commit-message: "Version Packages"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_CONFIG_PROVENANCE: true
