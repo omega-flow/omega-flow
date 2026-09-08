@@ -1,5 +1,23 @@
 # @omega-flow/editor
 
+## 0.3.0
+
+### Minor Changes
+
+- [#68](https://github.com/omega-flow/omega-flow/pull/68) [`bfb754a`](https://github.com/omega-flow/omega-flow/commit/bfb754aa6422f51f9f859d02f4256bd21eb0600f) Thanks [@fones](https://github.com/fones)! - Align all published package versions and cut a maintenance release.
+  
+  - The four packages are now a `fixed` changesets group, so they version and
+    publish together from here on.
+  - Refresh `pnpm` audit overrides: `fast-uri` `>=4.1.3`, `qs` `>=6.16.0`, and a
+    new `browserslist` `>=4.28.7` pin, clearing the high-severity advisories that
+    `pnpm audit --audit-level=high` reports against transitive dependencies.
+  - Roll in the batched production and dev dependency updates.
+
+### Patch Changes
+
+- Updated dependencies [[`bfb754a`](https://github.com/omega-flow/omega-flow/commit/bfb754aa6422f51f9f859d02f4256bd21eb0600f)]:
+  - @omega-flow/types@0.3.0
+
 ## 0.2.0
 
 ### Minor Changes
