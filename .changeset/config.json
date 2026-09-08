@@ -2,7 +2,7 @@
   "$schema": "https://unpkg.com/@changesets/config@3.1.2/schema.json",
   "changelog": ["@changesets/changelog-github", { "repo": "omega-flow/omega-flow" }],
   "commit": false,
-  "fixed": [],
+  "fixed": [["@omega-flow/types", "@omega-flow/engine", "@omega-flow/editor", "@omega-flow/store-aws"]],
   "linked": [],
   "access": "public",
   "baseBranch": "master",
