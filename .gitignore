@@ -3,3 +3,8 @@ dist
 coverage
 TODO.md
 *.tsbuildinfo
+
+# This is a pnpm workspace: pnpm-lock.yaml is the only lockfile.
+# Guard against stray npm/yarn lockfiles committed from an app subdir.
+package-lock.json
+yarn.lock
