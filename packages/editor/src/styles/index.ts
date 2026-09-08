@@ -53,9 +53,15 @@ export const themeVars = {
   // Node handles (connection points)
   handle: {
     size: "var(--of-handle-size, 10px)",
-    labelSize: "var(--of-handle-label-size, 10px)",
     positive: "var(--of-handle-positive-color, #2E7D32)",
     negative: "var(--of-handle-negative-color, #C62828)",
+  },
+
+  // Branch names painted on edges
+  edgeLabel: {
+    size: "var(--of-edge-label-size, 11px)",
+    color: "var(--of-edge-label-color, #374151)",
+    bg: "var(--of-edge-label-bg, #fff)",
   },
 
   // Spacing

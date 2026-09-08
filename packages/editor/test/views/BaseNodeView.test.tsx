@@ -44,7 +44,7 @@ function render(element: React.ReactElement): string {
 }
 
 describe("BaseNodeView handles", () => {
-  it("labels each output of a multi-output node", () => {
+  it("spreads handles evenly across the side they sit on", () => {
     const html = render(
       <BaseNodeView
         id="n1"
@@ -59,11 +59,11 @@ describe("BaseNodeView handles", () => {
       />
     );
 
-    expect(html).toContain("Alpha");
-    expect(html).toContain("Beta");
-    // Labels sit at the same offsets as the handles they belong to.
     expect(html).toContain("left:33.33333333333333%");
     expect(html).toContain("left:66.66666666666666%");
+    // The branch names belong on the edges, not on the node itself.
+    expect(html).not.toContain(">Alpha<");
+    expect(html).not.toContain(">Beta<");
   });
 
   it("exposes the label to assistive tech and as a hover tooltip", () => {
@@ -86,7 +86,7 @@ describe("BaseNodeView handles", () => {
     expect(html).toContain('data-handle-label="Beta"');
   });
 
-  it("applies the per-handle color to both the dot and its label", () => {
+  it("applies the per-handle color to the dot", () => {
     const html = render(
       <BaseNodeView
         id="n1"
@@ -100,64 +100,35 @@ describe("BaseNodeView handles", () => {
       />
     );
 
-    // Dot color for the handle that overrides it, plus its label text color.
-    expect(html.match(/#0f0/g)?.length).toBe(2);
+    expect(html).toContain("background-color:#0f0");
     // The handle without an override keeps the node color.
     expect(html).toContain("background-color:#111");
-  });
-
-  it("does not render a label row for a single-output node", () => {
-    const html = render(
-      <BaseNodeView
-        id="n1"
-        data={{}}
-        label="Node"
-        color="#111"
-        sourceHandles={[{ id: "output", label: "Output" }]}
-        targetHandles={[{ id: "input", label: "Input" }]}
-      />
-    );
-
-    // The label is still available on hover, but no caption is painted.
-    expect(html).toContain('data-handle-title="Output"');
-    expect(html).not.toContain(">Output<");
-    expect(html).not.toContain(">Input<");
-  });
-
-  it("omits the label row when a multi-output node supplies no labels", () => {
-    const html = render(
-      <BaseNodeView
-        id="n1"
-        data={{}}
-        label="Node"
-        color="#111"
-        sourceHandles={[{ id: "a" }, { id: "b" }]}
-      />
-    );
-
-    expect(html).not.toContain("<span style");
   });
 });
 
 describe("multi-output node views", () => {
-  it("distinguishes the Condition node's true and false branches", () => {
+  it("names the Condition node's true and false branches", () => {
     const html = render(
       <ConditionNodeView id="c1" data={{}} selected={false} />
     );
 
-    expect(html).toContain("True");
-    expect(html).toContain("False");
+    expect(html).toContain('data-handle-id="true"');
+    expect(html).toContain('data-handle-title="True"');
+    expect(html).toContain('data-handle-id="false"');
+    expect(html).toContain('data-handle-title="False"');
     expect(html).toContain("--of-handle-positive-color");
     expect(html).toContain("--of-handle-negative-color");
   });
 
-  it("distinguishes the TriggerOrTimeout node's trigger and timeout branches", () => {
+  it("names the TriggerOrTimeout node's trigger and timeout branches", () => {
     const html = render(
       <TriggerOrTimeoutNodeView id="t1" data={{}} selected={false} />
     );
 
-    expect(html).toContain("Trigger");
-    expect(html).toContain("Timeout");
+    expect(html).toContain('data-handle-id="trigger"');
+    expect(html).toContain('data-handle-title="Trigger"');
+    expect(html).toContain('data-handle-id="timeout"');
+    expect(html).toContain('data-handle-title="Timeout"');
     expect(html).toContain("--of-handle-positive-color");
     expect(html).toContain("--of-handle-negative-color");
   });

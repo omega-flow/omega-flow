@@ -20,6 +20,14 @@ import {
   TriggerOrTimeoutNodeDetail,
 } from "./details";
 
+// Handles
+import {
+  conditionSourceHandles,
+  defaultSourceHandles,
+  defaultTargetHandles,
+  triggerOrTimeoutSourceHandles,
+} from "./handles";
+
 // Icons
 import {
   TriggerIcon,
@@ -43,6 +51,8 @@ export const defaultNodeTypes: NodeTypeDefinition[] = [
     descriptionKey: "nodeTypes.trigger.description",
     Icon: TriggerIcon,
     defaultData: { params: { event: "" } },
+    sourceHandles: defaultSourceHandles,
+    targetHandles: [],
     ViewComponent: TriggerNodeView,
     DetailComponent: TriggerNodeDetail,
   },
@@ -54,6 +64,8 @@ export const defaultNodeTypes: NodeTypeDefinition[] = [
     descriptionKey: "nodeTypes.action.description",
     Icon: ActionIcon,
     defaultData: { action: "", params: {} },
+    sourceHandles: defaultSourceHandles,
+    targetHandles: defaultTargetHandles,
     ViewComponent: ActionNodeView,
     DetailComponent: ActionNodeDetail,
   },
@@ -65,6 +77,8 @@ export const defaultNodeTypes: NodeTypeDefinition[] = [
     descriptionKey: "nodeTypes.condition.description",
     Icon: ConditionIcon,
     defaultData: { conditions: { all: [] } },
+    sourceHandles: conditionSourceHandles,
+    targetHandles: defaultTargetHandles,
     ViewComponent: ConditionNodeView,
     DetailComponent: ConditionNodeDetail,
   },
@@ -76,6 +90,8 @@ export const defaultNodeTypes: NodeTypeDefinition[] = [
     descriptionKey: "nodeTypes.wait.description",
     Icon: WaitIcon,
     defaultData: { params: { duration: 60000 } },
+    sourceHandles: defaultSourceHandles,
+    targetHandles: defaultTargetHandles,
     ViewComponent: WaitNodeView,
     DetailComponent: WaitNodeDetail,
   },
@@ -87,6 +103,8 @@ export const defaultNodeTypes: NodeTypeDefinition[] = [
     descriptionKey: "nodeTypes.triggerOrTimeout.description",
     Icon: TriggerOrTimeoutIcon,
     defaultData: { params: { event: "", duration: 60000 } },
+    sourceHandles: triggerOrTimeoutSourceHandles,
+    targetHandles: defaultTargetHandles,
     ViewComponent: TriggerOrTimeoutNodeView,
     DetailComponent: TriggerOrTimeoutNodeDetail,
   },
@@ -98,6 +116,8 @@ export const defaultNodeTypes: NodeTypeDefinition[] = [
     descriptionKey: "nodeTypes.exit.description",
     Icon: ExitIcon,
     defaultData: {},
+    sourceHandles: [],
+    targetHandles: defaultTargetHandles,
     ViewComponent: ExitNodeView,
     DetailComponent: ExitNodeDetail,
   },
@@ -131,6 +151,9 @@ export function mergeNodeTypes(
   }
   return [...map.values()];
 }
+
+// Re-export handles
+export * from "./handles";
 
 // Re-export types
 export * from "./types";
