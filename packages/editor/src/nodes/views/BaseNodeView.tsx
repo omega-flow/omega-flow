@@ -39,10 +39,15 @@ const contentStyle: React.CSSProperties = {
 };
 
 const handleStyle: React.CSSProperties = {
-  width: "10px",
-  height: "10px",
+  width: "var(--of-handle-size, 10px)",
+  height: "var(--of-handle-size, 10px)",
   borderRadius: "50%",
 };
+
+/** Handles are spread evenly across the edge they sit on. */
+function handleOffset(index: number, total: number): string {
+  return `${((index + 1) / (total + 1)) * 100}%`;
+}
 
 /**
  * Base component for rendering nodes on the canvas.
@@ -74,10 +79,12 @@ export function BaseNodeView({
           type="target"
           position={Position.Top}
           id={handle.id}
+          title={handle.label}
+          aria-label={handle.label}
           style={{
             ...handleStyle,
-            backgroundColor: color,
-            left: `${((index + 1) / (targetHandles.length + 1)) * 100}%`,
+            backgroundColor: handle.color ?? color,
+            left: handleOffset(index, targetHandles.length),
           }}
         />
       ))}
@@ -91,17 +98,20 @@ export function BaseNodeView({
       {/* Content */}
       {children && <div style={contentStyle}>{children}</div>}
 
-      {/* Source handles (outputs) */}
+      {/* Source handles (outputs). Branch names are painted on the edges that
+          leave them, see useEdges; here they are hover/screen-reader only. */}
       {sourceHandles.map((handle, index) => (
         <Handle
           key={handle.id}
           type="source"
           position={Position.Bottom}
           id={handle.id}
+          title={handle.label}
+          aria-label={handle.label}
           style={{
             ...handleStyle,
-            backgroundColor: color,
-            left: `${((index + 1) / (sourceHandles.length + 1)) * 100}%`,
+            backgroundColor: handle.color ?? color,
+            left: handleOffset(index, sourceHandles.length),
           }}
         />
       ))}

@@ -8,7 +8,25 @@ import type { TranslationFunction, TranslationDictionary } from "../i18n/types";
  */
 export interface HandleDefinition {
   id: string;
+  /**
+   * Human-readable name for the connection point, e.g. "True" / "False".
+   * Shown as the handle's hover tooltip, and painted on every edge that leaves
+   * the handle when the node has more than one handle on that side. Used as a
+   * fallback when {@link labelKey} is unset or has no registered translation.
+   */
   label?: string;
+  /**
+   * Optional translation key for the name, resolved through the editor's
+   * translation function and falling back to {@link label}.
+   */
+  labelKey?: string;
+  /**
+   * Optional color for the handle dot and for the label on its edges,
+   * overriding the node color. Prefer a themeable CSS variable, e.g.
+   * `var(--of-handle-positive-color, #2E7D32)`. Color only reinforces the
+   * label, it never carries the meaning on its own.
+   */
+  color?: string;
 }
 
 /**
@@ -51,6 +69,15 @@ export interface NodeTypeDefinition {
   Icon?: ComponentType<{ size?: number }>;
   /** Initial data when node is created */
   defaultData: Record<string, unknown>;
+  /**
+   * Output connection points of this node type. Declared on the definition,
+   * not only inside the view, so the editor can label the edges leaving each
+   * handle without rendering the node. Branch labels are painted on the edges
+   * only when a node exposes more than one output.
+   */
+  sourceHandles?: HandleDefinition[];
+  /** Input connection points of this node type. See {@link sourceHandles}. */
+  targetHandles?: HandleDefinition[];
   /** Component to render on the canvas */
   ViewComponent: ComponentType<NodeViewProps>;
   /** Component to render in the detail panel */

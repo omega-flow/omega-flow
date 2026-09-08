@@ -3,6 +3,11 @@ import type { NodeProps } from "@xyflow/react";
 import { BaseNodeView } from "./BaseNodeView";
 import { useTranslation } from "../../i18n";
 import { formatDuration } from "../../utils/duration";
+import {
+  defaultTargetHandles,
+  resolveHandleLabels,
+  triggerOrTimeoutSourceHandles,
+} from "../handles";
 
 const TRIGGER_OR_TIMEOUT_COLOR = "var(--of-node-trigger-timeout-color, #607D8B)";
 
@@ -35,11 +40,8 @@ export function TriggerOrTimeoutNodeView({ id, data, selected }: NodeProps) {
       label={t("nodes.triggerOrTimeout.label")}
       color={TRIGGER_OR_TIMEOUT_COLOR}
       icon="⏰"
-      sourceHandles={[
-        { id: "trigger", label: t("nodes.triggerOrTimeout.handleTrigger") },
-        { id: "timeout", label: t("nodes.triggerOrTimeout.handleTimeout") },
-      ]}
-      targetHandles={[{ id: "input" }]}
+      sourceHandles={resolveHandleLabels(triggerOrTimeoutSourceHandles, t)}
+      targetHandles={defaultTargetHandles}
     >
       {description || <em>{t("nodes.triggerOrTimeout.notConfigured")}</em>}
     </BaseNodeView>
