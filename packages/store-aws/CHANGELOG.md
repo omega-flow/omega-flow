@@ -1,5 +1,26 @@
 # @omega-flow/store-aws
 
+## 0.3.0
+
+### Minor Changes
+
+- [#54](https://github.com/omega-flow/omega-flow/pull/54) [`f8ae82f`](https://github.com/omega-flow/omega-flow/commit/f8ae82feb02e304d8bb4b47b8a96520656595500) Thanks [@fones](https://github.com/fones)! - Raise the declared Node engine to `>=22` to match the `nanoid@^6` runtime dependency, which supports `^22 || ^24 || >=26`.
+
+- [#68](https://github.com/omega-flow/omega-flow/pull/68) [`bfb754a`](https://github.com/omega-flow/omega-flow/commit/bfb754aa6422f51f9f859d02f4256bd21eb0600f) Thanks [@fones](https://github.com/fones)! - Align all published package versions and cut a maintenance release.
+  
+  - The four packages are now a `fixed` changesets group, so they version and
+    publish together from here on.
+  - Refresh `pnpm` audit overrides: `fast-uri` `>=4.1.3`, `qs` `>=6.16.0`, and a
+    new `browserslist` `>=4.28.7` pin, clearing the high-severity advisories that
+    `pnpm audit --audit-level=high` reports against transitive dependencies.
+  - Roll in the batched production and dev dependency updates.
+
+### Patch Changes
+
+- Updated dependencies [[`bfb754a`](https://github.com/omega-flow/omega-flow/commit/bfb754aa6422f51f9f859d02f4256bd21eb0600f)]:
+  - @omega-flow/types@0.3.0
+  - @omega-flow/engine@0.3.0
+
 ## 0.2.0
 
 ### Minor Changes

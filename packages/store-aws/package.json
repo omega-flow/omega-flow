@@ -1,6 +1,6 @@
 {
   "name": "@omega-flow/store-aws",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "AWS-backed storage and scheduler implementations for Omega Flow",
   "type": "commonjs",
   "sideEffects": false,
