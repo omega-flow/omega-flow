@@ -28,6 +28,7 @@
     "dev:server": "pnpm --filter=@omega-flow/sample-server run dev",
     "dev:server:dynamodb": "pnpm --filter=@omega-flow/sample-server run dev:dynamodb",
     "dev:doc": "pnpm --filter=@omega-flow/doc run dev",
+    "sync-skill": "node scripts/sync-skill.mjs",
     "dev:packages": "pnpm --filter=@omega-flow/types --filter=@omega-flow/engine --filter=@omega-flow/editor --parallel run dev",
     "changeset": "changeset",
     "version-packages": "changeset version",
