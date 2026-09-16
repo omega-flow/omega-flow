@@ -321,9 +321,16 @@ export const sendEmailNodeType: NodeTypeDefinition = {
 
 ## Multiple Output Handles
 
-For nodes that need branching (like conditions), define multiple source handles in the ViewComponent:
+For nodes that need branching (like conditions), declare the handles once and
+share them between the view and the node type definition:
 
 ```tsx
+const branchSourceHandles: HandleDefinition[] = [
+  { id: "yes", label: "Yes", color: "var(--of-handle-positive-color, #2E7D32)" },
+  { id: "no", label: "No", color: "var(--of-handle-negative-color, #C62828)" },
+  { id: "error", label: "Error" },
+];
+
 function BranchNodeView({ id, data, selected }: NodeViewProps) {
   return (
     <BaseNodeView
@@ -332,17 +339,56 @@ function BranchNodeView({ id, data, selected }: NodeViewProps) {
       selected={selected}
       label="Branch"
       color="#FF9800"
-      sourceHandles={[
-        { id: "yes", label: "Yes" },
-        { id: "no", label: "No" },
-        { id: "error", label: "Error" },
-      ]}
+      sourceHandles={branchSourceHandles}
       targetHandles={[{ id: "input", label: "In" }]}
     >
       {/* Node content */}
     </BaseNodeView>
   );
 }
+
+export const branchNodeType: NodeTypeDefinition = {
+  type: "Branch",
+  label: "Branch",
+  defaultData: {},
+  sourceHandles: branchSourceHandles,
+  targetHandles: [{ id: "input", label: "In" }],
+  ViewComponent: BranchNodeView,
+  DetailComponent: BranchNodeDetail,
+};
+```
+
+The editor paints each `label` on the edges that leave its handle, so a fork can
+be read off the canvas without tracing which dot every line starts at. That
+labelling comes from the **node type definition**, not from the view — a node
+type that omits `sourceHandles` still renders fine, its edges just stay
+unnamed. Nodes with a single output are never labelled: an "Output" caption on
+every connection would only add noise.
+
+Always give multi-output handles a label. `color` merely reinforces it, so a
+canvas stays readable for users who cannot distinguish the colors. Labels are
+also exposed as a hover tooltip and to screen readers, on single-handle nodes
+too.
+
+To translate branch names, give each handle a `labelKey` instead of (or
+alongside) a literal `label`:
+
+```tsx
+const branchSourceHandles: HandleDefinition[] = [
+  { id: "yes", label: "Yes", labelKey: "nodes.branch.handleYes" },
+  { id: "no", label: "No", labelKey: "nodes.branch.handleNo" },
+];
+```
+
+The key is resolved through the editor's translation function, falling back to
+`label` when nothing is registered for it. Inside a view, `resolveHandleLabels`
+applies the same resolution to the handles you hand to `BaseNodeView`:
+
+```tsx
+import { resolveHandleLabels, useTranslation } from "@omega-flow/editor";
+
+const t = useTranslation();
+<BaseNodeView sourceHandles={resolveHandleLabels(branchSourceHandles, t)} ... />
 ```
 
 ## Nodes Without Inputs (Start Nodes)

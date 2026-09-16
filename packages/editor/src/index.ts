@@ -26,6 +26,15 @@ export {
 // Node system
 export { defaultNodeTypes, mergeNodeTypes } from "./nodes";
 export {
+  // Handles (shared by node views and edge labelling)
+  defaultSourceHandles,
+  defaultTargetHandles,
+  conditionSourceHandles,
+  triggerOrTimeoutSourceHandles,
+  resolveHandleLabel,
+  resolveHandleLabels,
+} from "./nodes";
+export {
   // Views
   BaseNodeView,
   TriggerNodeView,
@@ -107,6 +116,7 @@ export {
   TranslationProvider,
   createTranslationFunction,
   defaultTranslations,
+  resolveTranslation,
 } from "./i18n";
 export type {
   TranslationFunction,

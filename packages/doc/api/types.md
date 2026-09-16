@@ -278,8 +278,8 @@ interface NodeTypeDefinition {
   description?: string;
   Icon?: ComponentType<{ size?: number }>;
   defaultData: Record<string, unknown>;
-  sourceHandles: HandleDefinition[];
-  targetHandles: HandleDefinition[];
+  sourceHandles?: HandleDefinition[];
+  targetHandles?: HandleDefinition[];
   ViewComponent: ComponentType<NodeViewProps>;
   DetailComponent: ComponentType<NodeDetailProps>;
 }
@@ -294,7 +294,7 @@ Complete definition of a node type.
 | `description` | `string` | Tooltip/description text |
 | `Icon` | `ComponentType` | Icon component |
 | `defaultData` | `Record` | Initial data for new nodes |
-| `sourceHandles` | `HandleDefinition[]` | Output handles |
+| `sourceHandles` | `HandleDefinition[]` | Output handles. Declared here, not only in the view, so the editor can name the edges leaving each branch |
 | `targetHandles` | `HandleDefinition[]` | Input handles |
 | `ViewComponent` | `ComponentType` | Canvas render component |
 | `DetailComponent` | `ComponentType` | Properties panel component |
@@ -307,6 +307,8 @@ Complete definition of a node type.
 interface HandleDefinition {
   id: string;
   label?: string;
+  labelKey?: string;
+  color?: string;
 }
 ```
 
@@ -315,7 +317,9 @@ Definition for a connection handle on a node.
 | Property | Type | Description |
 |----------|------|-------------|
 | `id` | `string` | Handle identifier |
-| `label` | `string` | Display label |
+| `label` | `string` | Branch name. Painted on every edge leaving the handle when the node has more than one output, and always exposed as a hover tooltip and to screen readers |
+| `labelKey` | `string` | Translation key for the name, resolved through the editor's translation function and falling back to `label` |
+| `color` | `string` | Color of the handle dot and of the label on its edges, overriding the node color. Prefer a themeable CSS variable, e.g. `var(--of-handle-positive-color, #2E7D32)` |
 
 ---
 

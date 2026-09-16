@@ -2,3 +2,4 @@ export { TranslationProvider, useTranslation, createTranslationFunction } from "
 export type { TranslationProviderProps } from "./TranslationContext";
 export type { TranslationFunction, TranslationDictionary } from "./types";
 export { defaultTranslations } from "./defaults";
+export { resolveTranslation } from "./resolve";

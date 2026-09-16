@@ -2,6 +2,7 @@ import React from "react";
 import type { NodeProps } from "@xyflow/react";
 import { BaseNodeView } from "./BaseNodeView";
 import { useTranslation } from "../../i18n";
+import { defaultSourceHandles } from "../handles";
 
 const TRIGGER_COLOR = "var(--of-node-trigger-color, #4CAF50)";
 
@@ -19,7 +20,7 @@ export function TriggerNodeView({ id, data, selected }: NodeProps) {
       label={t("nodes.trigger.label")}
       color={TRIGGER_COLOR}
       icon="▶"
-      sourceHandles={[{ id: "output" }]}
+      sourceHandles={defaultSourceHandles}
       targetHandles={[]}
     >
       {eventName ? eventName : <em>{t("nodes.trigger.noEvent")}</em>}

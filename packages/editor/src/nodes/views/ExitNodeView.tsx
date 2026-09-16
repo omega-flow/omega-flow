@@ -2,6 +2,7 @@ import React from "react";
 import type { NodeProps } from "@xyflow/react";
 import { BaseNodeView } from "./BaseNodeView";
 import { useTranslation } from "../../i18n";
+import { defaultTargetHandles } from "../handles";
 
 const EXIT_COLOR = "var(--of-node-exit-color, #F44336)";
 
@@ -16,7 +17,7 @@ export function ExitNodeView({ id, data, selected }: NodeProps) {
       color={EXIT_COLOR}
       icon="⏹"
       sourceHandles={[]}
-      targetHandles={[{ id: "input" }]}
+      targetHandles={defaultTargetHandles}
     >
       {t("nodes.exit.endWorkflow")}
     </BaseNodeView>

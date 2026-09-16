@@ -215,6 +215,27 @@ This is useful for:
 --of-node-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 ```
 
+### Node Handles
+
+```css
+--of-handle-size: 10px;
+
+/* Branch colors used by multi-output nodes (Condition, Trigger or Timeout).
+   They tint both the handle dot and the branch name on its edges. */
+--of-handle-positive-color: #2E7D32;
+--of-handle-negative-color: #C62828;
+```
+
+### Edge Labels
+
+Branch names painted on the connections leaving a multi-output node.
+
+```css
+--of-edge-label-size: 11px;
+--of-edge-label-color: #374151;
+--of-edge-label-bg: #fff;
+```
+
 ### Spacing
 
 ```css

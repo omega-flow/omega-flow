@@ -2,6 +2,11 @@ import React from "react";
 import type { NodeProps } from "@xyflow/react";
 import { BaseNodeView } from "./BaseNodeView";
 import { useTranslation } from "../../i18n";
+import {
+  conditionSourceHandles,
+  defaultTargetHandles,
+  resolveHandleLabels,
+} from "../handles";
 
 const CONDITION_COLOR = "var(--of-node-condition-color, #FF9800)";
 
@@ -34,11 +39,8 @@ export function ConditionNodeView({ id, data, selected }: NodeProps) {
       label={t("nodes.condition.label")}
       color={CONDITION_COLOR}
       icon="?"
-      sourceHandles={[
-        { id: "true", label: t("nodes.condition.handleTrue") },
-        { id: "false", label: t("nodes.condition.handleFalse") },
-      ]}
-      targetHandles={[{ id: "input" }]}
+      sourceHandles={resolveHandleLabels(conditionSourceHandles, t)}
+      targetHandles={defaultTargetHandles}
     >
       {ruleLabel ?? <em>{t("nodes.condition.noRules")}</em>}
     </BaseNodeView>

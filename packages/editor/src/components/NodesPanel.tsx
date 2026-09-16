@@ -2,6 +2,7 @@ import React from "react";
 import { useNodeRegistry } from "../hooks/useNodeRegistry";
 import { useDragAndDrop } from "../hooks/useDragAndDrop";
 import { useTranslation } from "../i18n";
+import { resolveTranslation } from "../i18n/resolve";
 import type { NodesPanelProps, NodeTypeDefinition } from "../context/types";
 
 const panelStyle: React.CSSProperties = {
@@ -71,16 +72,14 @@ function NodeItem({
   const t = useTranslation();
   const IconComponent = nodeType.Icon;
 
-  // Resolve a translation key when present, falling back to the raw string when
-  // the key is unset or has no registered translation (custom nodes may not
-  // provide `labelKey`/`descriptionKey`, and `t` returns the key when unmatched).
-  const resolve = (key: string | undefined, fallback: string | undefined) => {
-    if (!key) return fallback;
-    const translated = t(key);
-    return translated === key ? fallback : translated;
-  };
-  const label = resolve(nodeType.labelKey, nodeType.label);
-  const description = resolve(nodeType.descriptionKey, nodeType.description);
+  // Custom nodes may not provide `labelKey`/`descriptionKey`, so fall back to
+  // the raw strings.
+  const label = resolveTranslation(t, nodeType.labelKey, nodeType.label);
+  const description = resolveTranslation(
+    t,
+    nodeType.descriptionKey,
+    nodeType.description,
+  );
 
   return (
     <div
