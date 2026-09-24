@@ -39,10 +39,10 @@
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.5",
     "@changesets/changelog-github": "^1.0.1",
-    "@changesets/cli": "^3.0.2",
+    "@changesets/cli": "^3.0.3",
     "@types/jest": "^30.0.0",
     "husky": "^9.1.7",
-    "jest": "^30.5.1",
+    "jest": "^30.5.2",
     "only-allow": "^1.2.2",
     "publint": "^0.3.24",
     "rimraf": "^6.1.3",
